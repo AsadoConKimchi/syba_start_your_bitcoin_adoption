@@ -17,7 +17,7 @@ import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { subscribeToPaymentStatus, PaymentStatus } from '../../src/services/blink';
+import { waitForPayment, PaymentStatus } from '../../src/services/blinkProxy';
 
 export default function SubscriptionScreen() {
   const {
@@ -48,8 +48,7 @@ export default function SubscriptionScreen() {
   // 결제 모달 상태
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'waiting' | 'checking' | 'success' | 'expired' | 'error'>('waiting');
-  const wsUnsubscribeRef = useRef<(() => void) | null>(null);
-  const isProcessingRef = useRef(false);
+  const paymentCancelledRef = useRef(false);
 
   const handleCopyLnurl = () => {
     if (authLnurlEncoded) {
@@ -140,36 +139,38 @@ export default function SubscriptionScreen() {
   };
 
   const handleClosePaymentModal = () => {
-    // WebSocket 정리
-    if (wsUnsubscribeRef.current) {
-      wsUnsubscribeRef.current();
-      wsUnsubscribeRef.current = null;
-    }
+    paymentCancelledRef.current = true;
     setShowPaymentModal(false);
     setPaymentStatus('waiting');
-    isProcessingRef.current = false;
   };
 
-  // 결제 모달이 열리면 WebSocket 구독
+  // 결제 모달이 열리면 폴링 시작
   useEffect(() => {
     if (!showPaymentModal || !lightningInvoice) return;
 
-    console.log('[Subscription] 결제 WebSocket 구독 시작');
+    console.log('[Subscription] 결제 폴링 시작');
+    paymentCancelledRef.current = false;
 
-    const handleStatusChange = async (status: PaymentStatus) => {
-      if (isProcessingRef.current) return;
+    const checkPayment = async () => {
+      const paid = await waitForPayment(
+        lightningInvoice,
+        (status: PaymentStatus) => {
+          if (paymentCancelledRef.current) return;
+          console.log('[Subscription] 결제 상태:', status);
 
-      console.log('[Subscription] 결제 상태:', status);
+          if (status === 'PENDING') {
+            setPaymentStatus('waiting');
+          } else if (status === 'EXPIRED') {
+            setPaymentStatus('expired');
+          }
+        },
+        10 * 60 * 1000, // 10분
+        3000 // 3초 간격
+      );
 
-      if (status === 'PAID') {
-        isProcessingRef.current = true;
+      if (paymentCancelledRef.current) return;
 
-        // WebSocket 해제
-        if (wsUnsubscribeRef.current) {
-          wsUnsubscribeRef.current();
-          wsUnsubscribeRef.current = null;
-        }
-
+      if (paid) {
         setPaymentStatus('checking');
 
         const confirmed = await confirmPayment();
@@ -188,37 +189,21 @@ export default function SubscriptionScreen() {
             '결제는 완료되었으나 구독 활성화에 실패했습니다. 고객센터에 문의해주세요.'
           );
         }
-      } else if (status === 'EXPIRED') {
-        isProcessingRef.current = true;
-
-        if (wsUnsubscribeRef.current) {
-          wsUnsubscribeRef.current();
-          wsUnsubscribeRef.current = null;
+      } else {
+        if (!paymentCancelledRef.current) {
+          setPaymentStatus('expired');
+          Alert.alert('결제 만료', 'Invoice가 만료되었습니다. 다시 시도해주세요.', [
+            { text: '확인', onPress: handleClosePaymentModal },
+          ]);
         }
-
-        setPaymentStatus('expired');
-        Alert.alert('결제 만료', 'Invoice가 만료되었습니다. 다시 시도해주세요.', [
-          { text: '확인', onPress: handleClosePaymentModal },
-        ]);
       }
     };
 
-    const handleError = (error: Error) => {
-      console.error('[Subscription] WebSocket 에러:', error);
-    };
-
-    wsUnsubscribeRef.current = subscribeToPaymentStatus(
-      lightningInvoice,
-      handleStatusChange,
-      handleError
-    );
+    checkPayment();
 
     return () => {
-      console.log('[Subscription] 결제 WebSocket 해제');
-      if (wsUnsubscribeRef.current) {
-        wsUnsubscribeRef.current();
-        wsUnsubscribeRef.current = null;
-      }
+      console.log('[Subscription] 결제 폴링 취소');
+      paymentCancelledRef.current = true;
     };
   }, [showPaymentModal, lightningInvoice]);
 

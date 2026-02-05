@@ -1,0 +1,11 @@
+# Supabase Edge Functions 설정
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[functions.blink-proxy]
+verify_jwt = false  # 공개 API로 설정 (앱에서 직접 호출)

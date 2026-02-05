@@ -218,14 +218,16 @@ export default function LoginScreen() {
         )}
 
         {/* 임시: 리셋 버튼 (개발용) */}
-        <TouchableOpacity
-          style={{ marginTop: 32, alignItems: 'center' }}
-          onPress={handleReset}
-        >
-          <Text style={{ color: '#EF4444', fontSize: 12 }}>
-            데이터 초기화 (개발용)
-          </Text>
-        </TouchableOpacity>
+        {__DEV__ && (
+          <TouchableOpacity
+            style={{ marginTop: 32, alignItems: 'center' }}
+            onPress={handleReset}
+          >
+            <Text style={{ color: '#EF4444', fontSize: 12 }}>
+              데이터 초기화 (개발용)
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     </KeyboardAvoidingView>
   );

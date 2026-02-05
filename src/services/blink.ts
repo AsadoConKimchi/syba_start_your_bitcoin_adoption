@@ -1,4 +1,14 @@
-import { BLINK_CONFIG } from '../constants/supabase';
+/**
+ * @deprecated 이 파일은 더 이상 사용되지 않습니다.
+ * blinkProxy.ts를 사용하세요. (Supabase Edge Function 프록시)
+ * API 키가 앱에 포함되지 않도록 Edge Function을 통해 Blink API를 호출합니다.
+ */
+
+// 레거시 코드 - 참조용으로 유지
+const BLINK_CONFIG = {
+  API_URL: 'https://api.blink.sv/graphql',
+  API_KEY: '', // 더 이상 사용하지 않음
+};
 
 // WebSocket URL
 const BLINK_WS_URL = 'wss://ws.blink.sv/graphql';

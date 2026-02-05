@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
-import { subscribeToPaymentStatus, PaymentStatus } from '../../src/services/blink';
+import { waitForPayment, PaymentStatus } from '../../src/services/blinkProxy';
 
 export default function PaymentScreen() {
   const {
@@ -24,33 +24,38 @@ export default function PaymentScreen() {
 
   const [status, setStatus] = useState<'waiting' | 'checking' | 'success' | 'expired' | 'error'>('waiting');
   const [copied, setCopied] = useState(false);
-  const unsubscribeRef = useRef<(() => void) | null>(null);
-  const isProcessingRef = useRef(false);
+  const isCancelledRef = useRef(false);
 
-  // WebSocket으로 결제 상태 실시간 구독
+  // 폴링으로 결제 상태 확인
   useEffect(() => {
     if (!lightningInvoice) return;
 
-    console.log('[Payment] WebSocket 구독 시작');
+    console.log('[Payment] 결제 상태 폴링 시작');
+    isCancelledRef.current = false;
 
-    const handleStatusChange = async (paymentStatus: PaymentStatus) => {
-      // 이미 처리 중이면 스킵
-      if (isProcessingRef.current) return;
+    const checkPayment = async () => {
+      const paid = await waitForPayment(
+        lightningInvoice,
+        (paymentStatus: PaymentStatus) => {
+          if (isCancelledRef.current) return;
+          console.log('[Payment] 상태 변경:', paymentStatus);
 
-      console.log('[Payment] 상태 변경:', paymentStatus);
+          if (paymentStatus === 'PENDING') {
+            setStatus('waiting');
+          } else if (paymentStatus === 'EXPIRED') {
+            setStatus('expired');
+          }
+        },
+        10 * 60 * 1000, // 10분
+        3000 // 3초 간격
+      );
 
-      if (paymentStatus === 'PAID') {
-        isProcessingRef.current = true;
+      if (isCancelledRef.current) return;
 
-        // 구독 해제
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current();
-          unsubscribeRef.current = null;
-        }
-
+      if (paid) {
         setStatus('checking');
 
-        // Blink에서 PAID 확인 후 구독 활성화
+        // 구독 활성화
         const confirmed = await confirmPayment();
 
         if (confirmed) {
@@ -66,42 +71,22 @@ export default function PaymentScreen() {
             [{ text: '확인', onPress: () => router.back() }]
           );
         }
-      } else if (paymentStatus === 'EXPIRED') {
-        isProcessingRef.current = true;
-
-        if (unsubscribeRef.current) {
-          unsubscribeRef.current();
-          unsubscribeRef.current = null;
-        }
-
-        setStatus('expired');
-        Alert.alert('결제 만료', 'Invoice가 만료되었습니다. 다시 시도해주세요.', [
-          { text: '확인', onPress: () => router.back() },
-        ]);
       } else {
-        setStatus('waiting');
+        if (!isCancelledRef.current) {
+          setStatus('expired');
+          Alert.alert('결제 만료', 'Invoice가 만료되었습니다. 다시 시도해주세요.', [
+            { text: '확인', onPress: () => router.back() },
+          ]);
+        }
       }
     };
 
-    const handleError = (error: Error) => {
-      console.error('[Payment] WebSocket 에러:', error);
-      // 에러 발생해도 자동 재연결되므로 사용자에게 알리지 않음
-    };
-
-    // WebSocket 구독 시작
-    unsubscribeRef.current = subscribeToPaymentStatus(
-      lightningInvoice,
-      handleStatusChange,
-      handleError
-    );
+    checkPayment();
 
     // cleanup
     return () => {
-      console.log('[Payment] WebSocket 구독 해제');
-      if (unsubscribeRef.current) {
-        unsubscribeRef.current();
-        unsubscribeRef.current = null;
-      }
+      console.log('[Payment] 결제 폴링 취소');
+      isCancelledRef.current = true;
     };
   }, [lightningInvoice]);
 
@@ -191,7 +176,7 @@ export default function PaymentScreen() {
           {status === 'waiting' && (
             <>
               <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#666666' }}>결제 대기 중... (실시간 연결)</Text>
+              <Text style={{ color: '#666666' }}>결제 대기 중...</Text>
             </>
           )}
           {status === 'checking' && (

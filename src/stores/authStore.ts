@@ -8,7 +8,7 @@ import {
   saveSecure,
   SECURE_KEYS,
 } from '../utils/encryption';
-import { initializeStorage } from '../utils/storage';
+import { initializeStorage, reEncryptAllData } from '../utils/storage';
 import { CONFIG } from '../constants/config';
 
 interface AuthState {
@@ -165,12 +165,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // 비밀번호 변경
   changePassword: async (currentPassword: string, newPassword: string) => {
     // 현재 비밀번호 확인
-    const [salt, storedHash] = await Promise.all([
+    const [salt, storedHash, oldKey] = await Promise.all([
       getSecure(SECURE_KEYS.ENCRYPTION_SALT),
       getSecure(SECURE_KEYS.PASSWORD_HASH),
+      getSecure(SECURE_KEYS.ENCRYPTION_KEY),
     ]);
 
-    if (!salt || !storedHash) {
+    if (!salt || !storedHash || !oldKey) {
       return false;
     }
 
@@ -179,11 +180,20 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return false; // 현재 비밀번호 불일치
     }
 
-    // 새 비밀번호로 업데이트
+    // 새 비밀번호로 키 생성
     const newSalt = await generateSalt();
     const newHash = hashPassword(newPassword, newSalt);
     const newKey = deriveKey(newPassword, newSalt);
 
+    // 모든 데이터를 새 키로 재암호화
+    try {
+      await reEncryptAllData(oldKey, newKey);
+    } catch (error) {
+      console.error('데이터 재암호화 실패:', error);
+      return false;
+    }
+
+    // 새 인증 정보 저장
     await Promise.all([
       saveSecure(SECURE_KEYS.ENCRYPTION_SALT, newSalt),
       saveSecure(SECURE_KEYS.PASSWORD_HASH, newHash),

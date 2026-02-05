@@ -5,6 +5,26 @@ console.log('[DEBUG] FileSystem.documentDirectory:', FileSystem.documentDirector
 const DATA_DIR = FileSystem.documentDirectory + 'data/';
 console.log('[DEBUG] DATA_DIR:', DATA_DIR);
 
+// 파일 손상 에러 클래스
+export class FileCorruptionError extends Error {
+  public readonly filePath: string;
+  public readonly originalError: unknown;
+
+  constructor(filePath: string, originalError: unknown) {
+    super(`파일이 손상되었거나 복호화할 수 없습니다: ${filePath}`);
+    this.name = 'FileCorruptionError';
+    this.filePath = filePath;
+    this.originalError = originalError;
+  }
+}
+
+// 로드 결과 타입
+export interface LoadResult<T> {
+  success: boolean;
+  data: T;
+  error?: FileCorruptionError;
+}
+
 // 파일 경로
 export const FILE_PATHS = {
   LEDGER: DATA_DIR + 'ledger.enc',
@@ -56,30 +76,94 @@ export async function saveEncrypted<T>(
   }
 }
 
-// 암호화된 데이터 로드
+// 암호화된 데이터 로드 (안전 버전 - 에러 정보 포함)
+export async function loadEncryptedSafe<T>(
+  path: string,
+  encryptionKey: string,
+  defaultValue: T
+): Promise<LoadResult<T>> {
+  try {
+    const fileInfo = await FileSystem.getInfoAsync(path);
+    if (!fileInfo.exists) {
+      return { success: true, data: defaultValue };
+    }
+
+    const encrypted = await FileSystem.readAsStringAsync(path);
+    const data = decrypt<T>(encrypted, encryptionKey);
+    return { success: true, data };
+  } catch (error) {
+    console.error('파일 로드 실패:', path, error);
+    return {
+      success: false,
+      data: defaultValue,
+      error: new FileCorruptionError(path, error),
+    };
+  }
+}
+
+// 암호화된 데이터 로드 (기존 호환용)
 export async function loadEncrypted<T>(
   path: string,
   encryptionKey: string,
   defaultValue: T
 ): Promise<T> {
-  try {
-    const fileInfo = await FileSystem.getInfoAsync(path);
-    if (!fileInfo.exists) {
-      return defaultValue;
-    }
-
-    const encrypted = await FileSystem.readAsStringAsync(path);
-    return decrypt<T>(encrypted, encryptionKey);
-  } catch (error) {
-    console.error('파일 로드 실패:', path, error);
-    return defaultValue;
-  }
+  const result = await loadEncryptedSafe(path, encryptionKey, defaultValue);
+  return result.data;
 }
 
 // 파일 존재 여부
 export async function fileExists(path: string): Promise<boolean> {
   const info = await FileSystem.getInfoAsync(path);
   return info.exists;
+}
+
+// 데이터 무결성 검사 (앱 시작 시 호출)
+export async function checkDataIntegrity(
+  encryptionKey: string
+): Promise<{ isHealthy: boolean; corruptedFiles: string[] }> {
+  const corruptedFiles: string[] = [];
+
+  const filesToCheck = [
+    FILE_PATHS.LEDGER,
+    FILE_PATHS.CARDS,
+    FILE_PATHS.INSTALLMENTS,
+    FILE_PATHS.LOANS,
+    FILE_PATHS.ASSETS,
+    FILE_PATHS.CATEGORIES,
+    FILE_PATHS.SNAPSHOTS,
+  ];
+
+  for (const path of filesToCheck) {
+    const fileInfo = await FileSystem.getInfoAsync(path);
+    if (!fileInfo.exists) {
+      continue; // 파일이 없으면 스킵 (정상)
+    }
+
+    try {
+      const encrypted = await FileSystem.readAsStringAsync(path);
+      decrypt(encrypted, encryptionKey);
+    } catch (error) {
+      console.error('[무결성 검사] 손상된 파일:', path);
+      corruptedFiles.push(path);
+    }
+  }
+
+  return {
+    isHealthy: corruptedFiles.length === 0,
+    corruptedFiles,
+  };
+}
+
+// 손상된 파일 삭제 (사용자 동의 후)
+export async function deleteCorruptedFiles(filePaths: string[]): Promise<void> {
+  for (const path of filePaths) {
+    try {
+      await FileSystem.deleteAsync(path, { idempotent: true });
+      console.log('[삭제 완료]', path);
+    } catch (error) {
+      console.error('[삭제 실패]', path, error);
+    }
+  }
 }
 
 // 모든 데이터 삭제
@@ -164,4 +248,50 @@ export async function restoreBackup(
   ]);
 
   console.log('[DEBUG] 모든 데이터 복원 완료');
+}
+
+// 모든 데이터를 새 키로 재암호화 (비밀번호 변경 시 사용)
+export async function reEncryptAllData(
+  oldKey: string,
+  newKey: string
+): Promise<void> {
+  console.log('[DEBUG] reEncryptAllData 시작');
+
+  // 모든 파일 경로
+  const filePaths = [
+    { path: FILE_PATHS.LEDGER, default: [] },
+    { path: FILE_PATHS.CARDS, default: [] },
+    { path: FILE_PATHS.INSTALLMENTS, default: [] },
+    { path: FILE_PATHS.LOANS, default: [] },
+    { path: FILE_PATHS.ASSETS, default: [] },
+    { path: FILE_PATHS.CATEGORIES, default: { expense: [], income: [] } },
+    { path: FILE_PATHS.SUBSCRIPTION, default: null },
+    { path: FILE_PATHS.SNAPSHOTS, default: [] },
+  ];
+
+  for (const { path, default: defaultValue } of filePaths) {
+    try {
+      const fileInfo = await FileSystem.getInfoAsync(path);
+      if (!fileInfo.exists) {
+        console.log('[DEBUG] 파일 없음, 스킵:', path);
+        continue;
+      }
+
+      // 구 키로 복호화
+      const encrypted = await FileSystem.readAsStringAsync(path);
+      const data = decrypt(encrypted, oldKey);
+      console.log('[DEBUG] 복호화 완료:', path);
+
+      // 새 키로 재암호화
+      const reEncrypted = await encrypt(data, newKey);
+      await FileSystem.writeAsStringAsync(path, reEncrypted);
+      console.log('[DEBUG] 재암호화 완료:', path);
+    } catch (error) {
+      console.error('[DEBUG] 재암호화 실패:', path, error);
+      // 파일이 존재하지만 복호화 실패 시 에러 던지기
+      throw new Error(`파일 재암호화 실패: ${path}`);
+    }
+  }
+
+  console.log('[DEBUG] 모든 데이터 재암호화 완료');
 }

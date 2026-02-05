@@ -19,8 +19,8 @@ export default function SetupScreen() {
   const { setupPassword, biometricAvailable } = useAuthStore();
 
   const handleSetup = async () => {
-    if (password.length < 6) {
-      Alert.alert('오류', '비밀번호는 6자 이상이어야 합니다.');
+    if (password.length < 12) {
+      Alert.alert('오류', '비밀번호는 12자 이상이어야 합니다.');
       return;
     }
 
@@ -77,7 +77,7 @@ export default function SetupScreen() {
               fontSize: 16,
               marginBottom: 12,
             }}
-            placeholder="비밀번호 (6자 이상)"
+            placeholder="비밀번호 (12자 이상)"
             secureTextEntry
             value={password}
             onChangeText={setPassword}

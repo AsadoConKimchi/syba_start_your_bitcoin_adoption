@@ -12,7 +12,7 @@ import {
 import {
   createLightningInvoice,
   checkPaymentStatus,
-} from '../services/blink';
+} from '../services/blinkProxy';
 import {
   createLnurlAuthSession,
   checkAuthSession,

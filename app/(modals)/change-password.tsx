@@ -34,8 +34,8 @@ export default function ChangePasswordScreen() {
       return;
     }
 
-    if (newPassword.length < 4) {
-      Alert.alert('오류', '비밀번호는 4자리 이상이어야 합니다.');
+    if (newPassword.length < 12) {
+      Alert.alert('오류', '비밀번호는 12자 이상이어야 합니다.');
       return;
     }
 
@@ -142,7 +142,7 @@ export default function ChangePasswordScreen() {
             >
               <TextInput
                 style={{ flex: 1, fontSize: 16, paddingVertical: 14 }}
-                placeholder="새 비밀번호 입력 (4자리 이상)"
+                placeholder="새 비밀번호 입력 (12자 이상)"
                 secureTextEntry={!showNewPassword}
                 value={newPassword}
                 onChangeText={setNewPassword}

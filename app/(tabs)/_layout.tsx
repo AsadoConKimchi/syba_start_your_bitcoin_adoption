@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Tabs } from 'expo-router';
+import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
@@ -14,6 +15,7 @@ import {
 } from '../../src/services/debtAutoRecord';
 import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
 import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
+import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
 
 export default function TabsLayout() {
   const { isAuthenticated, encryptionKey } = useAuthStore();
@@ -29,6 +31,8 @@ export default function TabsLayout() {
   const autoDeductionProcessed = useRef(false);
   // 스냅샷 체크 여부 추적
   const snapshotChecked = useRef(false);
+  // 무결성 검사 여부 추적
+  const integrityChecked = useRef(false);
 
   // 시세 초기화: 캐시 먼저 로드 → 네트워크에서 최신 데이터 시도
   useEffect(() => {
@@ -42,6 +46,34 @@ export default function TabsLayout() {
   useEffect(() => {
     const initData = async () => {
       if (isAuthenticated && encryptionKey) {
+        // 데이터 무결성 검사 (한 세션에 한 번만)
+        if (!integrityChecked.current) {
+          integrityChecked.current = true;
+          try {
+            const { isHealthy, corruptedFiles } = await checkDataIntegrity(encryptionKey);
+            if (!isHealthy) {
+              const fileNames = corruptedFiles.map(f => f.split('/').pop()).join(', ');
+              Alert.alert(
+                '데이터 손상 감지',
+                `일부 파일이 손상되었습니다:\n${fileNames}\n\n백업에서 복원하거나 손상된 파일을 삭제할 수 있습니다.`,
+                [
+                  { text: '무시', style: 'cancel' },
+                  {
+                    text: '손상된 파일 삭제',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await deleteCorruptedFiles(corruptedFiles);
+                      Alert.alert('완료', '손상된 파일이 삭제되었습니다. 앱을 다시 시작해주세요.');
+                    },
+                  },
+                ]
+              );
+            }
+          } catch (error) {
+            console.error('[TabsLayout] 무결성 검사 오류:', error);
+          }
+        }
+
         // 데이터 로드
         await Promise.all([
           loadRecords(),
