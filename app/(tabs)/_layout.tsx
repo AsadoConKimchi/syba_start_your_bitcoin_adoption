@@ -111,9 +111,13 @@ export default function TabsLayout() {
         tabBarActiveTintColor: '#F7931A',
         tabBarInactiveTintColor: '#9CA3AF',
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarStyle: {
           borderTopWidth: 1,
           borderTopColor: '#E5E7EB',
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
       }}
     >

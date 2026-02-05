@@ -10,11 +10,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCardStore } from '../../src/stores/cardStore';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { Card } from '../../src/types/card';
+
+const FREE_CARD_LIMIT = 3;
 
 export default function CardListScreen() {
   const { cards, deleteCard, setDefaultCard } = useCardStore();
+  const { isSubscribed } = useSubscriptionStore();
   const [editMode, setEditMode] = useState(false);
+
+  // 무료 사용자의 경우 카드 추가 가능 여부
+  const canAddMoreCards = isSubscribed || cards.length < FREE_CARD_LIMIT;
 
   const handleDelete = (card: Card) => {
     Alert.alert(
@@ -168,9 +175,18 @@ export default function CardListScreen() {
       {/* 카드 추가 버튼 */}
       {cards.length > 0 && (
         <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: '#E5E7EB' }}>
+          {/* 무료 사용자 카드 제한 안내 */}
+          {!isSubscribed && (
+            <View style={{ marginBottom: 12 }}>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center' }}>
+                {cards.length}/{FREE_CARD_LIMIT}장 등록됨
+                {!canAddMoreCards && ' (프리미엄 구독 시 무제한)'}
+              </Text>
+            </View>
+          )}
           <TouchableOpacity
             style={{
-              backgroundColor: '#F7931A',
+              backgroundColor: canAddMoreCards ? '#F7931A' : '#9CA3AF',
               padding: 16,
               borderRadius: 8,
               alignItems: 'center',
@@ -178,7 +194,23 @@ export default function CardListScreen() {
               justifyContent: 'center',
               gap: 8,
             }}
-            onPress={() => router.push('/(modals)/add-card')}
+            onPress={() => {
+              if (canAddMoreCards) {
+                router.push('/(modals)/add-card');
+              } else {
+                Alert.alert(
+                  '카드 등록 제한',
+                  `무료 사용자는 최대 ${FREE_CARD_LIMIT}장까지 등록할 수 있습니다.`,
+                  [
+                    { text: '취소', style: 'cancel' },
+                    {
+                      text: '프리미엄 구독',
+                      onPress: () => router.push('/(modals)/subscription'),
+                    },
+                  ]
+                );
+              }
+            }}
           >
             <Ionicons name="add" size={20} color="#FFFFFF" />
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>

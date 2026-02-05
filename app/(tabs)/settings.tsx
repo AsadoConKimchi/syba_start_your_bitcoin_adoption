@@ -118,6 +118,22 @@ export default function SettingsScreen() {
       return;
     }
 
+    // 프리미엄 체크
+    if (!isSubscribed) {
+      Alert.alert(
+        '프리미엄 기능',
+        '데이터 백업은 프리미엄 구독자만 이용할 수 있습니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          {
+            text: '구독하기',
+            onPress: () => router.push('/(modals)/subscription'),
+          },
+        ]
+      );
+      return;
+    }
+
     setIsBackingUp(true);
     try {
       const { path, filename } = await createBackup(encryptionKey);
@@ -528,22 +544,24 @@ export default function SettingsScreen() {
               />
             </View>
 
-            {/* 테스트 알림 */}
-            <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 16,
-              }}
-              onPress={async () => {
-                await sendRandomDailyReminder();
-                Alert.alert('알림 테스트', '유쾌한 기록 알림을 발송했습니다!');
-              }}
-            >
-              <Ionicons name="happy" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>테스트 알림 발송</Text>
-              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
-            </TouchableOpacity>
+            {/* 테스트 알림 - 개발자 전용 */}
+            {__DEV__ && (
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 16,
+                }}
+                onPress={async () => {
+                  await sendRandomDailyReminder();
+                  Alert.alert('알림 테스트', '유쾌한 기록 알림을 발송했습니다!');
+                }}
+              >
+                <Ionicons name="happy" size={24} color="#666666" style={{ marginRight: 12 }} />
+                <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>테스트 알림 발송</Text>
+                <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -720,150 +738,152 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* 개발자 도구 */}
-        <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>개발자 도구</Text>
+        {/* 개발자 도구 - 개발 모드에서만 표시 */}
+        {__DEV__ && (
+          <View style={{ padding: 20 }}>
+            <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>개발자 도구</Text>
 
-          <View
-            style={{
-              backgroundColor: '#FEF2F2',
-              borderRadius: 12,
-              overflow: 'hidden',
-            }}
-          >
-            <TouchableOpacity
+            <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 16,
-                borderBottomWidth: 1,
-                borderBottomColor: '#FECACA',
-              }}
-              disabled={isDummyLoading}
-              onPress={async () => {
-                if (!encryptionKey) {
-                  Alert.alert('오류', '인증이 필요합니다.');
-                  return;
-                }
-
-                Alert.alert(
-                  '테스트 데이터 추가',
-                  '6개월치 더미 데이터(스냅샷, 기록, 자산, 부채)를 추가합니다.\n\n기존 데이터는 유지됩니다.',
-                  [
-                    { text: '취소', style: 'cancel' },
-                    {
-                      text: '추가',
-                      onPress: async () => {
-                        setIsDummyLoading(true);
-                        try {
-                          const result = await addDummyData(encryptionKey);
-
-                          // 스토어 다시 로드
-                          await Promise.all([
-                            loadRecords(),
-                            loadDebts(encryptionKey),
-                            loadAssets(encryptionKey),
-                            loadSnapshots(encryptionKey),
-                          ]);
-
-                          setHasDummy(true);
-                          Alert.alert(
-                            '완료',
-                            `테스트 데이터 추가 완료!\n\n- 스냅샷: ${result.snapshots}개\n- 기록: ${result.records}개\n- 자산: ${result.assets}개\n- 대출: ${result.loans}개`
-                          );
-                        } catch (error) {
-                          console.error('더미 데이터 추가 실패:', error);
-                          Alert.alert('오류', '데이터 추가에 실패했습니다.');
-                        } finally {
-                          setIsDummyLoading(false);
-                        }
-                      },
-                    },
-                  ]
-                );
+                backgroundColor: '#FEF2F2',
+                borderRadius: 12,
+                overflow: 'hidden',
               }}
             >
-              <Ionicons name="flask" size={24} color="#DC2626" style={{ marginRight: 12 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, color: '#DC2626' }}>
-                  {isDummyLoading ? '처리 중...' : '테스트 데이터 추가'}
-                </Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
-                  6개월치 더미 데이터 생성
-                </Text>
-              </View>
-              <Ionicons name="add-circle" size={24} color="#DC2626" />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 16,
+                  borderBottomWidth: 1,
+                  borderBottomColor: '#FECACA',
+                }}
+                disabled={isDummyLoading}
+                onPress={async () => {
+                  if (!encryptionKey) {
+                    Alert.alert('오류', '인증이 필요합니다.');
+                    return;
+                  }
 
-            <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 16,
-                opacity: hasDummy ? 1 : 0.5,
-              }}
-              disabled={isDummyLoading || !hasDummy}
-              onPress={async () => {
-                if (!encryptionKey) {
-                  Alert.alert('오류', '인증이 필요합니다.');
-                  return;
-                }
+                  Alert.alert(
+                    '테스트 데이터 추가',
+                    '6개월치 더미 데이터(스냅샷, 기록, 자산, 부채)를 추가합니다.\n\n기존 데이터는 유지됩니다.',
+                    [
+                      { text: '취소', style: 'cancel' },
+                      {
+                        text: '추가',
+                        onPress: async () => {
+                          setIsDummyLoading(true);
+                          try {
+                            const result = await addDummyData(encryptionKey);
 
-                Alert.alert(
-                  '테스트 데이터 삭제',
-                  '추가했던 더미 데이터만 삭제합니다.\n\n실제 데이터는 유지됩니다.',
-                  [
-                    { text: '취소', style: 'cancel' },
-                    {
-                      text: '삭제',
-                      style: 'destructive',
-                      onPress: async () => {
-                        setIsDummyLoading(true);
-                        try {
-                          const result = await removeDummyData(encryptionKey);
+                            // 스토어 다시 로드
+                            await Promise.all([
+                              loadRecords(),
+                              loadDebts(encryptionKey),
+                              loadAssets(encryptionKey),
+                              loadSnapshots(encryptionKey),
+                            ]);
 
-                          // 스토어 다시 로드
-                          await Promise.all([
-                            loadRecords(),
-                            loadDebts(encryptionKey),
-                            loadAssets(encryptionKey),
-                            loadSnapshots(encryptionKey),
-                          ]);
-
-                          setHasDummy(false);
-                          Alert.alert(
-                            '완료',
-                            `테스트 데이터 삭제 완료!\n\n- 스냅샷: ${result.snapshots}개\n- 기록: ${result.records}개\n- 자산: ${result.assets}개\n- 대출: ${result.loans}개`
-                          );
-                        } catch (error) {
-                          console.error('더미 데이터 삭제 실패:', error);
-                          Alert.alert('오류', '데이터 삭제에 실패했습니다.');
-                        } finally {
-                          setIsDummyLoading(false);
-                        }
+                            setHasDummy(true);
+                            Alert.alert(
+                              '완료',
+                              `테스트 데이터 추가 완료!\n\n- 스냅샷: ${result.snapshots}개\n- 기록: ${result.records}개\n- 자산: ${result.assets}개\n- 대출: ${result.loans}개`
+                            );
+                          } catch (error) {
+                            console.error('더미 데이터 추가 실패:', error);
+                            Alert.alert('오류', '데이터 추가에 실패했습니다.');
+                          } finally {
+                            setIsDummyLoading(false);
+                          }
+                        },
                       },
-                    },
-                  ]
-                );
-              }}
-            >
-              <Ionicons name="trash" size={24} color={hasDummy ? '#DC2626' : '#9CA3AF'} style={{ marginRight: 12 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, color: hasDummy ? '#DC2626' : '#9CA3AF' }}>
-                  테스트 데이터 삭제
-                </Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
-                  {hasDummy ? '더미 데이터만 삭제' : '삭제할 더미 데이터 없음'}
-                </Text>
-              </View>
-              <Ionicons name="remove-circle" size={24} color={hasDummy ? '#DC2626' : '#9CA3AF'} />
-            </TouchableOpacity>
+                    ]
+                  );
+                }}
+              >
+                <Ionicons name="flask" size={24} color="#DC2626" style={{ marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, color: '#DC2626' }}>
+                    {isDummyLoading ? '처리 중...' : '테스트 데이터 추가'}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                    6개월치 더미 데이터 생성
+                  </Text>
+                </View>
+                <Ionicons name="add-circle" size={24} color="#DC2626" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 16,
+                  opacity: hasDummy ? 1 : 0.5,
+                }}
+                disabled={isDummyLoading || !hasDummy}
+                onPress={async () => {
+                  if (!encryptionKey) {
+                    Alert.alert('오류', '인증이 필요합니다.');
+                    return;
+                  }
+
+                  Alert.alert(
+                    '테스트 데이터 삭제',
+                    '추가했던 더미 데이터만 삭제합니다.\n\n실제 데이터는 유지됩니다.',
+                    [
+                      { text: '취소', style: 'cancel' },
+                      {
+                        text: '삭제',
+                        style: 'destructive',
+                        onPress: async () => {
+                          setIsDummyLoading(true);
+                          try {
+                            const result = await removeDummyData(encryptionKey);
+
+                            // 스토어 다시 로드
+                            await Promise.all([
+                              loadRecords(),
+                              loadDebts(encryptionKey),
+                              loadAssets(encryptionKey),
+                              loadSnapshots(encryptionKey),
+                            ]);
+
+                            setHasDummy(false);
+                            Alert.alert(
+                              '완료',
+                              `테스트 데이터 삭제 완료!\n\n- 스냅샷: ${result.snapshots}개\n- 기록: ${result.records}개\n- 자산: ${result.assets}개\n- 대출: ${result.loans}개`
+                            );
+                          } catch (error) {
+                            console.error('더미 데이터 삭제 실패:', error);
+                            Alert.alert('오류', '데이터 삭제에 실패했습니다.');
+                          } finally {
+                            setIsDummyLoading(false);
+                          }
+                        },
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Ionicons name="trash" size={24} color={hasDummy ? '#DC2626' : '#9CA3AF'} style={{ marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, color: hasDummy ? '#DC2626' : '#9CA3AF' }}>
+                    테스트 데이터 삭제
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
+                    {hasDummy ? '더미 데이터만 삭제' : '삭제할 더미 데이터 없음'}
+                  </Text>
+                </View>
+                <Ionicons name="remove-circle" size={24} color={hasDummy ? '#DC2626' : '#9CA3AF'} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
+              테스트 데이터는 "DUMMY_" 접두사로 구분되어 안전하게 삭제됩니다
+            </Text>
           </View>
-
-          <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
-            테스트 데이터는 "DUMMY_" 접두사로 구분되어 안전하게 삭제됩니다
-          </Text>
-        </View>
+        )}
 
         {/* 하단 여백 */}
         <View style={{ height: 40 }} />

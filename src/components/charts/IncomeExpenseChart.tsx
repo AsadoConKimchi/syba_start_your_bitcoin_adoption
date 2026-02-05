@@ -105,7 +105,7 @@ export function IncomeExpenseChart() {
       }}
     >
       <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 8 }}>
-        수입 vs 지출 추이 {monthlyData.length > 1 ? `(최근 ${monthlyData.length}개월)` : ''}
+        수입 vs 지출 흐름 {monthlyData.length > 1 ? `(최근 ${monthlyData.length}개월)` : ''}
       </Text>
 
       {/* 토글 버튼 */}

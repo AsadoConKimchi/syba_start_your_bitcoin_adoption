@@ -1,20 +1,27 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { formatKrw, formatSats } from '../../src/utils/formatters';
 import { CategoryPieChart, SpendingTrendChart } from '../../src/components/charts';
+import { PremiumBanner } from '../../src/components/PremiumGate';
 
 export default function RecordsScreen() {
   const { records, getRecordsByMonth } = useLedgerStore();
   const { settings } = useSettingsStore();
+  const { isSubscribed } = useSubscriptionStore();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth() + 1;
+
+  // 현재 월인지 확인
+  const now = new Date();
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
 
   const monthRecords = getRecordsByMonth(year, month);
 
@@ -30,10 +37,30 @@ export default function RecordsScreen() {
   const sortedDates = Object.keys(recordsByDate).sort((a, b) => b.localeCompare(a));
 
   const goToPrevMonth = () => {
+    // 프리미엄이 아니면 과거 월 접근 차단
+    if (!isSubscribed) {
+      Alert.alert(
+        '프리미엄 기능',
+        '과거 기록 조회는 프리미엄 구독자만 이용할 수 있습니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          {
+            text: '구독하기',
+            onPress: () => router.push('/(modals)/subscription'),
+          },
+        ]
+      );
+      return;
+    }
     setSelectedDate(new Date(year, month - 2, 1));
   };
 
   const goToNextMonth = () => {
+    // 미래 월로는 이동 가능 (현재 월까지만)
+    const nextMonth = new Date(year, month, 1);
+    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (nextMonth > currentMonth) return;
+
     setSelectedDate(new Date(year, month, 1));
   };
 
@@ -83,14 +110,22 @@ export default function RecordsScreen() {
       </View>
 
       <ScrollView style={{ flex: 1, padding: 20 }}>
-        {/* 카테고리별 파이차트 */}
+        {/* 카테고리별 파이차트 - 프리미엄 기능 */}
         <View style={{ marginBottom: 20 }}>
-          <CategoryPieChart year={year} month={month} />
+          {isSubscribed ? (
+            <CategoryPieChart year={year} month={month} />
+          ) : (
+            <PremiumBanner feature="카테고리별 지출 차트" />
+          )}
         </View>
 
-        {/* 월별 지출 추이 (토글) */}
+        {/* 월별 지출 흐름 (토글) - 프리미엄 기능 */}
         <View style={{ marginBottom: 20 }}>
-          <SpendingTrendChart />
+          {isSubscribed ? (
+            <SpendingTrendChart />
+          ) : (
+            <PremiumBanner feature="월별 지출 흐름 차트" />
+          )}
         </View>
 
         {sortedDates.length === 0 ? (

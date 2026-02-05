@@ -147,7 +147,7 @@ export function NetWorthChart() {
       {/* 헤더 */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
-          자산 추이 (최근 6개월)
+          자산 흐름 (최근 6개월)
         </Text>
 
         {/* BTC/KRW 토글 */}

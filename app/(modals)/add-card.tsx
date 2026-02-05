@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAssetStore } from '../../src/stores/assetStore';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CARD_COMPANIES, CardCompanyId } from '../../src/constants/cardCompanies';
 import { CardType, getPaymentDayOptions, getBillingPeriodForCard } from '../../src/types/card';
 import { CARD_COMPANY_BILLING_RULES } from '../../src/constants/billingPeriods';
@@ -44,8 +45,12 @@ export default function AddCardScreen() {
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { addCard } = useCardStore();
+  const { addCard, cards } = useCardStore();
   const { assets } = useAssetStore();
+  const { isSubscribed } = useSubscriptionStore();
+
+  // 무료 사용자 카드 3장 제한
+  const FREE_CARD_LIMIT = 3;
 
   // 법정화폐 자산만 필터링 (결제 계좌용)
   const fiatAssets = assets.filter(isFiatAsset);
@@ -99,6 +104,22 @@ export default function AddCardScreen() {
 
     if (!company) {
       Alert.alert('오류', '카드사를 선택해주세요.');
+      return;
+    }
+
+    // 무료 사용자 카드 3장 제한 체크
+    if (!isSubscribed && cards.length >= FREE_CARD_LIMIT) {
+      Alert.alert(
+        '카드 등록 제한',
+        `무료 사용자는 최대 ${FREE_CARD_LIMIT}장까지 등록할 수 있습니다.\n\n프리미엄 구독 시 무제한으로 등록할 수 있습니다.`,
+        [
+          { text: '취소', style: 'cancel' },
+          {
+            text: '프리미엄 구독',
+            onPress: () => router.push('/(modals)/subscription'),
+          },
+        ]
+      );
       return;
     }
 

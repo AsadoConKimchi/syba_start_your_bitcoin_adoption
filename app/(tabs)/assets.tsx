@@ -8,13 +8,16 @@ import { useAssetStore } from '../../src/stores/assetStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
 import { formatKrw, formatSats, formatTimeAgo } from '../../src/utils/formatters';
+import { PremiumGate } from '../../src/components/PremiumGate';
 
 export default function AssetsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const { encryptionKey } = useAuthStore();
+  const { isSubscribed } = useSubscriptionStore();
   const {
     assets,
     loadAssets,
@@ -67,6 +70,15 @@ export default function AssetsScreen() {
     ]);
     setRefreshing(false);
   }, [encryptionKey]);
+
+  // 프리미엄이 아니면 프리미엄 게이트 표시
+  if (!isSubscribed) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <PremiumGate feature="자산 관리" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>

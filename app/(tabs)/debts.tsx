@@ -15,11 +15,14 @@ import { useDebtStore } from '../../src/stores/debtStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { usePriceStore } from '../../src/stores/priceStore';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { formatKrw, formatSats } from '../../src/utils/formatters';
 import { Installment, Loan, REPAYMENT_TYPE_LABELS } from '../../src/types/debt';
+import { PremiumGate } from '../../src/components/PremiumGate';
 
 export default function DebtsScreen() {
   const { encryptionKey } = useAuthStore();
+  const { isSubscribed } = useSubscriptionStore();
   const {
     installments,
     loans,
@@ -252,6 +255,15 @@ export default function DebtsScreen() {
       </TouchableOpacity>
     );
   };
+
+  // 프리미엄이 아니면 프리미엄 게이트 표시
+  if (!isSubscribed) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <PremiumGate feature="부채 관리" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>

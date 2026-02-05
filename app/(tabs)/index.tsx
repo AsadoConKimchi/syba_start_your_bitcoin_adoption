@@ -8,10 +8,12 @@ import { usePriceStore } from '../../src/stores/priceStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useDebtStore } from '../../src/stores/debtStore';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { formatKrw, formatSats, formatDateWithDay, getTodayString } from '../../src/utils/formatters';
 import { krwToSats } from '../../src/utils/calculations';
 import { calculateAllCardsPayment } from '../../src/utils/cardPaymentCalculator';
 import { NetWorthChart } from '../../src/components/charts';
+import { PremiumBanner } from '../../src/components/PremiumGate';
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -21,6 +23,7 @@ export default function HomeScreen() {
   const { settings } = useSettingsStore();
   const { cards } = useCardStore();
   const { installments } = useDebtStore();
+  const { isSubscribed } = useSubscriptionStore();
 
   const today = new Date();
   const year = today.getFullYear();
@@ -227,9 +230,13 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* 자산 추이 차트 */}
+        {/* 자산 흐름 차트 - 프리미엄 기능 */}
         <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
-          <NetWorthChart />
+          {isSubscribed ? (
+            <NetWorthChart />
+          ) : (
+            <PremiumBanner feature="수입/지출 흐름 차트" />
+          )}
         </View>
 
         {/* 카드 결제 예정액 */}

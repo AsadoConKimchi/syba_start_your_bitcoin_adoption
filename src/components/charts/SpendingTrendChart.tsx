@@ -41,7 +41,7 @@ export function SpendingTrendChart() {
       onPress={() => setIsExpanded(!isExpanded)}
     >
       <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
-        월별 지출 추이 {monthlyData.length > 1 ? `(${monthlyData.length}개월)` : ''}
+        월별 지출 흐름 {monthlyData.length > 1 ? `(${monthlyData.length}개월)` : ''}
       </Text>
       <Ionicons
         name={isExpanded ? 'chevron-up' : 'chevron-down'}
