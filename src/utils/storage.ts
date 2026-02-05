@@ -95,7 +95,7 @@ export async function createBackup(
   encryptionKey: string
 ): Promise<{ path: string; filename: string }> {
   const timestamp = new Date().toISOString().split('T')[0];
-  const filename = `byob_backup_${timestamp}.enc`;
+  const filename = `syba_backup_${timestamp}.enc`;
   const backupPath = FileSystem.cacheDirectory + filename;
 
   // 모든 데이터 수집

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "SYBA",
-    "slug": "byob",
+    "slug": "syba",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,13 +15,13 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.byob.finance",
+      "bundleIdentifier": "com.syba.finance",
       "infoPlist": {
         "NSFaceIDUsageDescription": "생체 인증으로 앱에 로그인합니다"
       }
     },
     "android": {
-      "package": "com.byob.finance",
+      "package": "com.syba.finance",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F7931A"
@@ -51,7 +51,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "3ff16ccd-51d5-4acd-b11c-f3006753e837"
+        "projectId": "e5c44edb-cc18-4d85-9c1a-f5fe410998a1"
       }
     },
     "owner": "asadoconkimchi"
