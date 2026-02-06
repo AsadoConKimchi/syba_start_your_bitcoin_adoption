@@ -93,6 +93,9 @@ async function generateRandomHex(bytes: number): Promise<string> {
     .join('');
 }
 
+// 마지막 에러 저장 (디버깅용)
+export let lastLnurlError: string | null = null;
+
 // LNURL-auth 세션 생성
 export async function createLnurlAuthSession(): Promise<{
   sessionId: string;
@@ -100,9 +103,25 @@ export async function createLnurlAuthSession(): Promise<{
   lnurlEncoded: string;
   k1: string;
 } | null> {
+  lastLnurlError = null;
+
   try {
+    // 환경 변수 확인
+    if (!SUPABASE_CONFIG.URL || !SUPABASE_CONFIG.ANON_KEY) {
+      lastLnurlError = `환경변수 누락 - URL: ${!!SUPABASE_CONFIG.URL}, KEY: ${!!SUPABASE_CONFIG.ANON_KEY}`;
+      console.error('[LNURL]', lastLnurlError);
+      return null;
+    }
+
     // 32바이트 k1 challenge 생성
-    const k1 = await generateRandomHex(32);
+    let k1: string;
+    try {
+      k1 = await generateRandomHex(32);
+    } catch (cryptoError) {
+      lastLnurlError = `Crypto 에러: ${cryptoError}`;
+      console.error('[LNURL]', lastLnurlError);
+      return null;
+    }
 
     // 세션 생성
     const { data, error } = await supabase
@@ -115,13 +134,9 @@ export async function createLnurlAuthSession(): Promise<{
       .single();
 
     if (error || !data) {
-      console.error('LNURL-auth 세션 생성 실패:', error);
-      console.error('에러 상세:', JSON.stringify(error, null, 2));
-      // 개발/테스트용 상세 에러
-      if (__DEV__) {
-        console.error('Supabase URL:', SUPABASE_CONFIG.URL);
-        console.error('ANON_KEY 존재:', !!SUPABASE_CONFIG.ANON_KEY);
-      }
+      lastLnurlError = `Supabase 에러: ${error?.message || 'Unknown'} (code: ${error?.code || 'N/A'})`;
+      console.error('[LNURL]', lastLnurlError);
+      console.error('[LNURL] 상세:', JSON.stringify(error, null, 2));
       return null;
     }
 

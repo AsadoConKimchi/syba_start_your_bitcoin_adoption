@@ -18,6 +18,7 @@ import { CONFIG } from '../../src/constants/config';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { waitForPayment, PaymentStatus } from '../../src/services/blinkProxy';
+import { lastLnurlError } from '../../src/services/lnurlAuth';
 
 export default function SubscriptionScreen() {
   const {
@@ -98,11 +99,16 @@ export default function SubscriptionScreen() {
       const result = await startLnurlAuth();
       console.log('[Subscription] startLnurlAuth 결과:', result);
       if (!result) {
-        Alert.alert('오류', 'LNURL 생성에 실패했습니다. 네트워크를 확인해주세요.');
+        // 상세 에러 메시지 표시
+        const errorDetail = lastLnurlError || '알 수 없는 오류';
+        Alert.alert(
+          'LNURL 생성 실패',
+          `상세: ${errorDetail}\n\n네트워크 연결을 확인해주세요.`
+        );
       }
     } catch (error) {
       console.error('[Subscription] handleStartAuth 에러:', error);
-      Alert.alert('오류', '로그인 시작에 실패했습니다.');
+      Alert.alert('오류', `로그인 시작 실패: ${error}`);
     } finally {
       setIsStartingAuth(false);
     }
