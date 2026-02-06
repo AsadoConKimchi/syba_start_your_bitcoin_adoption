@@ -5,7 +5,7 @@ import { saveEncrypted, loadEncrypted, FILE_PATHS } from '../utils/storage';
 import { useAuthStore } from './authStore';
 import { useAssetStore } from './assetStore';
 import { fetchHistoricalBtcPrice } from '../services/api/upbit';
-import { krwToSats } from '../utils/calculations';
+import { krwToSats, satsToKrw } from '../utils/calculations';
 
 interface LedgerState {
   records: LedgerRecord[];
@@ -108,7 +108,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       let satsEquivalent: number | null = null;
       let needsPriceSync = false;
 
-      // 원화 기록 시 BTC 시세 조회
+      // 원화 기록 시 BTC 시세 조회하여 sats 환산
       if (expenseData.currency === 'KRW') {
         try {
           console.log('[DEBUG] BTC 시세 조회 시도');
@@ -117,6 +117,17 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           console.log('[DEBUG] BTC 시세 조회 성공:', btcKrwAtTime);
         } catch (e) {
           console.log('[DEBUG] BTC 시세 조회 실패, 나중에 동기화:', e);
+          needsPriceSync = true;
+        }
+      }
+      // SATS 기록 시: amount가 sats 값, satsEquivalent에 그대로 저장
+      else if (expenseData.currency === 'SATS') {
+        satsEquivalent = expenseData.amount; // sats 값 그대로
+        try {
+          btcKrwAtTime = await fetchHistoricalBtcPrice(expenseData.date);
+          console.log('[DEBUG] SATS 기록 - BTC 시세 조회 성공:', btcKrwAtTime);
+        } catch (e) {
+          console.log('[DEBUG] SATS 기록 - BTC 시세 조회 실패:', e);
           needsPriceSync = true;
         }
       }
@@ -155,11 +166,16 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           expenseData.paymentMethod === 'onchain')
       ) {
         console.log('[DEBUG] 자산 잔액 차감 시작:', expenseData.linkedAssetId);
-        // 비트코인 결제의 경우 sats로 차감, 법정화폐는 KRW로 차감
-        const deductAmount =
-          expenseData.paymentMethod === 'lightning' || expenseData.paymentMethod === 'onchain'
-            ? satsEquivalent ?? expenseData.amount // sats 차감
-            : expenseData.amount; // KRW 차감
+        // SATS 기록 또는 비트코인 결제: sats로 차감
+        // KRW 기록 + 계좌이체: KRW로 차감
+        let deductAmount: number;
+        if (expenseData.currency === 'SATS') {
+          deductAmount = expenseData.amount; // sats 값 그대로
+        } else if (expenseData.paymentMethod === 'lightning' || expenseData.paymentMethod === 'onchain') {
+          deductAmount = satsEquivalent ?? expenseData.amount;
+        } else {
+          deductAmount = expenseData.amount; // KRW
+        }
 
         await useAssetStore.getState().adjustAssetBalance(
           expenseData.linkedAssetId,
@@ -183,12 +199,24 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     let satsEquivalent: number | null = null;
     let needsPriceSync = false;
 
+    // 원화 기록 시 BTC 시세 조회하여 sats 환산
     if (incomeData.currency === 'KRW') {
       try {
         btcKrwAtTime = await fetchHistoricalBtcPrice(incomeData.date);
         satsEquivalent = krwToSats(incomeData.amount, btcKrwAtTime);
       } catch (error) {
         console.log('[오프라인] BTC 시세 조회 실패, 나중에 동기화:', error);
+        needsPriceSync = true;
+      }
+    }
+    // SATS 기록 시: amount가 sats 값, satsEquivalent에 그대로 저장
+    else if (incomeData.currency === 'SATS') {
+      satsEquivalent = incomeData.amount; // sats 값 그대로
+      try {
+        btcKrwAtTime = await fetchHistoricalBtcPrice(incomeData.date);
+        console.log('[DEBUG] SATS 수입 - BTC 시세 조회 성공:', btcKrwAtTime);
+      } catch (error) {
+        console.log('[DEBUG] SATS 수입 - BTC 시세 조회 실패:', error);
         needsPriceSync = true;
       }
     }
@@ -213,11 +241,18 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     if (incomeData.linkedAssetId && encryptionKey) {
       console.log('[DEBUG] 수입 - 자산 잔액 증가 시작:', incomeData.linkedAssetId);
 
-      // 비트코인 자산인 경우 sats로 증가, 법정화폐는 KRW로 증가
+      // SATS 기록: sats 값 그대로 증가
+      // KRW 기록 + 비트코인 자산: sats 환산값으로 증가
+      // KRW 기록 + 법정화폐 자산: KRW 그대로 증가
       const asset = useAssetStore.getState().getAssetById(incomeData.linkedAssetId);
-      const addAmount = asset?.type === 'bitcoin'
-        ? satsEquivalent ?? incomeData.amount // sats 증가
-        : incomeData.amount; // KRW 증가
+      let addAmount: number;
+      if (incomeData.currency === 'SATS') {
+        addAmount = incomeData.amount; // sats 값 그대로
+      } else if (asset?.type === 'bitcoin') {
+        addAmount = satsEquivalent ?? incomeData.amount;
+      } else {
+        addAmount = incomeData.amount; // KRW
+      }
 
       await useAssetStore.getState().adjustAssetBalance(
         incomeData.linkedAssetId,
@@ -295,8 +330,22 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     let expenseSats = 0;
 
     for (const record of monthRecords) {
-      const krwAmount = record.currency === 'KRW' ? record.amount : 0;
-      const sats = record.satsEquivalent ?? 0;
+      // KRW 기록: amount가 원화, satsEquivalent가 sats
+      // SATS 기록: amount가 sats, btcKrwAtTime으로 원화 환산
+      let krwAmount: number;
+      let sats: number;
+
+      if (record.currency === 'KRW') {
+        krwAmount = record.amount;
+        sats = record.satsEquivalent ?? 0;
+      } else {
+        // SATS 기록
+        sats = record.amount;
+        // 원화 환산 (기록 당시 시세)
+        krwAmount = record.btcKrwAtTime
+          ? satsToKrw(record.amount, record.btcKrwAtTime)
+          : 0;
+      }
 
       if (record.type === 'income') {
         income += krwAmount;
@@ -319,7 +368,17 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     let expense = 0;
 
     for (const record of todayRecords) {
-      const krwAmount = record.currency === 'KRW' ? record.amount : 0;
+      // KRW 기록: amount가 원화
+      // SATS 기록: btcKrwAtTime으로 원화 환산
+      let krwAmount: number;
+      if (record.currency === 'KRW') {
+        krwAmount = record.amount;
+      } else {
+        krwAmount = record.btcKrwAtTime
+          ? satsToKrw(record.amount, record.btcKrwAtTime)
+          : 0;
+      }
+
       if (record.type === 'income') {
         income += krwAmount;
       } else {

@@ -1,7 +1,7 @@
 /**
  * 자동 자산 차감 서비스
  * - 카드 결제일에 연결 계좌에서 자동 차감
- * - 대출 상환일에 연결 계좌에서 자동 차감
+ * - 대출 상환일에 연결 계좌에서 자동 차감 + 기록탭에 지출 기록
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +11,7 @@ import { useDebtStore } from '../stores/debtStore';
 import { useLedgerStore } from '../stores/ledgerStore';
 import { useAuthStore } from '../stores/authStore';
 import { calculateAllCardsPayment } from '../utils/cardPaymentCalculator';
+import { createLoanRepaymentRecordData } from './debtAutoRecord';
 import { Card } from '../types/card';
 import { Loan } from '../types/debt';
 
@@ -185,6 +186,26 @@ export async function processLoanRepayments(): Promise<{
         -loan.monthlyPayment,
         encryptionKey
       );
+
+      // 기록탭에 지출 자동 기록 (원화 기준)
+      const recordData = createLoanRepaymentRecordData(loan);
+      if (recordData) {
+        const { addExpense } = useLedgerStore.getState();
+        await addExpense({
+          date: recordData.date,
+          amount: recordData.amount,
+          currency: 'KRW',
+          category: recordData.category,
+          paymentMethod: recordData.paymentMethod,
+          cardId: null,
+          installmentMonths: null,
+          isInterestFree: null,
+          installmentId: null,
+          memo: recordData.memo,
+          linkedAssetId: null, // 이미 위에서 차감했으므로 연동 안 함
+        });
+        console.log(`[AutoDeduction] 대출 ${loan.name}: 기록탭에 지출 기록 추가됨`);
+      }
 
       // 대출 상환 상태 업데이트
       const newPaidMonths = loan.paidMonths + 1;

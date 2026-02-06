@@ -160,6 +160,12 @@ export default function AddExpenseScreen() {
       return;
     }
 
+    // sats 모드일 때 시세가 없으면 저장 불가
+    if (currencyMode === 'SATS' && !btcKrw) {
+      Alert.alert('오류', 'BTC 시세를 가져올 수 없습니다. 네트워크를 확인해주세요.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -167,10 +173,12 @@ export default function AddExpenseScreen() {
       const isInstallment = paymentMethod === 'card' && installmentMonths > 1;
 
       // 1. 지출 기록 추가
+      // - KRW 모드: amount는 원화, currency는 'KRW'
+      // - SATS 모드: amount는 sats, currency는 'SATS'
       const expenseId = await addExpense({
         date: dateString,
-        amount: krwAmount,
-        currency: 'KRW',
+        amount: currencyMode === 'KRW' ? amountNumber : amountNumber,
+        currency: currencyMode,
         category: finalCategory,
         paymentMethod,
         cardId: paymentMethod === 'card' ? selectedCardId : null,

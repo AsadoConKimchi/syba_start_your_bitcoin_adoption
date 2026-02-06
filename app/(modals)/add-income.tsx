@@ -107,13 +107,21 @@ export default function AddIncomeScreen() {
       return;
     }
 
+    // sats 모드일 때 시세가 없으면 저장 불가
+    if (currencyMode === 'SATS' && !btcKrw) {
+      Alert.alert('오류', 'BTC 시세를 가져올 수 없습니다. 네트워크를 확인해주세요.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
+      // - KRW 모드: amount는 원화, currency는 'KRW'
+      // - SATS 모드: amount는 sats, currency는 'SATS'
       await addIncome({
         date: formatDateString(selectedDate),
-        amount: krwAmount,
-        currency: 'KRW',
+        amount: amountNumber,
+        currency: currencyMode,
         category: finalCategory,
         source: source || null,
         memo: memo || null,
