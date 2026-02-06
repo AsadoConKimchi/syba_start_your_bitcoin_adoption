@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Clipboard from 'expo-clipboard';
@@ -674,7 +675,16 @@ export default function SettingsScreen() {
               }}
             >
               <Text style={{ fontSize: 14, color: '#666666' }}>버전</Text>
-              <Text style={{ fontSize: 14, color: '#1A1A1A' }}>1.0.0</Text>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
+                  {Constants.expoConfig?.version || '0.1.0'}
+                </Text>
+                {Constants.expoConfig?.extra?.eas?.buildId && (
+                  <Text style={{ fontSize: 10, color: '#9CA3AF' }}>
+                    {Constants.expoConfig.extra.eas.buildId.slice(0, 8)}
+                  </Text>
+                )}
+              </View>
             </View>
             <View
               style={{

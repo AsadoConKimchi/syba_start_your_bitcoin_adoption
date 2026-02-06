@@ -268,6 +268,26 @@
 4. 단위 표시 통일: sats, ₩ (만원), K sats 등
 ```
 
+### 14. CI/CD 워크플로우 위치 확인 누락
+
+**잘못된 검색:**
+- `.github/workflows/`만 확인하고 "자동 빌드 없음"이라고 답변
+
+**문제점:**
+- EAS는 자체 워크플로우 시스템 사용 (`.eas/workflows/`)
+- 사용자에게 잘못된 정보 제공
+
+**교훈:**
+```
+✅ CI/CD 워크플로우 확인 시 체크리스트:
+1. .github/workflows/ (GitHub Actions)
+2. .eas/workflows/ (EAS Workflows)
+3. .circleci/ (CircleCI)
+4. .gitlab-ci.yml (GitLab CI)
+5. bitbucket-pipelines.yml (Bitbucket)
+6. 한 곳만 확인하고 "없다"고 단정하지 말 것
+```
+
 ---
 
 ## 코드 스타일
