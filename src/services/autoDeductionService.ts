@@ -18,6 +18,7 @@ import { Loan } from '../types/debt';
 const STORAGE_KEYS = {
   LAST_CARD_DEDUCTION: 'lastCardDeduction', // { cardId: 'YYYY-MM' }
   LAST_LOAN_DEDUCTION: 'lastLoanDeduction', // { loanId: 'YYYY-MM' }
+  LAST_INSTALLMENT_DEDUCTION: 'lastInstallmentDeduction', // { installmentId: 'YYYY-MM' }
 };
 
 /**
@@ -262,23 +263,140 @@ export async function processLoanRepayments(): Promise<{
 }
 
 /**
+ * 할부 결제일 자동 지출 기록 생성
+ * - 카드 결제일에 해당 카드의 활성 할부 월납입금을 지출 기록으로 생성
+ * - 그날의 시세로 sats 환산 (addExpense에서 자동 처리)
+ */
+export async function processInstallmentPayments(): Promise<{
+  processed: number;
+  skipped: number;
+  errors: string[];
+}> {
+  const result = { processed: 0, skipped: 0, errors: [] as string[] };
+
+  const encryptionKey = useAuthStore.getState().encryptionKey;
+  if (!encryptionKey) {
+    result.errors.push('인증 필요');
+    return result;
+  }
+
+  const { cards } = useCardStore.getState();
+  const { installments, updateInstallment } = useDebtStore.getState();
+  const { addExpense } = useLedgerStore.getState();
+
+  // 마지막 처리 기록 로드
+  const lastDeductionStr = await AsyncStorage.getItem(STORAGE_KEYS.LAST_INSTALLMENT_DEDUCTION);
+  const lastDeduction: Record<string, string> = lastDeductionStr
+    ? JSON.parse(lastDeductionStr)
+    : {};
+
+  const today = getTodayInfo();
+  const todayDateStr = `${today.year}-${String(today.month).padStart(2, '0')}-${String(today.day).padStart(2, '0')}`;
+
+  // 활성 할부만 필터링
+  const activeInstallments = installments.filter((i) => i.status === 'active');
+
+  for (const installment of activeInstallments) {
+    try {
+      // 해당 카드 찾기
+      const card = cards.find((c) => c.id === installment.cardId);
+      if (!card || !card.paymentDay) {
+        continue;
+      }
+
+      // 오늘이 카드 결제일인지 확인
+      if (card.paymentDay !== today.day) {
+        continue;
+      }
+
+      // 이번 달 이미 처리했는지 확인
+      if (lastDeduction[installment.id] === today.yearMonth) {
+        result.skipped++;
+        console.log(`[AutoDeduction] 할부 ${installment.storeName}: 이번 달 이미 처리됨`);
+        continue;
+      }
+
+      // 이미 완납했는지 확인
+      if (installment.paidMonths >= installment.months) {
+        console.log(`[AutoDeduction] 할부 ${installment.storeName}: 이미 완납됨`);
+        lastDeduction[installment.id] = today.yearMonth;
+        continue;
+      }
+
+      // 지출 기록 생성 (addExpense가 현재 시세로 sats 환산)
+      await addExpense({
+        date: todayDateStr,
+        amount: installment.monthlyPayment,
+        currency: 'KRW',
+        category: '할부',
+        paymentMethod: 'card',
+        cardId: installment.cardId,
+        installmentMonths: null, // 이미 할부로 등록된 건이므로 null
+        isInterestFree: null,
+        installmentId: installment.id,
+        memo: `${installment.storeName} 할부 ${installment.paidMonths + 1}/${installment.months}회차`,
+        linkedAssetId: null, // 카드 결제이므로 자산 직접 연동 안 함
+      });
+
+      // 할부 상태 업데이트
+      const newPaidMonths = installment.paidMonths + 1;
+      const isCompleted = newPaidMonths >= installment.months;
+      const newRemainingAmount = Math.max(0, installment.remainingAmount - installment.monthlyPayment);
+
+      await updateInstallment(
+        installment.id,
+        {
+          paidMonths: newPaidMonths,
+          remainingAmount: Math.round(newRemainingAmount),
+          status: isCompleted ? 'completed' : 'active',
+        },
+        encryptionKey
+      );
+
+      // 처리 기록 저장
+      lastDeduction[installment.id] = today.yearMonth;
+      result.processed++;
+
+      console.log(
+        `[AutoDeduction] 할부 ${installment.storeName}: ${installment.monthlyPayment.toLocaleString()}원 지출 기록 생성 (${newPaidMonths}/${installment.months}회차)`
+      );
+    } catch (error) {
+      const errorMsg = `할부 ${installment.storeName} 처리 실패: ${error}`;
+      result.errors.push(errorMsg);
+      console.error('[AutoDeduction]', errorMsg);
+    }
+  }
+
+  // 마지막 처리 기록 저장
+  await AsyncStorage.setItem(
+    STORAGE_KEYS.LAST_INSTALLMENT_DEDUCTION,
+    JSON.stringify(lastDeduction)
+  );
+
+  return result;
+}
+
+/**
  * 모든 자동 차감 처리 (앱 시작 시 호출)
  */
 export async function processAllAutoDeductions(): Promise<{
   cards: { processed: number; skipped: number; errors: string[] };
   loans: { processed: number; skipped: number; errors: string[] };
+  installments: { processed: number; skipped: number; errors: string[] };
 }> {
   console.log('[AutoDeduction] 자동 차감 처리 시작...');
 
-  const [cardResult, loanResult] = await Promise.all([
+  const [cardResult, loanResult, installmentResult] = await Promise.all([
     processCardPayments(),
     processLoanRepayments(),
+    processInstallmentPayments(),
   ]);
 
   console.log('[AutoDeduction] 카드 결과:', cardResult);
   console.log('[AutoDeduction] 대출 결과:', loanResult);
+  console.log('[AutoDeduction] 할부 결과:', installmentResult);
 
-  return { cards: cardResult, loans: loanResult };
+  return { cards: cardResult, loans: loanResult, installments: installmentResult };
 }
 
 /**

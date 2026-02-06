@@ -29,12 +29,12 @@ export default function HomeScreen() {
   const year = today.getFullYear();
   const month = today.getMonth() + 1;
 
-  // 카드별 결제 예정액 계산
+  // 카드별 결제 예정액 계산 (btcKrw로 할부 sats 환산 포함)
   const cardPayments = useMemo(() => {
-    return calculateAllCardsPayment(cards, records, installments)
+    return calculateAllCardsPayment(cards, records, installments, new Date(), btcKrw || undefined)
       .filter((p) => p.totalPayment > 0)
       .sort((a, b) => (a.daysUntilPayment || 999) - (b.daysUntilPayment || 999));
-  }, [cards, records, installments]);
+  }, [cards, records, installments, btcKrw]);
 
   const todayTotal = getTodayTotal();
   const monthlyTotal = getMonthlyTotal(year, month);

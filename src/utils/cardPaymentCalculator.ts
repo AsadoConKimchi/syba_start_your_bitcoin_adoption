@@ -2,6 +2,7 @@ import { Card } from '../types/card';
 import { LedgerRecord, isExpense } from '../types/ledger';
 import { Installment } from '../types/debt';
 import { getBillingPeriodByCompany } from '../constants/billingPeriods';
+import { krwToSats } from './calculations';
 
 interface CardPaymentSummary {
   cardId: string;
@@ -13,10 +14,11 @@ interface CardPaymentSummary {
   periodExpensesSats: number; // 각 기록의 당시 환산된 sats 합계
   // 할부 납부액
   installmentPayments: number;
+  installmentPaymentsSats: number; // 할부 금액의 현재 시세 sats 환산
   installmentCount: number;
   // 총 결제 예정액
   totalPayment: number;
-  totalPaymentSats: number; // 기록된 sats 합계 (할부는 제외 - 할부는 당시 시세 없음)
+  totalPaymentSats: number; // 일시불(기록 당시) + 할부(현재 시세) sats 합계
   // 산정기간
   billingPeriodStart: string | null;
   billingPeriodEnd: string | null;
@@ -30,12 +32,14 @@ interface CardPaymentSummary {
  * @param expenses 지출 기록 목록
  * @param installments 할부 목록
  * @param targetDate 기준 날짜 (기본: 오늘)
+ * @param btcKrw 현재 BTC/KRW 시세 (할부 sats 환산용)
  */
 export function calculateCardPayment(
   card: Card,
   expenses: LedgerRecord[],
   installments: Installment[],
-  targetDate: Date = new Date()
+  targetDate: Date = new Date(),
+  btcKrw?: number
 ): CardPaymentSummary {
   const result: CardPaymentSummary = {
     cardId: card.id,
@@ -45,6 +49,7 @@ export function calculateCardPayment(
     periodExpenses: 0,
     periodExpensesSats: 0,
     installmentPayments: 0,
+    installmentPaymentsSats: 0,
     installmentCount: 0,
     totalPayment: 0,
     totalPaymentSats: 0,
@@ -105,26 +110,33 @@ export function calculateCardPayment(
   );
   result.installmentCount = cardInstallments.length;
 
+  // 할부 월납입금의 현재 시세 sats 환산
+  if (btcKrw && result.installmentPayments > 0) {
+    result.installmentPaymentsSats = krwToSats(result.installmentPayments, btcKrw);
+  }
+
   // 3. 총 결제 예정액
   result.totalPayment = result.periodExpenses + result.installmentPayments;
-  // sats는 기록된 값만 합산 (할부는 당시 시세 기록이 없으므로 제외)
-  result.totalPaymentSats = result.periodExpensesSats;
+  // sats 합산: 일시불(기록 당시) + 할부(현재 시세)
+  result.totalPaymentSats = result.periodExpensesSats + result.installmentPaymentsSats;
 
   return result;
 }
 
 /**
  * 모든 카드의 결제 예정 금액 계산
+ * @param btcKrw 현재 BTC/KRW 시세 (할부 sats 환산용)
  */
 export function calculateAllCardsPayment(
   cards: Card[],
   expenses: LedgerRecord[],
   installments: Installment[],
-  targetDate: Date = new Date()
+  targetDate: Date = new Date(),
+  btcKrw?: number
 ): CardPaymentSummary[] {
   return cards
     .filter((c) => c.type === 'credit' && c.paymentDay)
-    .map((card) => calculateCardPayment(card, expenses, installments, targetDate));
+    .map((card) => calculateCardPayment(card, expenses, installments, targetDate, btcKrw));
 }
 
 /**
