@@ -17,9 +17,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { usePriceStore } from '../../src/stores/priceStore';
+import { useAssetStore } from '../../src/stores/assetStore';
 import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../../src/constants/categories';
 import { formatKrw, formatSats } from '../../src/utils/formatters';
 import { krwToSats, satsToKrw } from '../../src/utils/calculations';
+import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
 import { LedgerRecord, isExpense } from '../../src/types/ledger';
 
 type PaymentMethod = 'cash' | 'card' | 'lightning' | 'onchain' | 'bank';
@@ -63,7 +65,27 @@ export default function EditRecordScreen() {
   const [memo, setMemo] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [linkedAssetId, setLinkedAssetId] = useState<string | null>(null);
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const { assets } = useAssetStore();
+
+  // 결제수단별 자산 필터링
+  const fiatAssets = assets.filter(isFiatAsset);
+  const lightningAssets = assets.filter(a => isBitcoinAsset(a) && a.walletType === 'lightning');
+  const onchainAssets = assets.filter(a => isBitcoinAsset(a) && a.walletType === 'onchain');
+
+  const getAssetsForPaymentMethod = () => {
+    switch (paymentMethod) {
+      case 'bank': return fiatAssets;
+      case 'lightning': return lightningAssets;
+      case 'onchain': return onchainAssets;
+      default: return [];
+    }
+  };
+
+  const availableAssets = getAssetsForPaymentMethod();
 
   // 초기값 설정
   useEffect(() => {
@@ -85,6 +107,7 @@ export default function EditRecordScreen() {
       if (isExpense(record)) {
         setPaymentMethod(record.paymentMethod);
         setSelectedCardId(record.cardId);
+        setLinkedAssetId(record.linkedAssetId || null);
         setInstallmentMonths(record.installmentMonths || 1);
         setIsInterestFree(record.isInterestFree ?? true);
 
@@ -183,6 +206,7 @@ export default function EditRecordScreen() {
           cardId: paymentMethod === 'card' ? selectedCardId : null,
           installmentMonths: paymentMethod === 'card' && installmentMonths > 1 ? installmentMonths : null,
           isInterestFree: paymentMethod === 'card' && installmentMonths > 1 ? isInterestFree : null,
+          linkedAssetId: (paymentMethod === 'bank' || paymentMethod === 'lightning' || paymentMethod === 'onchain') ? linkedAssetId : null,
         });
       } else {
         Object.assign(updates, {
@@ -395,19 +419,23 @@ export default function EditRecordScreen() {
                   {[
                     { id: 'cash', label: '현금' },
                     { id: 'card', label: '카드' },
+                    { id: 'bank', label: '계좌이체' },
                     { id: 'lightning', label: '⚡' },
                     { id: 'onchain', label: '₿' },
                   ].map(method => (
                     <TouchableOpacity
                       key={method.id}
                       style={{
-                        flex: 1,
                         paddingVertical: 12,
+                        paddingHorizontal: 16,
                         borderRadius: 8,
                         backgroundColor: paymentMethod === method.id ? '#F7931A' : '#F3F4F6',
                         alignItems: 'center',
                       }}
-                      onPress={() => setPaymentMethod(method.id as PaymentMethod)}
+                      onPress={() => {
+                        setPaymentMethod(method.id as PaymentMethod);
+                        setLinkedAssetId(null);
+                      }}
                     >
                       <Text style={{ fontSize: 14, color: paymentMethod === method.id ? '#FFFFFF' : '#666666' }}>
                         {method.label}
@@ -416,6 +444,55 @@ export default function EditRecordScreen() {
                   ))}
                 </View>
               </View>
+
+              {/* 자산 선택 (계좌이체/Lightning/Onchain) */}
+              {(paymentMethod === 'bank' || paymentMethod === 'lightning' || paymentMethod === 'onchain') && (
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
+                    {paymentMethod === 'bank' ? '출금 계좌' : paymentMethod === 'lightning' ? 'Lightning 지갑' : 'Onchain 지갑'}
+                  </Text>
+                  {availableAssets.length === 0 ? (
+                    <TouchableOpacity
+                      style={{
+                        padding: 16,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: '#E5E7EB',
+                        borderStyle: 'dashed',
+                        alignItems: 'center',
+                      }}
+                      onPress={() => router.push('/(modals)/add-asset')}
+                    >
+                      <Text style={{ color: '#9CA3AF' }}>
+                        + {paymentMethod === 'bank' ? '계좌 추가하기' : '지갑 추가하기'}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={{
+                        borderWidth: 1,
+                        borderColor: '#E5E7EB',
+                        borderRadius: 8,
+                        padding: 12,
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                      onPress={() => setShowAssetPicker(true)}
+                    >
+                      <Text style={{ fontSize: 16, color: linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
+                        {linkedAssetId
+                          ? availableAssets.find(a => a.id === linkedAssetId)?.name ?? '선택'
+                          : `${paymentMethod === 'bank' ? '계좌' : '지갑'} 선택 (선택)`}
+                      </Text>
+                      <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+                    </TouchableOpacity>
+                  )}
+                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
+                    선택하면 지출 시 자산에서 자동 차감됩니다
+                  </Text>
+                </View>
+              )}
 
               {/* 카드 선택 */}
               {paymentMethod === 'card' && (
@@ -690,6 +767,85 @@ export default function EditRecordScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+            </View>
+          </View>
+        </Modal>
+        {/* 자산 선택 모달 */}
+        <Modal visible={showAssetPicker} transparent animationType="slide">
+          <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+            <View
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                padding: 20,
+                maxHeight: '60%',
+              }}
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
+                  {paymentMethod === 'bank' ? '출금 계좌 선택' : paymentMethod === 'lightning' ? 'Lightning 지갑 선택' : 'Onchain 지갑 선택'}
+                </Text>
+                <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
+                  <Ionicons name="close" size={24} color="#666666" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ maxHeight: 300 }}>
+                {availableAssets.map((asset) => (
+                  <TouchableOpacity
+                    key={asset.id}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      padding: 16,
+                      backgroundColor: linkedAssetId === asset.id ? '#FEF3C7' : '#F9FAFB',
+                      borderRadius: 8,
+                      marginBottom: 8,
+                    }}
+                    onPress={() => {
+                      setLinkedAssetId(asset.id);
+                      setShowAssetPicker(false);
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor: paymentMethod === 'bank' ? '#D1FAE5' : '#FDE68A',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: 12,
+                      }}
+                    >
+                      <Text style={{ fontSize: 18 }}>
+                        {paymentMethod === 'bank' ? '🏦' : paymentMethod === 'lightning' ? '⚡' : '₿'}
+                      </Text>
+                    </View>
+                    <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{asset.name}</Text>
+                    {linkedAssetId === asset.id && (
+                      <Ionicons name="checkmark-circle" size={24} color="#F7931A" />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <TouchableOpacity
+                style={{
+                  padding: 16,
+                  backgroundColor: '#F3F4F6',
+                  borderRadius: 8,
+                  alignItems: 'center',
+                  marginTop: 8,
+                }}
+                onPress={() => {
+                  setLinkedAssetId(null);
+                  setShowAssetPicker(false);
+                }}
+              >
+                <Text style={{ fontSize: 16, color: '#666666' }}>선택 안함</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </Modal>

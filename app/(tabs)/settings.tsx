@@ -136,23 +136,48 @@ export default function SettingsScreen() {
       return;
     }
 
-    setIsBackingUp(true);
-    try {
-      const { path, filename } = await createBackup(encryptionKey);
+    const doBackup = async (mode: 'local' | 'share') => {
+      setIsBackingUp(true);
+      try {
+        const { path, filename } = await createBackup(encryptionKey);
 
-      // 파일 공유 (expo-sharing: Android/iOS 모두 실제 파일 공유)
-      await Sharing.shareAsync(path, {
-        mimeType: 'application/octet-stream',
-        dialogTitle: `SYBA 백업 파일: ${filename}`,
-      });
+        if (mode === 'local') {
+          const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+          if (!permissions.granted) return;
 
-      Alert.alert('완료', '백업 파일이 생성되었습니다.');
-    } catch (error) {
-      console.error('백업 실패:', error);
-      Alert.alert('오류', '백업에 실패했습니다.');
-    } finally {
-      setIsBackingUp(false);
-    }
+          const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+            permissions.directoryUri,
+            filename,
+            'application/octet-stream'
+          );
+          const content = await FileSystem.readAsStringAsync(path, { encoding: FileSystem.EncodingType.Base64 });
+          await FileSystem.writeAsStringAsync(fileUri, content, { encoding: FileSystem.EncodingType.Base64 });
+
+          Alert.alert('완료', '백업 파일이 기기에 저장되었습니다.');
+        } else {
+          await Sharing.shareAsync(path, {
+            mimeType: 'application/octet-stream',
+            dialogTitle: `SYBA 백업 파일: ${filename}`,
+          });
+          Alert.alert('완료', '백업 파일이 생성되었습니다.');
+        }
+      } catch (error) {
+        console.error('백업 실패:', error);
+        Alert.alert('오류', '백업에 실패했습니다.');
+      } finally {
+        setIsBackingUp(false);
+      }
+    };
+
+    Alert.alert(
+      '데이터 백업',
+      'AES-256 암호화로 보호됩니다.\n비밀번호 없이는 누구도 열람할 수 없습니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        { text: '기기에 저장', onPress: () => doBackup('local') },
+        { text: '외부 공유', onPress: () => doBackup('share') },
+      ]
+    );
   };
 
   const handleRestore = async () => {
@@ -609,10 +634,6 @@ export default function SettingsScreen() {
               <Text style={{ fontSize: 12, color: '#9CA3AF', marginRight: 8 }}>준비 중</Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
-
-            <Text style={{ fontSize: 12, color: '#9CA3AF', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 }}>
-              AES-256 암호화로 보호됩니다. 비밀번호 없이는 누구도 열람할 수 없습니다.
-            </Text>
 
             <TouchableOpacity
               style={{
