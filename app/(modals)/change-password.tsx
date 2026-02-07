@@ -109,8 +109,9 @@ export default function ChangePasswordScreen() {
               }}
             >
               <TextInput
-                style={{ flex: 1, fontSize: 16, paddingVertical: 14 }}
+                style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: '#1A1A1A' }}
                 placeholder="현재 비밀번호 입력"
+                placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showCurrentPassword}
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
@@ -141,8 +142,9 @@ export default function ChangePasswordScreen() {
               }}
             >
               <TextInput
-                style={{ flex: 1, fontSize: 16, paddingVertical: 14 }}
+                style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: '#1A1A1A' }}
                 placeholder="새 비밀번호 입력 (12자 이상)"
+                placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showNewPassword}
                 value={newPassword}
                 onChangeText={setNewPassword}
@@ -173,8 +175,9 @@ export default function ChangePasswordScreen() {
               }}
             >
               <TextInput
-                style={{ flex: 1, fontSize: 16, paddingVertical: 14 }}
+                style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: '#1A1A1A' }}
                 placeholder="새 비밀번호 다시 입력"
+                placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showNewPassword}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}

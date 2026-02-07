@@ -211,8 +211,10 @@ export default function AddCardScreen() {
                 borderRadius: 8,
                 padding: 12,
                 fontSize: 16,
+                color: '#1A1A1A',
               }}
               placeholder="예: 내 신용카드"
+              placeholderTextColor="#9CA3AF"
               value={name}
               onChangeText={setName}
             />

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { Tabs } from 'expo-router';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useCardStore } from '../../src/stores/cardStore';
@@ -26,6 +27,7 @@ export default function TabsLayout() {
   const { loadAssets } = useAssetStore();
   const { loadCachedPrices, fetchPrices } = usePriceStore();
   const { loadSnapshots, checkAndSaveMonthlySnapshot } = useSnapshotStore();
+  const insets = useSafeAreaInsets();
 
   // 자동 차감 처리 여부 추적
   const autoDeductionProcessed = useRef(false);
@@ -147,8 +149,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           borderTopWidth: 1,
           borderTopColor: '#E5E7EB',
-          height: 60,
-          paddingBottom: 8,
+          height: 60 + (Platform.OS === 'android' ? insets.bottom : 0),
+          paddingBottom: 8 + (Platform.OS === 'android' ? insets.bottom : 0),
           paddingTop: 8,
         },
       }}

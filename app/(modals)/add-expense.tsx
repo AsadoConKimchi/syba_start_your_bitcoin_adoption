@@ -312,8 +312,9 @@ export default function AddExpenseScreen() {
                 {currencyMode === 'KRW' ? '₩' : '₿'}
               </Text>
               <TextInput
-                style={{ flex: 1, fontSize: 24, fontWeight: 'bold', paddingVertical: 16 }}
+                style={{ flex: 1, fontSize: 24, fontWeight: 'bold', paddingVertical: 16, color: '#1A1A1A' }}
                 placeholder="0"
+                placeholderTextColor="#9CA3AF"
                 keyboardType="numeric"
                 value={amount}
                 onChangeText={handleAmountChange}
@@ -387,8 +388,10 @@ export default function AddExpenseScreen() {
                   borderRadius: 8,
                   padding: 12,
                   fontSize: 16,
+                  color: '#1A1A1A',
                 }}
                 placeholder="카테고리 직접 입력"
+                placeholderTextColor="#9CA3AF"
                 value={customCategory}
                 onChangeText={setCustomCategory}
                 autoFocus
@@ -555,8 +558,10 @@ export default function AddExpenseScreen() {
                       borderRadius: 8,
                       padding: 12,
                       fontSize: 16,
+                      color: '#1A1A1A',
                     }}
                     placeholder="개월 수 입력"
+                    placeholderTextColor="#9CA3AF"
                     keyboardType="numeric"
                     value={customInstallment}
                     onChangeText={(text) => {
@@ -650,8 +655,10 @@ export default function AddExpenseScreen() {
                 borderRadius: 8,
                 padding: 12,
                 fontSize: 16,
+                color: '#1A1A1A',
               }}
               placeholder="메모를 입력하세요"
+              placeholderTextColor="#9CA3AF"
               value={memo}
               onChangeText={setMemo}
             />

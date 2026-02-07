@@ -140,8 +140,9 @@ export async function createLnurlAuthSession(): Promise<{
       return null;
     }
 
-    // LNURL-auth URL 생성
-    const callbackUrl = `${SUPABASE_CONFIG.URL}/functions/v1/lnurl-auth?tag=login&k1=${k1}&action=login`;
+    // LNURL-auth URL 생성 (Vercel 프록시 사용)
+    const LNURL_AUTH_PROXY = 'https://syba-citadel.vercel.app';
+    const callbackUrl = `${LNURL_AUTH_PROXY}?tag=login&k1=${k1}&action=login`;
 
     // Bech32 인코딩된 LNURL (복사용)
     const lnurlEncoded = encodeLnurl(callbackUrl);

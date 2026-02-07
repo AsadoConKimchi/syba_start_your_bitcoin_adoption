@@ -157,8 +157,10 @@ export default function LoginScreen() {
               borderRadius: 8,
               padding: 16,
               fontSize: 16,
+              color: '#1A1A1A',
             }}
             placeholder="비밀번호"
+            placeholderTextColor="#9CA3AF"
             secureTextEntry
             value={password}
             onChangeText={setPassword}

@@ -76,8 +76,10 @@ export default function SetupScreen() {
               padding: 16,
               fontSize: 16,
               marginBottom: 12,
+              color: '#1A1A1A',
             }}
             placeholder="비밀번호 (12자 이상)"
+            placeholderTextColor="#9CA3AF"
             secureTextEntry
             value={password}
             onChangeText={setPassword}
@@ -91,8 +93,10 @@ export default function SetupScreen() {
               borderRadius: 8,
               padding: 16,
               fontSize: 16,
+              color: '#1A1A1A',
             }}
             placeholder="비밀번호 확인"
+            placeholderTextColor="#9CA3AF"
             secureTextEntry
             value={confirmPassword}
             onChangeText={setConfirmPassword}

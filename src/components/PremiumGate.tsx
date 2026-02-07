@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
+import { getSubscriptionPriceSats } from '../services/appConfigService';
+import { CONFIG } from '../constants/config';
 
 interface PremiumGateProps {
   children: React.ReactNode;
@@ -15,6 +18,11 @@ interface PremiumGateProps {
  */
 export function PremiumGate({ children, feature = '이 기능' }: PremiumGateProps) {
   const { isSubscribed } = useSubscriptionStore();
+  const [subscriptionPrice, setSubscriptionPrice] = useState(CONFIG.SUBSCRIPTION_PRICE_SATS);
+
+  useEffect(() => {
+    getSubscriptionPriceSats().then(setSubscriptionPrice);
+  }, []);
 
   if (isSubscribed) {
     return <>{children}</>;
@@ -109,7 +117,7 @@ export function PremiumGate({ children, feature = '이 기능' }: PremiumGatePro
       </TouchableOpacity>
 
       <Text style={{ fontSize: 14, color: '#F7931A', marginTop: 12, fontWeight: '600' }}>
-        월 10,000 sats
+        월 {subscriptionPrice.toLocaleString()} sats
       </Text>
     </View>
   );
