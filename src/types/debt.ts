@@ -89,14 +89,21 @@ export interface RepaymentSchedule {
   remainingPrincipal: number; // 상환 후 잔여 원금
 }
 
-// 상환 방식별 라벨
+// Repayment type i18n keys (use with t())
+export const REPAYMENT_TYPE_LABEL_KEYS: Record<RepaymentType, string> = {
+  bullet: 'loan.bullet',
+  equalPrincipalAndInterest: 'loan.equalPrincipalInterest',
+  equalPrincipal: 'loan.equalPrincipal',
+};
+
+// Legacy labels for backward compatibility
 export const REPAYMENT_TYPE_LABELS: Record<RepaymentType, string> = {
   bullet: '만기일시상환',
   equalPrincipalAndInterest: '원리금균등상환',
   equalPrincipal: '원금균등상환',
 };
 
-// 상환 방식별 설명
+// Legacy descriptions for backward compatibility
 export const REPAYMENT_TYPE_DESCRIPTIONS: Record<RepaymentType, string> = {
   bullet: '매월 이자만 납부, 만기에 원금 일시 상환',
   equalPrincipalAndInterest: '매월 동일한 금액(원금+이자) 상환',

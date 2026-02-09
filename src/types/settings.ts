@@ -17,12 +17,13 @@ export interface AppSettings {
   dailyReminderTime: string; // "HH:mm"
   paymentReminderEnabled: boolean;
   monthlyReportEnabled: boolean;
-  subscriptionNotificationEnabled: boolean; // 구독 만료 알림
+  subscriptionNotificationEnabled: boolean;
   theme: 'light' | 'dark' | 'system';
-  language: 'ko' | 'en' | 'es';
+  language: 'ko' | 'en' | 'es' | 'ja';
+  region: 'kr' | 'us' | 'ar' | 'jp';
   lastPriceCache: PriceCache | null;
   userName: string | null;
-  displayUnit: DisplayUnit; // 기본 표시 단위 (BTC=sats 메인, KRW=원화 메인)
+  displayUnit: DisplayUnit;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -35,7 +36,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   subscriptionNotificationEnabled: true,
   theme: 'light',
   language: 'ko',
+  region: 'kr',
   lastPriceCache: null,
   userName: null,
-  displayUnit: 'BTC', // 기본값: sats 메인 표시
+  displayUnit: 'BTC',
 };

@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import i18n from '../i18n';
 
 interface Props {
   children: ReactNode;
@@ -49,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
               marginBottom: 8,
             }}
           >
-            문제가 발생했습니다
+            {i18n.t('errorBoundary.title')}
           </Text>
           <Text
             style={{
@@ -60,7 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
               lineHeight: 20,
             }}
           >
-            예상치 못한 오류가 발생했습니다.{'\n'}다시 시도해주세요.
+            {i18n.t('errorBoundary.description')}
           </Text>
           <TouchableOpacity
             style={{
@@ -72,7 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
             onPress={this.handleRetry}
           >
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              다시 시도
+              {i18n.t('errorBoundary.retry')}
             </Text>
           </TouchableOpacity>
           {__DEV__ && this.state.error && (

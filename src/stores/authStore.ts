@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as LocalAuthentication from 'expo-local-authentication';
+import i18n from '../i18n';
 import {
   generateSalt,
   deriveKey,
@@ -210,8 +211,8 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     try {
       console.log('[DEBUG] LocalAuthentication.authenticateAsync 호출');
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: '생체 인증으로 로그인',
-        fallbackLabel: '비밀번호 사용',
+        promptMessage: i18n.t('auth.biometricPrompt'),
+        fallbackLabel: i18n.t('auth.biometricFallback'),
         disableDeviceFallback: true,
       });
       console.log('[DEBUG] 생체인증 결과:', JSON.stringify(result));

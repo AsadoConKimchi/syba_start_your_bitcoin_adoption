@@ -44,3 +44,5 @@ supabase/.temp/
 /ios
 /android
 *.apk
+*.ipa
+/build

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
+import { useTranslation } from 'react-i18next';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
 import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
@@ -22,6 +23,7 @@ import { waitForPayment, PaymentStatus } from '../../src/services/blinkProxy';
 import { lastLnurlError } from '../../src/services/lnurlAuth';
 
 export default function SubscriptionScreen() {
+  const { t } = useTranslation();
   const {
     user,
     subscription,
@@ -104,15 +106,15 @@ export default function SubscriptionScreen() {
       console.log('[Subscription] startLnurlAuth 결과:', result);
       if (!result) {
         // 상세 에러 메시지 표시
-        const errorDetail = lastLnurlError || '알 수 없는 오류';
+        const errorDetail = lastLnurlError || t('common.error');
         Alert.alert(
-          'LNURL 생성 실패',
-          `상세: ${errorDetail}\n\n네트워크 연결을 확인해주세요.`
+          t('subscription.lnurlFailed'),
+          `${errorDetail}\n\n${t('subscription.lnurlFailedDetail')}`
         );
       }
     } catch (error) {
       console.error('[Subscription] handleStartAuth 에러:', error);
-      Alert.alert('오류', `로그인 시작 실패: ${error}`);
+      Alert.alert(t('common.error'), `${t('subscription.loginFailed')}: ${error}`);
     } finally {
       setIsStartingAuth(false);
     }
@@ -126,10 +128,10 @@ export default function SubscriptionScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('로그아웃', '정말 로그아웃 하시겠습니까?', [
-      { text: '취소', style: 'cancel' },
+    Alert.alert(t('subscription.logout'), t('subscription.logoutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: '로그아웃',
+        text: t('subscription.logout'),
         style: 'destructive',
         onPress: logout,
       },
@@ -146,10 +148,10 @@ export default function SubscriptionScreen() {
         isProcessingRef.current = false;
         setShowPaymentModal(true);
       } else {
-        Alert.alert('오류', '결제 생성에 실패했습니다.');
+        Alert.alert(t('common.error'), t('subscription.paymentFailed'));
       }
     } catch (error) {
-      Alert.alert('오류', '결제 시작 중 오류가 발생했습니다.');
+      Alert.alert(t('common.error'), t('subscription.paymentStartFailed'));
     } finally {
       setIsStartingPayment(false);
     }
@@ -197,20 +199,20 @@ export default function SubscriptionScreen() {
 
           setTimeout(() => {
             setShowPaymentModal(false);
-            Alert.alert('결제 완료', '프리미엄 구독이 활성화되었습니다!');
+            Alert.alert(t('subscription.paymentComplete'), t('subscription.paymentDone'));
           }, 1500);
         } else {
           setPaymentStatus('error');
           Alert.alert(
-            '처리 오류',
-            '결제는 완료되었으나 구독 활성화에 실패했습니다. 고객센터에 문의해주세요.'
+            t('subscription.processingError'),
+            t('subscription.activationFailed')
           );
         }
       } else {
         if (!paymentCancelledRef.current) {
           setPaymentStatus('expired');
-          Alert.alert('결제 만료', 'Invoice가 만료되었습니다. 다시 시도해주세요.', [
-            { text: '확인', onPress: handleClosePaymentModal },
+          Alert.alert(t('subscription.expired'), t('subscription.invoiceExpired'), [
+            { text: t('common.confirm'), onPress: handleClosePaymentModal },
           ]);
         }
       }
@@ -246,7 +248,7 @@ export default function SubscriptionScreen() {
         }}
       >
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
-          프리미엄 구독
+          {t('subscription.title')}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={24} color="#666666" />
@@ -281,31 +283,31 @@ export default function SubscriptionScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
-                SYBA 프리미엄
+                {t('subscription.sybaPremium')}
               </Text>
               <Text style={{ fontSize: 12, color: '#666666' }}>
-                모든 기능을 잠금 해제하세요
+                {t('subscription.unlockAll')}
               </Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#F7931A' }}>
                 {subscriptionPrice.toLocaleString()}
               </Text>
-              <Text style={{ fontSize: 11, color: '#666666' }}>sats / 월</Text>
+              <Text style={{ fontSize: 11, color: '#666666' }}>{t('subscription.pricePerMonth')}</Text>
             </View>
           </View>
 
           {/* 혜택 목록 */}
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 }}>
-              프리미엄 혜택
+              {t('subscription.benefits')}
             </Text>
             {[
-              { icon: 'card', text: '무제한 카드 등록' },
-              { icon: 'analytics', text: '상세 통계 및 리포트' },
-              { icon: 'notifications', text: '김프 알림' },
-              { icon: 'cloud-upload', text: '클라우드 백업' },
-              { icon: 'color-palette', text: '커스텀 테마' },
+              { icon: 'card', text: t('subscription.unlimitedCards') },
+              { icon: 'analytics', text: t('subscription.detailedStats') },
+              { icon: 'notifications', text: t('subscription.premiumAlert') },
+              { icon: 'cloud-upload', text: t('subscription.cloudBackup') },
+              { icon: 'color-palette', text: t('subscription.customTheme') },
             ].map((item, index) => (
               <View
                 key={index}
@@ -337,7 +339,7 @@ export default function SubscriptionScreen() {
           {authStatus === 'waiting' && authLnurl ? (
             <View style={{ marginBottom: 24 }}>
               <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12, textAlign: 'center' }}>
-                Lightning 지갑으로 QR 코드를 스캔하세요
+                {t('subscription.scanQR')}
               </Text>
               <TouchableOpacity
                 style={{
@@ -362,12 +364,12 @@ export default function SubscriptionScreen() {
                   color="#000000"
                 />
                 <Text style={{ marginTop: 12, fontSize: 12, color: copied ? '#22C55E' : '#9CA3AF' }}>
-                  {copied ? '복사됨!' : 'QR 탭하여 복사'}
+                  {copied ? t('common.copied') : t('subscription.tapToCopy')}
                 </Text>
               </TouchableOpacity>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                 <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-                <Text style={{ color: '#666666' }}>인증 대기 중...</Text>
+                <Text style={{ color: '#666666' }}>{t('subscription.waitingAuth')}</Text>
               </View>
               <TouchableOpacity
                 style={{
@@ -379,13 +381,13 @@ export default function SubscriptionScreen() {
                 }}
                 onPress={handleCancelAuth}
               >
-                <Text style={{ color: '#666666' }}>취소</Text>
+                <Text style={{ color: '#666666' }}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </View>
           ) : !user ? (
             <View style={{ marginBottom: 24 }}>
               <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>
-                구독하려면 Lightning 지갑으로 로그인이 필요합니다
+                {t('subscription.loginRequired')}
               </Text>
               <TouchableOpacity
                 style={{
@@ -406,7 +408,7 @@ export default function SubscriptionScreen() {
                   <Ionicons name="flash" size={24} color="#FFFFFF" style={{ marginRight: 8 }} />
                 )}
                 <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-                  {isStartingAuth ? '준비 중...' : 'Lightning 지갑으로 로그인'}
+                  {isStartingAuth ? `${t('common.preparing')}...` : t('subscription.loginWithLightning')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -438,14 +440,14 @@ export default function SubscriptionScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 16, fontWeight: '500', color: '#1A1A1A' }}>
-                    Lightning 연결됨
+                    {t('subscription.lightningConnected')}
                   </Text>
                   <Text style={{ fontSize: 10, color: '#9CA3AF' }} numberOfLines={1}>
                     {user.linking_key?.substring(0, 16)}...
                   </Text>
                 </View>
                 <TouchableOpacity onPress={handleLogout}>
-                  <Text style={{ fontSize: 14, color: '#EF4444' }}>로그아웃</Text>
+                  <Text style={{ fontSize: 14, color: '#EF4444' }}>{t('subscription.logout')}</Text>
                 </TouchableOpacity>
               </View>
 
@@ -461,12 +463,12 @@ export default function SubscriptionScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                     <Ionicons name="checkmark-circle" size={20} color="#22C55E" style={{ marginRight: 8 }} />
                     <Text style={{ fontSize: 16, fontWeight: '600', color: '#22C55E' }}>
-                      프리미엄 활성화
+                      {t('subscription.premiumActive')}
                     </Text>
                   </View>
                   {subscription.expires_at && (
                     <Text style={{ fontSize: 14, color: '#666666' }}>
-                      만료일: {format(new Date(subscription.expires_at), 'yyyy년 M월 d일', { locale: ko })}
+                      {t('subscription.expiresAt', { date: format(new Date(subscription.expires_at), 'PPP', { locale: ko }) })}
                     </Text>
                   )}
                 </View>
@@ -490,7 +492,7 @@ export default function SubscriptionScreen() {
                     <Ionicons name="flash" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
                   )}
                   <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-                    {isStartingPayment ? '결제 준비 중...' : 'Lightning으로 구독하기'}
+                    {isStartingPayment ? t('subscription.paymentPreparing') : t('subscription.subscribeWithLightning')}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -506,12 +508,10 @@ export default function SubscriptionScreen() {
             }}
           >
             <Text style={{ fontSize: 14, fontWeight: '500', color: '#666666', marginBottom: 8 }}>
-              무료 버전 제한
+              {t('subscription.freeLimits')}
             </Text>
             <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
-              • 카드 등록 최대 {CONFIG.FREE_MAX_CARDS}장{'\n'}
-              • 기본 통계만 제공{'\n'}
-              • 로컬 백업만 가능
+              {t('subscription.freeLimitsDetail', { max: CONFIG.FREE_MAX_CARDS })}
             </Text>
           </View>
         </View>
@@ -538,7 +538,7 @@ export default function SubscriptionScreen() {
             {/* 모달 헤더 */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 16 }}>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
-                Lightning 결제
+                {t('subscription.lightningPayment')}
               </Text>
               <TouchableOpacity onPress={handleClosePaymentModal}>
                 <Ionicons name="close" size={24} color="#666666" />
@@ -547,7 +547,7 @@ export default function SubscriptionScreen() {
 
             {/* 금액 */}
             <View style={{ marginBottom: 20, alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 4 }}>결제 금액</Text>
+              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 4 }}>{t('subscription.paymentAmount')}</Text>
               <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#F7931A' }}>
                 {subscriptionPrice.toLocaleString()} sats
               </Text>
@@ -578,7 +578,7 @@ export default function SubscriptionScreen() {
                   color="#000000"
                 />
                 <Text style={{ marginTop: 12, fontSize: 12, color: invoiceCopied ? '#22C55E' : '#9CA3AF' }}>
-                  {invoiceCopied ? '복사됨!' : 'QR 탭하여 Invoice 복사'}
+                  {invoiceCopied ? t('common.copied') : t('subscription.tapToCopyInvoice')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -588,31 +588,31 @@ export default function SubscriptionScreen() {
               {paymentStatus === 'waiting' && (
                 <>
                   <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#666666' }}>결제 대기 중...</Text>
+                  <Text style={{ color: '#666666' }}>{t('subscription.waitingPayment')}</Text>
                 </>
               )}
               {paymentStatus === 'checking' && (
                 <>
                   <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#666666' }}>구독 활성화 중...</Text>
+                  <Text style={{ color: '#666666' }}>{t('subscription.activating')}</Text>
                 </>
               )}
               {paymentStatus === 'success' && (
                 <>
                   <Ionicons name="checkmark-circle" size={20} color="#22C55E" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#22C55E', fontWeight: '600' }}>결제 완료!</Text>
+                  <Text style={{ color: '#22C55E', fontWeight: '600' }}>{t('subscription.paymentComplete')}</Text>
                 </>
               )}
               {paymentStatus === 'expired' && (
                 <>
                   <Ionicons name="close-circle" size={20} color="#EF4444" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#EF4444' }}>만료됨</Text>
+                  <Text style={{ color: '#EF4444' }}>{t('subscription.expired')}</Text>
                 </>
               )}
               {paymentStatus === 'error' && (
                 <>
                   <Ionicons name="warning" size={20} color="#F59E0B" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#F59E0B' }}>처리 오류</Text>
+                  <Text style={{ color: '#F59E0B' }}>{t('subscription.processingError')}</Text>
                 </>
               )}
             </View>
@@ -638,7 +638,7 @@ export default function SubscriptionScreen() {
 
             {/* 안내 문구 */}
             <Text style={{ marginTop: 16, fontSize: 11, color: '#9CA3AF', textAlign: 'center' }}>
-              Lightning 지갑으로 QR 코드를 스캔하거나{'\n'}Invoice를 복사하여 결제해주세요
+              {t('subscription.paymentInstructions')}
             </Text>
           </View>
         </View>

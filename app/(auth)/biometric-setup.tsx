@@ -1,10 +1,12 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/stores/authStore';
 
 export default function BiometricSetupScreen() {
   const { enableBiometric } = useAuthStore();
+  const { t } = useTranslation();
 
   const handleEnable = async () => {
     await enableBiometric();
@@ -17,7 +19,6 @@ export default function BiometricSetupScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF', padding: 24, justifyContent: 'center' }}>
-      {/* 아이콘 */}
       <View style={{ alignItems: 'center', marginBottom: 32 }}>
         <View
           style={{
@@ -33,7 +34,6 @@ export default function BiometricSetupScreen() {
         </View>
       </View>
 
-      {/* 텍스트 */}
       <Text
         style={{
           fontSize: 24,
@@ -43,7 +43,7 @@ export default function BiometricSetupScreen() {
           marginBottom: 12,
         }}
       >
-        생체 인증을 사용할까요?
+        {t('auth.biometricTitle')}
       </Text>
 
       <Text
@@ -55,10 +55,9 @@ export default function BiometricSetupScreen() {
           lineHeight: 24,
         }}
       >
-        Face ID / 지문으로{'\n'}더 빠르게 로그인할 수 있습니다.
+        {t('auth.biometricDescription')}
       </Text>
 
-      {/* 버튼들 */}
       <TouchableOpacity
         style={{
           backgroundColor: '#F7931A',
@@ -70,7 +69,7 @@ export default function BiometricSetupScreen() {
         onPress={handleEnable}
       >
         <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-          생체인증 사용
+          {t('auth.enableBiometric')}
         </Text>
       </TouchableOpacity>
 
@@ -85,7 +84,7 @@ export default function BiometricSetupScreen() {
         onPress={handleSkip}
       >
         <Text style={{ color: '#666666', fontSize: 16 }}>
-          나중에 하기
+          {t('auth.later')}
         </Text>
       </TouchableOpacity>
     </View>

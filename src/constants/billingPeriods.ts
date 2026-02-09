@@ -475,8 +475,10 @@ export function getRecommendedPaymentDay(companyId: string): number {
   return companyRules?.recommendedDay || 14;
 }
 
+import i18n from '../i18n';
+
 /**
- * 산정기간 텍스트 생성
+ * Format billing period text (i18n)
  */
 export function formatBillingPeriodText(
   companyId: string,
@@ -488,9 +490,16 @@ export function formatBillingPeriodText(
   const rule = companyRules.rules[paymentDay];
   if (!rule) return null;
 
-  const startMonth = rule.start.monthOffset === -2 ? '전전월' : '전월';
-  const endMonth = rule.end.monthOffset === -1 ? '전월' : '당월';
-  const endDay = rule.end.day === 31 ? '말일' : `${rule.end.day}일`;
+  const startMonth = rule.start.monthOffset === -2
+    ? i18n.t('card.twoMonthsAgo')
+    : i18n.t('card.prevMonth');
+  const endMonth = rule.end.monthOffset === -1
+    ? i18n.t('card.prevMonth')
+    : i18n.t('card.currentMonth');
+  const dayUnit = i18n.t('card.dayUnit');
+  const endDay = rule.end.day === 31
+    ? i18n.t('common.lastDay', { defaultValue: 'last' })
+    : `${rule.end.day}${dayUnit}`;
 
-  return `${startMonth} ${rule.start.day}일 ~ ${endMonth} ${endDay}`;
+  return `${startMonth} ${rule.start.day}${dayUnit} ~ ${endMonth} ${endDay}`;
 }

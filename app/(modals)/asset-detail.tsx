@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { usePriceStore } from '../../src/stores/priceStore';
@@ -22,6 +23,7 @@ import { formatKrw, formatSats, formatTimeAgo } from '../../src/utils/formatters
 type WalletType = 'onchain' | 'lightning';
 
 export default function AssetDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { encryptionKey } = useAuthStore();
   const { assets, updateAsset, deleteAsset } = useAssetStore();
@@ -55,12 +57,12 @@ export default function AssetDetailScreen() {
   if (!asset) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#9CA3AF' }}>자산 정보를 찾을 수 없습니다</Text>
+        <Text style={{ color: '#9CA3AF' }}>{t('common.notFound')}</Text>
         <TouchableOpacity
           style={{ marginTop: 16, padding: 12, backgroundColor: '#22C55E', borderRadius: 8 }}
           onPress={() => router.back()}
         >
-          <Text style={{ color: '#FFFFFF' }}>돌아가기</Text>
+          <Text style={{ color: '#FFFFFF' }}>{t('common.back')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -103,12 +105,12 @@ export default function AssetDetailScreen() {
 
   const handleSave = async () => {
     if (!encryptionKey) {
-      Alert.alert('오류', '인증이 필요합니다.');
+      Alert.alert(t('common.error'), t('common.authRequired'));
       return;
     }
 
     if (!name.trim()) {
-      Alert.alert('오류', '자산명을 입력해주세요.');
+      Alert.alert(t('common.error'), t('asset.nameRequired'));
       return;
     }
 
@@ -126,10 +128,10 @@ export default function AssetDetailScreen() {
 
       await updateAsset(asset.id, updateData, encryptionKey);
       setIsEditing(false);
-      Alert.alert('완료', '자산 정보가 수정되었습니다.');
+      Alert.alert(t('common.done'), t('asset.editDone'));
     } catch (error) {
       console.error('자산 수정 실패:', error);
-      Alert.alert('오류', '자산 수정에 실패했습니다.');
+      Alert.alert(t('common.error'), t('asset.editFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -137,12 +139,12 @@ export default function AssetDetailScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      '자산 삭제',
-      `"${asset.name}"을(를) 삭제하시겠습니까?`,
+      t('asset.deleteConfirm'),
+      t('asset.deleteMessage', { name: asset.name }),
       [
-        { text: '취소', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '삭제',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             if (!encryptionKey) return;
@@ -151,7 +153,7 @@ export default function AssetDetailScreen() {
               router.back();
             } catch (error) {
               console.error('자산 삭제 실패:', error);
-              Alert.alert('오류', '자산 삭제에 실패했습니다.');
+              Alert.alert(t('common.error'), t('asset.deleteFailed'));
             }
           },
         },
@@ -177,9 +179,9 @@ export default function AssetDetailScreen() {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#666666" />
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>자산 상세</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('asset.detailTitle')}</Text>
           <TouchableOpacity onPress={() => setIsEditing(true)}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#22C55E' }}>수정</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#22C55E' }}>{t('common.edit')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -201,7 +203,7 @@ export default function AssetDetailScreen() {
               {asset.name}
             </Text>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 16 }}>
-              {isOverdraft ? '마이너스통장' : isFiat ? '법정화폐' : isBitcoinAsset(asset) ? (asset.walletType === 'onchain' ? 'Onchain' : 'Lightning') : ''}
+              {isOverdraft ? t('asset.overdraft') : isFiat ? t('asset.fiat') : isBitcoinAsset(asset) ? (asset.walletType === 'onchain' ? 'Onchain' : 'Lightning') : ''}
             </Text>
 
             {/* 잔액 */}
@@ -219,14 +221,14 @@ export default function AssetDetailScreen() {
             {isOverdraft && (
               <View style={{ flexDirection: 'row', gap: 16, marginTop: 12 }}>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, color: '#666666' }}>한도</Text>
+                  <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.limit')}</Text>
                   <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
                     {formatKrw(creditLimit)}
                   </Text>
                 </View>
                 <Text style={{ color: '#D1D5DB' }}>|</Text>
                 <View style={{ alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, color: '#666666' }}>가용</Text>
+                  <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.available')}</Text>
                   <Text style={{ fontSize: 14, fontWeight: '600', color: availableAmount > 0 ? '#22C55E' : '#EF4444' }}>
                     {formatKrw(availableAmount)}
                   </Text>
@@ -254,12 +256,12 @@ export default function AssetDetailScreen() {
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <View>
-                  <Text style={{ fontSize: 12, color: '#92400E' }}>이번달 예상 이자</Text>
+                  <Text style={{ fontSize: 12, color: '#92400E' }}>{t('asset.estimatedInterestLabel')}</Text>
                   <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#F59E0B' }}>
                     {formatKrw(estimatedInterest)}
                   </Text>
                   <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2 }}>
-                    연 {interestRate}% 기준
+                    {t('asset.rateBasedOn', { rate: interestRate })}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -289,19 +291,19 @@ export default function AssetDetailScreen() {
             }}
           >
             <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 16 }}>
-              상세 정보
+              {t('asset.detailInfo')}
             </Text>
 
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>자산 유형</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.assetType')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
-                {isFiat ? '법정화폐 (KRW)' : '비트코인 (sats)'}
+                {isFiat ? `${t('asset.fiat')} (KRW)` : `${t('asset.bitcoin')} (sats)`}
               </Text>
             </View>
 
             {isBitcoinAsset(asset) && (
               <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>지갑 유형</Text>
+                <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.walletType')}</Text>
                 <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                   {asset.walletType === 'onchain' ? 'Onchain (L1)' : 'Lightning (L2)'}
                 </Text>
@@ -311,13 +313,13 @@ export default function AssetDetailScreen() {
             {isOverdraft && (
               <>
                 <View style={{ marginBottom: 12 }}>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>마이너스 한도</Text>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.creditLimit')}</Text>
                   <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                     {formatKrw(creditLimit)}
                   </Text>
                 </View>
                 <View style={{ marginBottom: 12 }}>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>연이자율</Text>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.annualRate')}</Text>
                   <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                     {interestRate}%
                   </Text>
@@ -326,14 +328,14 @@ export default function AssetDetailScreen() {
             )}
 
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>등록일</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.registrationDate')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                 {new Date(asset.createdAt).toLocaleDateString('ko-KR')}
               </Text>
             </View>
 
             <View>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>마지막 업데이트</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('asset.lastUpdate')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                 {formatTimeAgo(asset.updatedAt)}
               </Text>
@@ -351,7 +353,7 @@ export default function AssetDetailScreen() {
             }}
             onPress={handleDelete}
           >
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#DC2626' }}>자산 삭제</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#DC2626' }}>{t('asset.deleteConfirm')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -377,9 +379,9 @@ export default function AssetDetailScreen() {
           }}
         >
           <TouchableOpacity onPress={() => setIsEditing(false)}>
-            <Text style={{ fontSize: 16, color: '#666666' }}>취소</Text>
+            <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.cancel')}</Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>자산 수정</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('asset.editTitle')}</Text>
           <TouchableOpacity onPress={handleSave} disabled={isSubmitting}>
             <Text
               style={{
@@ -388,7 +390,7 @@ export default function AssetDetailScreen() {
                 color: isSubmitting ? '#9CA3AF' : '#22C55E',
               }}
             >
-              저장
+              {t('common.save')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -398,7 +400,7 @@ export default function AssetDetailScreen() {
             {/* 자산명 */}
             <View style={{ marginBottom: 24 }}>
               <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-                {isFiat ? '계좌/자산명' : '지갑명'} *
+                {isFiat ? t('asset.accountName') : t('asset.walletName')} *
               </Text>
               <TextInput
                 style={{
@@ -416,7 +418,7 @@ export default function AssetDetailScreen() {
             {/* 비트코인 지갑 유형 */}
             {isBtc && (
               <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>지갑 유형</Text>
+                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('asset.walletType')}</Text>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   <TouchableOpacity
                     style={{
@@ -467,7 +469,7 @@ export default function AssetDetailScreen() {
             <View style={{ marginBottom: 24 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <Text style={{ fontSize: 14, color: '#666666' }}>
-                  잔액 {isBtc ? '(sats)' : '(원)'}
+                  {isBtc ? t('asset.balanceSats') : t('asset.balanceFiat')}
                 </Text>
                 {/* 마이너스 잔액 토글 (마이너스통장인 경우만) */}
                 {isOverdraft && (
@@ -483,7 +485,7 @@ export default function AssetDetailScreen() {
                     onPress={() => setIsNegativeBalance(!isNegativeBalance)}
                   >
                     <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#666666', fontWeight: '600' }}>
-                      {isNegativeBalance ? '- 마이너스' : '+ 플러스'}
+                      {isNegativeBalance ? t('asset.negative') : t('asset.positive')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -527,14 +529,14 @@ export default function AssetDetailScreen() {
               {/* 원화 환산 (비트코인인 경우) */}
               {isBtc && btcKrw && balanceNumber > 0 && (
                 <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
-                  = {formatKrw(Math.round(balanceNumber * (btcKrw / 100_000_000)))} (현재 시세)
+                  = {formatKrw(Math.round(balanceNumber * (btcKrw / 100_000_000)))} ({t('asset.currentRate')})
                 </Text>
               )}
 
               {/* 마이너스통장 가용 한도 표시 */}
               {isOverdraft && creditLimit > 0 && (
                 <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#22C55E', marginTop: 8 }}>
-                  가용 한도: {formatKrw(creditLimit - (isNegativeBalance ? balanceNumber : 0))}
+                  {t('asset.availableLimit', { amount: formatKrw(creditLimit - (isNegativeBalance ? balanceNumber : 0)) })}
                 </Text>
               )}
             </View>
@@ -554,10 +556,10 @@ export default function AssetDetailScreen() {
             }}
           >
             <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A', marginBottom: 8 }}>
-              예상 이자 수정
+              {t('asset.editEstimatedInterest')}
             </Text>
             <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 16 }}>
-              실제 이자와 다를 경우 직접 수정하세요
+              {t('asset.editEstimatedInterestHint')}
             </Text>
 
             <View
@@ -591,7 +593,7 @@ export default function AssetDetailScreen() {
             </View>
 
             <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 20 }}>
-              자동 계산: {formatKrw(calculateEstimatedInterest())} (연 {interestRate}% 기준)
+              {t('asset.autoCalcLabel', { amount: formatKrw(calculateEstimatedInterest()), rate: interestRate })}
             </Text>
 
             <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -605,7 +607,7 @@ export default function AssetDetailScreen() {
                 }}
                 onPress={() => setShowInterestModal(false)}
               >
-                <Text style={{ fontSize: 16, color: '#666666' }}>취소</Text>
+                <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
@@ -626,11 +628,11 @@ export default function AssetDetailScreen() {
                     );
                     setShowInterestModal(false);
                   } catch (error) {
-                    Alert.alert('오류', '저장에 실패했습니다.');
+                    Alert.alert(t('common.error'), t('asset.saveFailed'));
                   }
                 }}
               >
-                <Text style={{ fontSize: 16, fontWeight: '600', color: '#FFFFFF' }}>저장</Text>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: '#FFFFFF' }}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -651,11 +653,11 @@ export default function AssetDetailScreen() {
                   );
                   setShowInterestModal(false);
                 } catch (error) {
-                  Alert.alert('오류', '저장에 실패했습니다.');
+                  Alert.alert(t('common.error'), t('asset.saveFailed'));
                 }
               }}
             >
-              <Text style={{ fontSize: 14, color: '#9CA3AF' }}>자동 계산으로 되돌리기</Text>
+              <Text style={{ fontSize: 14, color: '#9CA3AF' }}>{t('asset.revertToAutoCalc')}</Text>
             </TouchableOpacity>
           </View>
         </View>

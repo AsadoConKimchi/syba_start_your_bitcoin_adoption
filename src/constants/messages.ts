@@ -1,81 +1,49 @@
-// 매일 기록 알림 메시지
-// 이 파일을 수정하여 알림 메시지를 자유롭게 변경할 수 있습니다.
+import i18n from '../i18n';
 
-export const DAILY_REMINDER_MESSAGES = [
-  {
-    title: '오늘 하루도 수고했어요! 💰',
-    body: '잠깐! 오늘 쓴 돈 기록하고 자면 부자 될 확률 +1%',
-  },
-  {
-    title: '혹시 오늘... 💸',
-    body: '커피 한 잔? 점심값? 작은 지출도 티끌 모아 태산!',
-  },
-  {
-    title: '사토시가 궁금해해요 🤔',
-    body: '오늘 얼마나 썼는지 알려주세요~',
-  },
-  {
-    title: '기록하는 자가 부자된다 📝',
-    body: '3초만 투자해서 오늘 지출을 기록해보세요!',
-  },
-  {
-    title: '잠깐만요! ✋',
-    body: '오늘 뭐 사셨어요? SYBA가 기억해드릴게요',
-  },
-  {
-    title: '미래의 부자님께 💎',
-    body: '오늘의 기록이 내일의 자산이 됩니다',
-  },
-  {
-    title: '비트코인으로 환산하면? 🧡',
-    body: '오늘 지출, sats로 얼마인지 확인해보세요!',
-  },
-  {
-    title: '1분 챌린지 ⏱️',
-    body: '오늘 지출 기록하는 데 1분이면 충분!',
-  },
-  {
-    title: '통장 지킴이 출동 🦸',
-    body: '오늘의 소비 패턴을 체크해볼까요?',
-  },
-  {
-    title: '하루 마무리 시간 🌙',
-    body: '오늘 하루 지출, 잊기 전에 기록해요!',
-  },
-  {
-    title: '부자들의 공통점 📊',
-    body: '매일 기록하기! 오늘도 함께해요',
-  },
-  {
-    title: '혹시 충동구매...? 🛒',
-    body: '괜찮아요, 일단 기록하고 반성은 나중에!',
-  },
-  {
-    title: '스택 사토시 💪',
-    body: '지출 줄이고 BTC 늘리기! 오늘 기록 완료?',
-  },
-  {
-    title: '오늘의 미션 🎯',
-    body: '지출 기록하고 마음의 평화 얻기',
-  },
-  {
-    title: '까먹기 전에! 🧠',
-    body: '오늘 쓴 돈, 지금 바로 기록해두세요',
-  },
-];
+// Daily reminder messages (i18n)
+export function getDailyReminderMessages() {
+  return Array.from({ length: 15 }, (_, i) => ({
+    title: i18n.t(`notifications.reminder${i + 1}Title`),
+    body: i18n.t(`notifications.reminder${i + 1}Body`),
+  }));
+}
 
-// 구독 만료 알림 메시지
+// Legacy export for backward compatibility
+export const DAILY_REMINDER_MESSAGES = Array.from({ length: 15 }, (_, i) => ({
+  titleKey: `notifications.reminder${i + 1}Title`,
+  bodyKey: `notifications.reminder${i + 1}Body`,
+}));
+
+// Subscription expiry notification messages (i18n)
+export function getSubscriptionMessages() {
+  return {
+    sevenDaysBefore: {
+      title: i18n.t('notifications.subExpiring7Days'),
+      body: i18n.t('notifications.subExpiring7DaysBody'),
+    },
+    expiryDay: {
+      title: i18n.t('notifications.subExpiringToday'),
+      body: i18n.t('notifications.subExpiringTodayBody'),
+    },
+    expired: {
+      title: i18n.t('notifications.subExpired'),
+      body: i18n.t('notifications.subExpiredBody'),
+    },
+  };
+}
+
+// Legacy export for backward compatibility
 export const SUBSCRIPTION_MESSAGES = {
   sevenDaysBefore: {
-    title: 'SYBA 프리미엄 만료 예정',
-    body: '프리미엄 구독이 7일 후 만료됩니다. 갱신하여 계속 이용하세요!',
+    titleKey: 'notifications.subExpiring7Days',
+    bodyKey: 'notifications.subExpiring7DaysBody',
   },
   expiryDay: {
-    title: 'SYBA 프리미엄 만료일',
-    body: '오늘 프리미엄 구독이 만료됩니다. 지금 갱신하세요!',
+    titleKey: 'notifications.subExpiringToday',
+    bodyKey: 'notifications.subExpiringTodayBody',
   },
   expired: {
-    title: 'SYBA 프리미엄 만료됨',
-    body: '프리미엄 구독이 만료되었습니다. 다시 구독하여 모든 기능을 이용하세요.',
+    titleKey: 'notifications.subExpired',
+    bodyKey: 'notifications.subExpiredBody',
   },
 };

@@ -1,6 +1,7 @@
 import { View, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSnapshotStore } from '../../stores/snapshotStore';
 import { usePriceStore } from '../../stores/priceStore';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -12,6 +13,7 @@ const screenWidth = Dimensions.get('window').width;
 type DisplayMode = 'KRW' | 'BTC';
 
 export function NetWorthChart() {
+  const { t } = useTranslation();
   const { snapshots } = useSnapshotStore();
   const { btcKrw } = usePriceStore();
   const { settings } = useSettingsStore();
@@ -21,7 +23,7 @@ export function NetWorthChart() {
   const [showNetWorth, setShowNetWorth] = useState(true);
   const [displayMode, setDisplayMode] = useState<DisplayMode>(settings.displayUnit);
 
-  // 최근 6개월 스냅샷 (오래된 순 정렬)
+  // Sort snapshots by yearMonth ascending, take last 6
   const recentSnapshots = useMemo(() => {
     return [...snapshots]
       .sort((a, b) => a.yearMonth.localeCompare(b.yearMonth))
@@ -33,7 +35,7 @@ export function NetWorthChart() {
   if (!hasData) {
     return (
       <ChartEmptyState
-        message="자산 히스토리가 없습니다\n앱을 사용하면 자동으로 기록됩니다"
+        message={`${t('charts.noAssetHistory')}\n${t('charts.autoRecord')}`}
         icon="📊"
       />
     );
@@ -41,25 +43,24 @@ export function NetWorthChart() {
 
   const labels = recentSnapshots.map(s => {
     const month = parseInt(s.yearMonth.split('-')[1]);
-    return `${month}월`;
+    return `${month}${t('common.month')}`;
   });
 
-  // 데이터 변환 (KRW 또는 BTC 기준)
+  // Data conversion (KRW or BTC basis)
   const getData = (snapshot: typeof recentSnapshots[0]) => {
     if (displayMode === 'KRW') {
       return {
-        asset: snapshot.totalAssetKrw / 10000, // 만원 단위
+        asset: snapshot.totalAssetKrw / 10000,
         debt: snapshot.totalDebt / 10000,
         netWorth: snapshot.netWorthKrw / 10000,
       };
     } else {
-      // BTC 기준 - 각 스냅샷의 당시 시세 사용
       const btcPrice = snapshot.btcKrw || btcKrw || 150000000;
       const assetBtc = snapshot.totalAssetKrw / (btcPrice / 100_000_000);
       const debtBtc = snapshot.totalDebt / (btcPrice / 100_000_000);
       const netWorthBtc = assetBtc - debtBtc;
       return {
-        asset: assetBtc / 1000, // K sats (천 사토시) 단위
+        asset: assetBtc / 1000,
         debt: debtBtc / 1000,
         netWorth: netWorthBtc / 1000,
       };
@@ -68,13 +69,13 @@ export function NetWorthChart() {
 
   const chartData = recentSnapshots.map(getData);
 
-  // 꺾은선 그래프 데이터 (자산/부채/순자산 모두 라인으로)
+  // Line chart datasets
   const datasets = [];
 
   if (showAssets) {
     datasets.push({
-      data: chartData.map(d => d.asset || 0.1), // 0이면 차트 오류 방지
-      color: () => '#22C55E', // 초록
+      data: chartData.map(d => d.asset || 0.1),
+      color: () => '#22C55E',
       strokeWidth: 2,
     });
   }
@@ -82,7 +83,7 @@ export function NetWorthChart() {
   if (showDebts) {
     datasets.push({
       data: chartData.map(d => d.debt || 0.1),
-      color: () => '#EF4444', // 빨강
+      color: () => '#EF4444',
       strokeWidth: 2,
     });
   }
@@ -90,12 +91,12 @@ export function NetWorthChart() {
   if (showNetWorth) {
     datasets.push({
       data: chartData.map(d => d.netWorth || 0.1),
-      color: () => '#3B82F6', // 파랑
+      color: () => '#3B82F6',
       strokeWidth: 3,
     });
   }
 
-  // 아무것도 선택 안했으면 기본 데이터
+  // Default data if nothing selected
   if (datasets.length === 0) {
     datasets.push({ data: [0], color: () => '#9CA3AF', strokeWidth: 1 });
   }
@@ -103,27 +104,27 @@ export function NetWorthChart() {
   const lineData = {
     labels,
     datasets,
-    legend: [], // 범례는 커스텀으로
+    legend: [],
   };
 
-  // 최신 스냅샷 정보
+  // Latest snapshot info
   const latestSnapshot = recentSnapshots[recentSnapshots.length - 1];
   const latestData = latestSnapshot ? getData(latestSnapshot) : null;
 
-  // 변화율 계산 (첫 스냅샷 대비)
+  // Change rate calculation (vs first snapshot)
   const firstData = chartData[0];
   const lastData = chartData[chartData.length - 1];
   const netWorthChange = firstData && lastData && firstData.netWorth !== 0
     ? ((lastData.netWorth - firstData.netWorth) / Math.abs(firstData.netWorth)) * 100
     : 0;
 
-  const unit = displayMode === 'KRW' ? '₩ (만원)' : 'sats (K)';
+  const unit = displayMode === 'KRW' ? t('charts.tenThousandWon') : `sats (K)`;
 
   const chartConfig = {
     backgroundColor: '#FFFFFF',
     backgroundGradientFrom: '#FFFFFF',
     backgroundGradientTo: '#FFFFFF',
-    decimalPlaces: 0, // K sats면 정수로 충분
+    decimalPlaces: 0,
     color: (opacity = 1) => `rgba(102, 102, 102, ${opacity})`,
     labelColor: () => '#666666',
     propsForBackgroundLines: {
@@ -144,13 +145,13 @@ export function NetWorthChart() {
         padding: 16,
       }}
     >
-      {/* 헤더 */}
+      {/* Header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
-          자산 흐름 (최근 6개월)
+          {t('charts.assetFlow')}
         </Text>
 
-        {/* BTC/KRW 토글 */}
+        {/* BTC/KRW toggle */}
         <View style={{ flexDirection: 'row', backgroundColor: '#E5E7EB', borderRadius: 8, padding: 2 }}>
           <TouchableOpacity
             style={{
@@ -181,12 +182,12 @@ export function NetWorthChart() {
         </View>
       </View>
 
-      {/* 단위 표시 */}
+      {/* Unit display */}
       <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>
-        단위: {unit}
+        {unit}
       </Text>
 
-      {/* 토글 버튼 */}
+      {/* Toggle buttons */}
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         <TouchableOpacity
           style={{
@@ -210,7 +211,7 @@ export function NetWorthChart() {
             }}
           />
           <Text style={{ fontSize: 12, color: showAssets ? '#22C55E' : '#9CA3AF', fontWeight: '500' }}>
-            자산
+            {t('charts.assets')}
           </Text>
         </TouchableOpacity>
 
@@ -236,7 +237,7 @@ export function NetWorthChart() {
             }}
           />
           <Text style={{ fontSize: 12, color: showDebts ? '#EF4444' : '#9CA3AF', fontWeight: '500' }}>
-            부채
+            {t('charts.debts')}
           </Text>
         </TouchableOpacity>
 
@@ -262,12 +263,12 @@ export function NetWorthChart() {
             }}
           />
           <Text style={{ fontSize: 12, color: showNetWorth ? '#3B82F6' : '#9CA3AF', fontWeight: '500' }}>
-            순자산
+            {t('charts.netWorth')}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* 꺾은선 그래프 */}
+      {/* Line chart */}
       {(showAssets || showDebts || showNetWorth) && (
         <View style={{ marginLeft: -16 }}>
           <LineChart
@@ -287,29 +288,29 @@ export function NetWorthChart() {
         </View>
       )}
 
-      {/* 범례 */}
+      {/* Legend */}
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 8 }}>
         {showAssets && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ width: 16, height: 3, backgroundColor: '#22C55E', marginRight: 4 }} />
-            <Text style={{ fontSize: 11, color: '#666666' }}>자산</Text>
+            <Text style={{ fontSize: 11, color: '#666666' }}>{t('charts.assets')}</Text>
           </View>
         )}
         {showDebts && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ width: 16, height: 3, backgroundColor: '#EF4444', marginRight: 4 }} />
-            <Text style={{ fontSize: 11, color: '#666666' }}>부채</Text>
+            <Text style={{ fontSize: 11, color: '#666666' }}>{t('charts.debts')}</Text>
           </View>
         )}
         {showNetWorth && (
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ width: 16, height: 3, backgroundColor: '#3B82F6', marginRight: 4 }} />
-            <Text style={{ fontSize: 11, color: '#666666' }}>순자산</Text>
+            <Text style={{ fontSize: 11, color: '#666666' }}>{t('charts.netWorth')}</Text>
           </View>
         )}
       </View>
 
-      {/* 요약 정보 */}
+      {/* Summary info */}
       {latestData && (
         <View
           style={{
@@ -323,7 +324,7 @@ export function NetWorthChart() {
           }}
         >
           <View style={{ minWidth: 70 }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>순자산</Text>
+            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>{t('charts.netWorth')}</Text>
             <Text style={{ fontSize: 13, fontWeight: '600', color: latestData.netWorth >= 0 ? '#22C55E' : '#EF4444' }}>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.netWorth * 10000)
@@ -331,7 +332,7 @@ export function NetWorthChart() {
             </Text>
           </View>
           <View style={{ minWidth: 60, alignItems: 'center' }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>자산</Text>
+            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>{t('charts.assets')}</Text>
             <Text style={{ fontSize: 13, fontWeight: '600', color: '#22C55E' }}>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.asset * 10000)
@@ -339,7 +340,7 @@ export function NetWorthChart() {
             </Text>
           </View>
           <View style={{ minWidth: 60, alignItems: 'center' }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>부채</Text>
+            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>{t('charts.debts')}</Text>
             <Text style={{ fontSize: 13, fontWeight: '600', color: '#EF4444' }}>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.debt * 10000)
@@ -347,7 +348,7 @@ export function NetWorthChart() {
             </Text>
           </View>
           <View style={{ minWidth: 50, alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>변화율</Text>
+            <Text style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 4 }}>{t('charts.changeRate')}</Text>
             <Text
               style={{
                 fontSize: 13,

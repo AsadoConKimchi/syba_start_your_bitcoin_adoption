@@ -1,4 +1,5 @@
 import { View, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 interface ChartEmptyStateProps {
   message?: string;
@@ -6,9 +7,11 @@ interface ChartEmptyStateProps {
 }
 
 export function ChartEmptyState({
-  message = '데이터가 없습니다',
+  message,
   icon = '📊'
 }: ChartEmptyStateProps) {
+  const { t } = useTranslation();
+
   return (
     <View
       style={{
@@ -22,7 +25,7 @@ export function ChartEmptyState({
     >
       <Text style={{ fontSize: 32, marginBottom: 12 }}>{icon}</Text>
       <Text style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center' }}>
-        {message}
+        {message ?? t('charts.noData')}
       </Text>
     </View>
   );

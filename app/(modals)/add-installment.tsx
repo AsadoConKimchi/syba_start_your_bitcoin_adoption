@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAuthStore } from '../../src/stores/authStore';
@@ -23,6 +24,7 @@ import { calculateInstallmentPayment, calculatePaidMonths } from '../../src/util
 const INSTALLMENT_MONTHS = [2, 3, 6, 12, 18, 24, 36];
 
 export default function AddInstallmentScreen() {
+  const { t } = useTranslation();
   const { encryptionKey } = useAuthStore();
   const { addInstallment } = useDebtStore();
   const { cards } = useCardStore();
@@ -67,22 +69,22 @@ export default function AddInstallmentScreen() {
 
   const handleSubmit = async () => {
     if (!encryptionKey) {
-      Alert.alert('오류', '인증이 필요합니다.');
+      Alert.alert(t('common.error'), t('common.authRequired'));
       return;
     }
 
     if (!storeName.trim()) {
-      Alert.alert('오류', '상점명을 입력해주세요.');
+      Alert.alert(t('common.error'), t('installment.storeRequired'));
       return;
     }
 
     if (amount <= 0) {
-      Alert.alert('오류', '결제 금액을 입력해주세요.');
+      Alert.alert(t('common.error'), t('installment.amountRequired'));
       return;
     }
 
     if (!selectedCardId) {
-      Alert.alert('오류', '카드를 선택해주세요.');
+      Alert.alert(t('common.error'), t('installment.cardRequired'));
       return;
     }
 
@@ -103,12 +105,12 @@ export default function AddInstallmentScreen() {
         encryptionKey
       );
 
-      Alert.alert('완료', '할부가 추가되었습니다.', [
-        { text: '확인', onPress: () => router.back() },
+      Alert.alert(t('common.done'), t('installment.addDone'), [
+        { text: t('common.confirm'), onPress: () => router.back() },
       ]);
     } catch (error) {
       console.error('할부 추가 실패:', error);
-      Alert.alert('오류', '할부 추가에 실패했습니다.');
+      Alert.alert(t('common.error'), t('installment.addFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -133,7 +135,7 @@ export default function AddInstallmentScreen() {
           <Ionicons name="close" size={24} color="#666666" />
         </TouchableOpacity>
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
-          할부 추가
+          {t('installment.addTitle')}
         </Text>
         <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
           <Text
@@ -143,7 +145,7 @@ export default function AddInstallmentScreen() {
               color: isSubmitting ? '#9CA3AF' : '#F7931A',
             }}
           >
-            저장
+            {t('common.save')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -152,7 +154,7 @@ export default function AddInstallmentScreen() {
         <View style={{ padding: 20 }}>
           {/* 상점명 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>상점명 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.storeName')} *</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -161,7 +163,7 @@ export default function AddInstallmentScreen() {
                 fontSize: 16,
                 color: '#1A1A1A',
               }}
-              placeholder="예: 쿠팡, 삼성전자"
+              placeholder={t('installment.storeNamePlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={storeName}
               onChangeText={setStoreName}
@@ -170,7 +172,7 @@ export default function AddInstallmentScreen() {
 
           {/* 결제 금액 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>총 결제 금액 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.totalAmount')} *</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -195,13 +197,13 @@ export default function AddInstallmentScreen() {
               }}
             />
             <Text style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'right', marginTop: 4 }}>
-              원
+              {t('common.won')}
             </Text>
           </View>
 
           {/* 카드 선택 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>결제 카드 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.selectCard')} *</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -226,7 +228,7 @@ export default function AddInstallmentScreen() {
                   />
                 )}
                 <Text style={{ fontSize: 16, color: selectedCard ? '#1A1A1A' : '#9CA3AF' }}>
-                  {selectedCard?.name || '카드 선택'}
+                  {selectedCard?.name || t('installment.selectCard')}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
@@ -235,7 +237,7 @@ export default function AddInstallmentScreen() {
 
           {/* 할부 개월 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>할부 개월 수 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.months')} *</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -248,7 +250,7 @@ export default function AddInstallmentScreen() {
               onPress={() => setShowMonthPicker(true)}
             >
               <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
-                {customMonths || months}개월
+                {t('installment.monthsFormat', { count: Number(customMonths) || months })}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -257,7 +259,7 @@ export default function AddInstallmentScreen() {
           {/* 무이자/유이자 */}
           <View style={{ marginBottom: 20 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, color: '#666666' }}>무이자 할부</Text>
+              <Text style={{ fontSize: 14, color: '#666666' }}>{t('installment.interestFree')}</Text>
               <Switch
                 value={isInterestFree}
                 onValueChange={setIsInterestFree}
@@ -267,7 +269,7 @@ export default function AddInstallmentScreen() {
 
             {!isInterestFree && (
               <View style={{ marginTop: 12 }}>
-                <Text style={{ fontSize: 12, color: '#666666', marginBottom: 8 }}>연 이자율 (%)</Text>
+                <Text style={{ fontSize: 12, color: '#666666', marginBottom: 8 }}>{t('installment.annualRate')}</Text>
                 <TextInput
                   style={{
                     backgroundColor: '#F9FAFB',
@@ -276,7 +278,7 @@ export default function AddInstallmentScreen() {
                     fontSize: 16,
                     color: '#1A1A1A',
                   }}
-                  placeholder="예: 15.9"
+                  placeholder={t('installment.annualRatePlaceholder')}
                   placeholderTextColor="#9CA3AF"
                   keyboardType="decimal-pad"
                   value={interestRate}
@@ -288,7 +290,7 @@ export default function AddInstallmentScreen() {
 
           {/* 시작일 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>시작일</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.startDate')}</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -310,7 +312,7 @@ export default function AddInstallmentScreen() {
           {/* 이미 납부한 개월 */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-              이미 납부한 개월 수 (자동 계산, 수정 가능)
+              {t('installment.paidMonths')}
             </Text>
             <TextInput
               style={{
@@ -331,14 +333,14 @@ export default function AddInstallmentScreen() {
             />
             {!paidMonthsEdited && parseInt(paidMonths) > 0 && (
               <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>
-                * 시작일 기준 자동 계산됨
+                {t('installment.autoCalculated')}
               </Text>
             )}
           </View>
 
           {/* 메모 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>메모</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.memo')}</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -348,7 +350,7 @@ export default function AddInstallmentScreen() {
                 color: '#1A1A1A',
                 minHeight: 80,
               }}
-              placeholder="메모 (선택)"
+              placeholder={t('common.memoPlaceholder')}
               placeholderTextColor="#9CA3AF"
               multiline
               value={memo}
@@ -367,17 +369,17 @@ export default function AddInstallmentScreen() {
               }}
             >
               <Text style={{ fontSize: 14, fontWeight: '600', color: '#92400E', marginBottom: 12 }}>
-                계산 결과
+                {t('installment.calculationResult')}
               </Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ color: '#92400E' }}>월 납부액</Text>
+                <Text style={{ color: '#92400E' }}>{t('installment.monthlyPayment')}</Text>
                 <Text style={{ fontWeight: 'bold', color: '#B45309' }}>
                   {formatKrw(monthlyPayment)}
                 </Text>
               </View>
               {!isInterestFree && totalInterest > 0 && (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ color: '#92400E' }}>총 이자</Text>
+                  <Text style={{ color: '#92400E' }}>{t('installment.totalInterest')}</Text>
                   <Text style={{ color: '#B45309' }}>{formatKrw(totalInterest)}</Text>
                 </View>
               )}
@@ -399,7 +401,7 @@ export default function AddInstallmentScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>카드 선택</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('installment.selectCardTitle')}</Text>
               <TouchableOpacity onPress={() => setShowCardPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -454,7 +456,7 @@ export default function AddInstallmentScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>할부 개월 수</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('installment.selectMonths')}</Text>
               <TouchableOpacity onPress={() => setShowMonthPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -484,13 +486,13 @@ export default function AddInstallmentScreen() {
                       color: months === m && !customMonths ? '#FFFFFF' : '#1A1A1A',
                     }}
                   >
-                    {m}개월
+                    {t('installment.monthsFormat', { count: m })}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>직접 입력</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.customInput')}</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -499,7 +501,7 @@ export default function AddInstallmentScreen() {
                 fontSize: 16,
                 color: '#1A1A1A',
               }}
-              placeholder="개월 수 입력"
+              placeholder={t('installment.customMonthsPlaceholder')}
               placeholderTextColor="#9CA3AF"
               keyboardType="number-pad"
               value={customMonths}
@@ -516,7 +518,7 @@ export default function AddInstallmentScreen() {
               }}
               onPress={() => setShowMonthPicker(false)}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>확인</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('common.confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -535,7 +537,7 @@ export default function AddInstallmentScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>날짜 선택</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('common.selectDate')}</Text>
                 <TouchableOpacity onPress={() => setShowDatePicker(false)}>
                   <Ionicons name="close" size={24} color="#666666" />
                 </TouchableOpacity>
@@ -566,7 +568,7 @@ export default function AddInstallmentScreen() {
                   }}
                   onPress={() => setShowDatePicker(false)}
                 >
-                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>확인</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('common.confirm')}</Text>
                 </TouchableOpacity>
               )}
             </View>

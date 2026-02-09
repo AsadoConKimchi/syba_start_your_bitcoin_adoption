@@ -2,6 +2,7 @@ import { View, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useLedgerStore } from '../../stores/ledgerStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { formatKrw, formatSats } from '../../utils/formatters';
@@ -12,12 +13,13 @@ const screenWidth = Dimensions.get('window').width;
 type DisplayMode = 'KRW' | 'BTC';
 
 export function SpendingTrendChart() {
+  const { t } = useTranslation();
   const { getMultiMonthTotals } = useLedgerStore();
   const { settings } = useSettingsStore();
   const [isExpanded, setIsExpanded] = useState(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>(settings.displayUnit);
 
-  // 데이터가 있는 월만 필터링 (최대 6개월)
+  // Filter months with data (max 6 months)
   const monthlyData = useMemo(() => {
     const allMonths = getMultiMonthTotals(6);
     return allMonths.filter(m => m.expense > 0 || m.expenseSats > 0);
@@ -25,7 +27,7 @@ export function SpendingTrendChart() {
 
   const hasData = monthlyData.length > 0;
 
-  // 토글 헤더
+  // Toggle header
   const header = (
     <TouchableOpacity
       style={{
@@ -41,7 +43,7 @@ export function SpendingTrendChart() {
       onPress={() => setIsExpanded(!isExpanded)}
     >
       <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
-        월별 지출 흐름 {monthlyData.length > 1 ? `(${monthlyData.length}개월)` : ''}
+        {t('charts.monthlySpendingFlow')} {monthlyData.length > 1 ? `(${t('charts.recentMonths', { count: monthlyData.length })})` : ''}
       </Text>
       <Ionicons
         name={isExpanded ? 'chevron-up' : 'chevron-down'}
@@ -61,7 +63,7 @@ export function SpendingTrendChart() {
         {header}
         <View style={{ padding: 16, paddingTop: 0 }}>
           <ChartEmptyState
-            message="지출 기록이 없습니다"
+            message={t('charts.noSpending')}
             icon="📉"
           />
         </View>
@@ -71,12 +73,12 @@ export function SpendingTrendChart() {
 
   const labels = monthlyData.map(m => m.month);
 
-  // 표시 모드에 따른 데이터
+  // Data based on display mode
   const getExpenseValue = (m: typeof monthlyData[0]) => {
     if (displayMode === 'KRW') {
-      return m.expense / 10000; // 만원 단위
+      return m.expense / 10000;
     } else {
-      return m.expenseSats / 1000; // K sats 단위 (천 사토시)
+      return m.expenseSats / 1000;
     }
   };
 
@@ -97,7 +99,7 @@ export function SpendingTrendChart() {
     backgroundColor: '#FFFFFF',
     backgroundGradientFrom: '#FFFFFF',
     backgroundGradientTo: '#FFFFFF',
-    decimalPlaces: 0, // K sats면 정수로 충분
+    decimalPlaces: 0,
     color: (opacity = 1) => `rgba(239, 68, 68, ${opacity})`,
     labelColor: () => '#666666',
     propsForBackgroundLines: {
@@ -111,7 +113,7 @@ export function SpendingTrendChart() {
     },
   };
 
-  // 추세 계산 (최근 절반 vs 이전 절반)
+  // Trend calculation (recent half vs previous half)
   const halfIndex = Math.floor(monthlyData.length / 2);
   const canShowTrend = monthlyData.length >= 2;
   const recentHalf = monthlyData.slice(halfIndex);
@@ -124,7 +126,7 @@ export function SpendingTrendChart() {
     : prevHalf.reduce((sum, m) => sum + m.expenseSats, 0) / prevHalf.length;
   const trendPercent = canShowTrend && prevAvg > 0 ? ((recentAvg - prevAvg) / prevAvg) * 100 : 0;
 
-  // 최대/최소 지출 월
+  // Max/min spending month
   const getExpenseForComparison = (m: typeof monthlyData[0]) =>
     displayMode === 'KRW' ? m.expense : m.expenseSats;
 
@@ -134,16 +136,16 @@ export function SpendingTrendChart() {
   const maxMonth = monthlyData.find(m => getExpenseForComparison(m) === maxExpense);
   const minMonth = monthlyData.find(m => getExpenseForComparison(m) === minExpense);
 
-  const unit = displayMode === 'KRW' ? '₩ (만원)' : 'sats (K)';
+  const unit = displayMode === 'KRW' ? t('charts.tenThousandWon') : `sats (K)`;
 
   return (
     <View style={{ backgroundColor: '#F9FAFB', borderRadius: 12 }}>
       {header}
 
       <View style={{ padding: 16, paddingTop: 0 }}>
-        {/* BTC/KRW 토글 */}
+        {/* BTC/KRW toggle */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>단위: {unit}</Text>
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{unit}</Text>
           <View style={{ flexDirection: 'row', backgroundColor: '#E5E7EB', borderRadius: 8, padding: 2 }}>
             <TouchableOpacity
               style={{
@@ -174,7 +176,7 @@ export function SpendingTrendChart() {
           </View>
         </View>
 
-        {/* 라인 차트 */}
+        {/* Line chart */}
         <View style={{ marginLeft: -16, marginBottom: 16 }}>
           <LineChart
             data={lineData}
@@ -192,7 +194,7 @@ export function SpendingTrendChart() {
           />
         </View>
 
-        {/* 통계 요약 */}
+        {/* Stats summary */}
         <View
           style={{
             flexDirection: 'row',
@@ -202,10 +204,10 @@ export function SpendingTrendChart() {
             borderTopColor: '#E5E7EB',
           }}
         >
-          {/* 추세 (2개월 이상일 때만 표시) */}
+          {/* Trend (shown only when 2+ months) */}
           {canShowTrend ? (
             <View>
-              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>지출 추세</Text>
+              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.spendingTrend')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons
                   name={trendPercent > 0 ? 'trending-up' : trendPercent < 0 ? 'trending-down' : 'remove'}
@@ -226,15 +228,15 @@ export function SpendingTrendChart() {
             </View>
           ) : (
             <View>
-              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>지출 추세</Text>
-              <Text style={{ fontSize: 12, color: '#9CA3AF' }}>데이터 수집 중</Text>
+              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.spendingTrend')}</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF' }}>{t('charts.collectingData')}</Text>
             </View>
           )}
 
-          {/* 최고 지출 */}
+          {/* Highest spending */}
           {maxMonth && maxExpense > 0 && (
             <View style={{ alignItems: 'center' }}>
-              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>최고</Text>
+              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.highest')}</Text>
               <Text style={{ fontSize: 12, fontWeight: '500', color: '#EF4444' }}>
                 {maxMonth.month}
               </Text>
@@ -244,10 +246,10 @@ export function SpendingTrendChart() {
             </View>
           )}
 
-          {/* 최저 지출 */}
+          {/* Lowest spending */}
           {minMonth && minExpense > 0 && (
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>최저</Text>
+              <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.lowest')}</Text>
               <Text style={{ fontSize: 12, fontWeight: '500', color: '#22C55E' }}>
                 {minMonth.month}
               </Text>

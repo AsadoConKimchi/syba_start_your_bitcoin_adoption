@@ -1,4 +1,6 @@
-// 1금융권 은행 목록
+import i18n from '../i18n';
+
+// Korean bank list (legacy, used for type definitions)
 export const BANKS = [
   { id: 'kb', name: 'KB국민은행' },
   { id: 'shinhan', name: '신한은행' },
@@ -13,11 +15,9 @@ export const BANKS = [
   { id: 'kfcc', name: '새마을금고' },
   { id: 'cu', name: '신협' },
   { id: 'post', name: '우체국' },
-  // 인터넷은행
   { id: 'kakao', name: '카카오뱅크' },
   { id: 'toss', name: '토스뱅크' },
   { id: 'kbank', name: '케이뱅크' },
-  // 기타
   { id: 'etc', name: '기타' },
 ] as const;
 
@@ -27,6 +27,6 @@ export function getBankById(id: BankId) {
   return BANKS.find((b) => b.id === id);
 }
 
-export function getBankName(id: BankId): string {
-  return getBankById(id)?.name ?? '기타';
+export function getBankName(id: string): string {
+  return i18n.t(`banks.${id}`, { defaultValue: id });
 }

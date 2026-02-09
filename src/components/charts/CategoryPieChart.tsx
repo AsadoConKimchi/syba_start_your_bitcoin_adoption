@@ -2,6 +2,7 @@ import { View, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useLedgerStore } from '../../stores/ledgerStore';
 import { usePriceStore } from '../../stores/priceStore';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -27,6 +28,7 @@ const chartConfig = {
 type DisplayMode = 'KRW' | 'BTC';
 
 export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
+  const { t } = useTranslation();
   const { getRecordsByMonth } = useLedgerStore();
   const { btcKrw } = usePriceStore();
   const { settings } = useSettingsStore();
@@ -34,18 +36,18 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [displayMode, setDisplayMode] = useState<DisplayMode>(settings.displayUnit);
 
-  // 카테고리별 지출 계산 (KRW + sats)
+  // Category spending calculation (KRW + sats)
   const breakdown = useMemo(() => {
     const monthRecords = getRecordsByMonth(year, month);
     const expenses = monthRecords.filter(r => r.type === 'expense' && r.currency === 'KRW');
 
-    // 카테고리별 합계
+    // Category totals
     const categoryTotals: Record<string, { krw: number; sats: number }> = {};
     let totalExpenseKrw = 0;
     let totalExpenseSats = 0;
 
     for (const expense of expenses) {
-      const category = expense.category || '미분류';
+      const category = expense.category || t('charts.uncategorized');
       if (!categoryTotals[category]) {
         categoryTotals[category] = { krw: 0, sats: 0 };
       }
@@ -57,18 +59,18 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
 
     if (totalExpenseKrw === 0) return { items: [], totalKrw: 0, totalSats: 0 };
 
-    // 정렬하여 상위 5개 추출
+    // Sort and extract top 5
     const sorted = Object.entries(categoryTotals)
       .map(([category, amounts]) => ({ category, ...amounts }))
       .sort((a, b) => b.krw - a.krw);
 
     const CHART_COLORS = [
-      '#3B82F6', // 파랑
-      '#22C55E', // 초록
-      '#F7931A', // 오렌지
-      '#EF4444', // 빨강
-      '#8B5CF6', // 보라
-      '#9CA3AF', // 회색 (기타)
+      '#3B82F6',
+      '#22C55E',
+      '#F7931A',
+      '#EF4444',
+      '#8B5CF6',
+      '#9CA3AF',
     ];
 
     const top5 = sorted.slice(0, 5);
@@ -86,7 +88,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
 
     if (othersKrw > 0) {
       items.push({
-        category: '기타',
+        category: t('charts.others'),
         krw: othersKrw,
         sats: othersSats,
         percentage: Math.round((othersKrw / totalExpenseKrw) * 100),
@@ -95,9 +97,9 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
     }
 
     return { items, totalKrw: totalExpenseKrw, totalSats: totalExpenseSats };
-  }, [year, month, getRecordsByMonth]);
+  }, [year, month, getRecordsByMonth, t]);
 
-  // 토글 헤더
+  // Toggle header
   const header = (
     <TouchableOpacity
       style={{
@@ -113,7 +115,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
       onPress={() => setIsExpanded(!isExpanded)}
     >
       <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
-        카테고리별 지출
+        {t('charts.categorySpending')}
       </Text>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         {breakdown.items.length > 0 && (
@@ -140,7 +142,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
         {header}
         <View style={{ padding: 16, paddingTop: 0 }}>
           <ChartEmptyState
-            message={`${month}월 지출 기록이 없습니다`}
+            message={t('charts.noSpendingRecords', { month })}
             icon="🥧"
           />
         </View>
@@ -161,7 +163,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
       {header}
 
       <View style={{ padding: 16, paddingTop: 0 }}>
-        {/* BTC/KRW 토글 */}
+        {/* BTC/KRW toggle */}
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 }}>
           <View style={{ flexDirection: 'row', backgroundColor: '#E5E7EB', borderRadius: 8, padding: 2 }}>
             <TouchableOpacity
@@ -204,7 +206,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
           absolute={false}
         />
 
-        {/* 범례 */}
+        {/* Legend */}
         <View style={{ marginTop: 12 }}>
           {breakdown.items.map((item) => (
             <View
@@ -242,7 +244,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
           ))}
         </View>
 
-        {/* 합계 */}
+        {/* Total */}
         <View
           style={{
             flexDirection: 'row',
@@ -254,7 +256,7 @@ export function CategoryPieChart({ year, month }: CategoryPieChartProps) {
           }}
         >
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A' }}>
-            총 지출
+            {t('charts.totalSpending')}
           </Text>
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#EF4444' }}>
             {displayMode === 'KRW' ? formatKrw(breakdown.totalKrw) : formatSats(breakdown.totalSats)}

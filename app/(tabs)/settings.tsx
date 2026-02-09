@@ -16,6 +16,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useCardStore } from '../../src/stores/cardStore';
@@ -41,15 +42,8 @@ import {
 } from '../../src/services/dummyDataService';
 import { useSnapshotStore } from '../../src/stores/snapshotStore';
 import { useAssetStore } from '../../src/stores/assetStore';
-
-const AUTO_LOCK_LABELS: Record<AutoLockTime, string> = {
-  immediate: '즉시',
-  '1min': '1분',
-  '5min': '5분',
-  '15min': '15분',
-  '30min': '30분',
-  never: '안 함',
-};
+import { SUPPORTED_LANGUAGES, SupportedLanguage, changeLanguage } from '../../src/i18n';
+import { SUPPORTED_REGIONS, getCurrentRegionId, setRegion, RegionId } from '../../src/regions';
 
 export default function SettingsScreen() {
   const { lock, biometricEnabled, biometricAvailable, enableBiometric, disableBiometric, encryptionKey } =
@@ -59,9 +53,13 @@ export default function SettingsScreen() {
   const { loadRecords } = useLedgerStore();
   const { loadDebts } = useDebtStore();
   const { user, isSubscribed, subscription, initialize } = useSubscriptionStore();
+  const { t, i18n } = useTranslation();
 
   const [showAutoLockPicker, setShowAutoLockPicker] = useState(false);
   const [showReminderTimePicker, setShowReminderTimePicker] = useState(false);
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
+  const [showRegionPicker, setShowRegionPicker] = useState(false);
+  const [currentRegion, setCurrentRegion] = useState<RegionId>(getCurrentRegionId());
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isDummyLoading, setIsDummyLoading] = useState(false);
   const [hasDummy, setHasDummy] = useState(false);
@@ -69,19 +67,16 @@ export default function SettingsScreen() {
   const { loadSnapshots } = useSnapshotStore();
   const { loadAssets } = useAssetStore();
 
-  // 구독 상태 초기화
   useEffect(() => {
     initialize();
   }, []);
 
-  // 더미 데이터 존재 여부 확인
   useEffect(() => {
     if (encryptionKey) {
       hasDummyData(encryptionKey).then(setHasDummy);
     }
   }, [encryptionKey]);
 
-  // 매일 알림 초기화
   useEffect(() => {
     if (settings.dailyReminderEnabled) {
       scheduleDailyReminder(settings.dailyReminderTime);
@@ -97,10 +92,10 @@ export default function SettingsScreen() {
   };
 
   const handleLock = () => {
-    Alert.alert('잠금', '앱을 잠그시겠습니까?', [
-      { text: '취소', style: 'cancel' },
+    Alert.alert(t('settings.lockConfirm'), t('settings.lockMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: '잠금',
+        text: t('settings.lockConfirm'),
         onPress: () => {
           lock();
           router.replace('/(auth)/login');
@@ -114,21 +109,32 @@ export default function SettingsScreen() {
     setShowAutoLockPicker(false);
   };
 
+  const handleLanguageChange = async (lang: SupportedLanguage) => {
+    await changeLanguage(lang);
+    await updateSettings({ language: lang });
+    setShowLanguagePicker(false);
+  };
+
+  const handleRegionChange = (regionId: RegionId) => {
+    setRegion(regionId);
+    setCurrentRegion(regionId);
+    setShowRegionPicker(false);
+  };
+
   const handleBackup = async () => {
     if (!encryptionKey) {
-      Alert.alert('오류', '인증이 필요합니다.');
+      Alert.alert(t('common.error'), t('common.authRequired'));
       return;
     }
 
-    // 프리미엄 체크
     if (!isSubscribed) {
       Alert.alert(
-        '프리미엄 기능',
-        '데이터 백업은 프리미엄 구독자만 이용할 수 있습니다.',
+        t('settings.premiumFeature'),
+        t('settings.backupPremiumOnly'),
         [
-          { text: '취소', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: '구독하기',
+            text: t('settings.subscribeNow'),
             onPress: () => router.push('/(modals)/subscription'),
           },
         ]
@@ -153,46 +159,46 @@ export default function SettingsScreen() {
           const content = await FileSystem.readAsStringAsync(path, { encoding: FileSystem.EncodingType.Base64 });
           await FileSystem.writeAsStringAsync(fileUri, content, { encoding: FileSystem.EncodingType.Base64 });
 
-          Alert.alert('완료', '백업 파일이 기기에 저장되었습니다.');
+          Alert.alert(t('common.done'), t('settings.backupDone'));
         } else {
           await Sharing.shareAsync(path, {
             mimeType: 'application/octet-stream',
-            dialogTitle: `SYBA 백업 파일: ${filename}`,
+            dialogTitle: `SYBA backup: ${filename}`,
           });
-          Alert.alert('완료', '백업 파일이 생성되었습니다.');
+          Alert.alert(t('common.done'), t('settings.backupShared'));
         }
       } catch (error) {
-        console.error('백업 실패:', error);
-        Alert.alert('오류', '백업에 실패했습니다.');
+        console.error('Backup failed:', error);
+        Alert.alert(t('common.error'), t('settings.backupFailed'));
       } finally {
         setIsBackingUp(false);
       }
     };
 
     Alert.alert(
-      '데이터 백업',
-      'AES-256 암호화로 보호됩니다.\n비밀번호 없이는 누구도 열람할 수 없습니다.',
+      t('settings.backupTitle'),
+      t('settings.backupDescription'),
       [
-        { text: '취소', style: 'cancel' },
-        { text: '기기에 저장', onPress: () => doBackup('local') },
-        { text: '외부 공유', onPress: () => doBackup('share') },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('settings.saveToDevice'), onPress: () => doBackup('local') },
+        { text: t('settings.shareExternal'), onPress: () => doBackup('share') },
       ]
     );
   };
 
   const handleRestore = async () => {
     if (!encryptionKey) {
-      Alert.alert('오류', '인증이 필요합니다.');
+      Alert.alert(t('common.error'), t('common.authRequired'));
       return;
     }
 
     Alert.alert(
-      '데이터 복원',
-      '백업 파일에서 데이터를 복원하시겠습니까?\n\n현재 데이터가 덮어씌워집니다.',
+      t('settings.restoreTitle'),
+      t('settings.restoreWarning'),
       [
-        { text: '취소', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '복원',
+          text: t('settings.restore'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -207,26 +213,24 @@ export default function SettingsScreen() {
 
               const file = result.assets[0];
               if (!file.name.endsWith('.enc')) {
-                Alert.alert('오류', '올바른 백업 파일(.enc)을 선택해주세요.');
+                Alert.alert(t('common.error'), t('settings.invalidBackupFile'));
                 return;
               }
 
-              // 복원 실행
               await restoreBackup(file.uri, encryptionKey);
 
-              // 모든 스토어 다시 로드
               await Promise.all([
                 loadRecords(),
                 loadCards(),
                 loadDebts(encryptionKey),
               ]);
 
-              Alert.alert('완료', '데이터가 성공적으로 복원되었습니다.');
+              Alert.alert(t('common.done'), t('settings.restoreDone'));
             } catch (error) {
-              console.error('복원 실패:', error);
+              console.error('Restore failed:', error);
               Alert.alert(
-                '복원 실패',
-                '백업 파일을 복원하는데 실패했습니다.\n\n올바른 비밀번호로 로그인했는지 확인해주세요.'
+                t('settings.restoreTitle'),
+                t('settings.restoreFailed')
               );
             }
           },
@@ -235,9 +239,28 @@ export default function SettingsScreen() {
     );
   };
 
+  const AUTO_LOCK_KEYS: Record<AutoLockTime, string> = {
+    immediate: 'settings.autoLockImmediate',
+    '1min': 'settings.autoLock1min',
+    '5min': 'settings.autoLock5min',
+    '15min': 'settings.autoLock15min',
+    '30min': 'settings.autoLock30min',
+    never: 'settings.autoLockNever',
+  };
+
+  const REMINDER_TIMES = ['09:00', '12:00', '18:00', '20:00', '21:00', '22:00'];
+  const REMINDER_TIME_KEYS: Record<string, string> = {
+    '09:00': 'settings.reminderTime0900',
+    '12:00': 'settings.reminderTime1200',
+    '18:00': 'settings.reminderTime1800',
+    '20:00': 'settings.reminderTime2000',
+    '21:00': 'settings.reminderTime2100',
+    '22:00': 'settings.reminderTime2200',
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-      {/* 헤더 */}
+      {/* Header */}
       <View
         style={{
           padding: 20,
@@ -245,13 +268,13 @@ export default function SettingsScreen() {
           borderBottomColor: '#E5E7EB',
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>설정</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>{t('settings.title')}</Text>
       </View>
 
       <ScrollView style={{ flex: 1 }}>
-        {/* 프로필 */}
+        {/* Profile */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>프로필</Text>
+          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.profile')}</Text>
 
           <View
             style={{
@@ -260,7 +283,6 @@ export default function SettingsScreen() {
               overflow: 'hidden',
             }}
           >
-            {/* 사용자 정보 (로그인 상태 표시) */}
             <View
               style={{
                 flexDirection: 'row',
@@ -285,10 +307,10 @@ export default function SettingsScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 16, fontWeight: '500', color: '#1A1A1A' }}>
-                  {user ? (settings.userName || 'Lightning 사용자') : '로그인 필요'}
+                  {user ? (settings.userName || t('settings.lightningUser')) : t('settings.loginRequired')}
                 </Text>
                 <Text style={{ fontSize: 12, color: user ? '#22C55E' : '#9CA3AF' }}>
-                  {user ? '로그인됨' : '프리미엄 구독을 위해 로그인하세요'}
+                  {user ? t('settings.loggedIn') : t('settings.loginForPremium')}
                 </Text>
               </View>
               {isSubscribed && (
@@ -300,12 +322,11 @@ export default function SettingsScreen() {
                     borderRadius: 12,
                   }}
                 >
-                  <Text style={{ fontSize: 10, color: '#FFFFFF', fontWeight: '600' }}>프리미엄</Text>
+                  <Text style={{ fontSize: 10, color: '#FFFFFF', fontWeight: '600' }}>{t('common.premium')}</Text>
                 </View>
               )}
             </View>
 
-            {/* 프리미엄 구독 */}
             <TouchableOpacity
               style={{
                 flexDirection: 'row',
@@ -317,12 +338,12 @@ export default function SettingsScreen() {
               <Ionicons name="diamond" size={24} color="#F7931A" style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 16, fontWeight: '500', color: '#1A1A1A' }}>
-                  프리미엄 구독
+                  {t('settings.premiumSubscription')}
                 </Text>
                 <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
                   {isSubscribed
-                    ? `${subscription?.expires_at ? new Date(subscription.expires_at).toLocaleDateString('ko-KR') : ''} 까지`
-                    : '구독하기'}
+                    ? t('settings.subscribedUntil', { date: subscription?.expires_at ? new Date(subscription.expires_at).toLocaleDateString() : '' })
+                    : t('settings.subscribeNow')}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
@@ -330,9 +351,9 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* 표시 설정 */}
+        {/* Display */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>표시</Text>
+          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.display')}</Text>
 
           <View
             style={{
@@ -346,13 +367,15 @@ export default function SettingsScreen() {
                 flexDirection: 'row',
                 alignItems: 'center',
                 padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: '#E5E7EB',
               }}
             >
               <Ionicons name="calculator" size={24} color="#666666" style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>기본 표시 단위</Text>
+                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('settings.displayUnit')}</Text>
                 <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
-                  {settings.displayUnit === 'BTC' ? 'sats 메인, 원화 서브' : '원화 메인, sats 서브'}
+                  {settings.displayUnit === 'BTC' ? t('settings.satsMain') : t('settings.krwMain')}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', backgroundColor: '#E5E7EB', borderRadius: 8, padding: 2 }}>
@@ -384,12 +407,50 @@ export default function SettingsScreen() {
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Language selector */}
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 16,
+              }}
+              onPress={() => setShowLanguagePicker(true)}
+            >
+              <Ionicons name="language" size={24} color="#666666" style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.language')}</Text>
+              <Text style={{ fontSize: 14, color: '#9CA3AF', marginRight: 8 }}>
+                {SUPPORTED_LANGUAGES[i18n.language as SupportedLanguage]?.flag}{' '}
+                {SUPPORTED_LANGUAGES[i18n.language as SupportedLanguage]?.nativeName}
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            {/* Region selector */}
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 16,
+                borderTopWidth: 1,
+                borderTopColor: '#F3F4F6',
+              }}
+              onPress={() => setShowRegionPicker(true)}
+            >
+              <Ionicons name="globe-outline" size={24} color="#666666" style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.region')}</Text>
+              <Text style={{ fontSize: 14, color: '#9CA3AF', marginRight: 8 }}>
+                {SUPPORTED_REGIONS.find(r => r.id === currentRegion)?.flag}{' '}
+                {t(SUPPORTED_REGIONS.find(r => r.id === currentRegion)?.nameKey || 'regions.korea')}
+              </Text>
+              <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* 보안 */}
+        {/* Security */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>보안</Text>
+          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.security')}</Text>
 
           <View
             style={{
@@ -409,7 +470,7 @@ export default function SettingsScreen() {
               onPress={() => router.push('/(modals)/change-password')}
             >
               <Ionicons name="key" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>비밀번호 변경</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.changePassword')}</Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
 
@@ -430,8 +491,8 @@ export default function SettingsScreen() {
                   style={{ marginRight: 12 }}
                 />
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, color: '#1A1A1A' }}>생체인증</Text>
-                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>Face ID / 지문</Text>
+                  <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('settings.biometric')}</Text>
+                  <Text style={{ fontSize: 12, color: '#9CA3AF' }}>{t('settings.biometricSub')}</Text>
                 </View>
                 <Switch
                   value={biometricEnabled}
@@ -452,9 +513,9 @@ export default function SettingsScreen() {
               onPress={() => setShowAutoLockPicker(true)}
             >
               <Ionicons name="time" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>자동 잠금</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.autoLock')}</Text>
               <Text style={{ fontSize: 14, color: '#9CA3AF', marginRight: 8 }}>
-                {AUTO_LOCK_LABELS[settings.autoLockTime]}
+                {t(AUTO_LOCK_KEYS[settings.autoLockTime])}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -468,14 +529,14 @@ export default function SettingsScreen() {
               onPress={handleLock}
             >
               <Ionicons name="lock-closed" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>앱 잠금</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.lockApp')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* 알림 */}
+        {/* Notifications */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>알림</Text>
+          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.notifications')}</Text>
 
           <View
             style={{
@@ -484,7 +545,6 @@ export default function SettingsScreen() {
               overflow: 'hidden',
             }}
           >
-            {/* 매일 기록 알림 */}
             <View
               style={{
                 flexDirection: 'row',
@@ -496,8 +556,8 @@ export default function SettingsScreen() {
             >
               <Ionicons name="calendar" size={24} color="#666666" style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>매일 기록 알림</Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>매일 지출 기록을 유도해요</Text>
+                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('settings.dailyReminder')}</Text>
+                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>{t('settings.dailyReminderSub')}</Text>
               </View>
               <Switch
                 value={settings.dailyReminderEnabled}
@@ -516,7 +576,6 @@ export default function SettingsScreen() {
               />
             </View>
 
-            {/* 알림 시간 설정 */}
             {settings.dailyReminderEnabled && (
               <TouchableOpacity
                 style={{
@@ -530,7 +589,7 @@ export default function SettingsScreen() {
                 onPress={() => setShowReminderTimePicker(true)}
               >
                 <Ionicons name="time-outline" size={20} color="#9CA3AF" style={{ marginRight: 12 }} />
-                <Text style={{ flex: 1, fontSize: 14, color: '#666666' }}>알림 시간</Text>
+                <Text style={{ flex: 1, fontSize: 14, color: '#666666' }}>{t('settings.reminderTime')}</Text>
                 <Text style={{ fontSize: 14, color: '#F7931A', fontWeight: '500', marginRight: 8 }}>
                   {settings.dailyReminderTime}
                 </Text>
@@ -538,7 +597,6 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             )}
 
-            {/* 구독 만료 알림 */}
             <View
               style={{
                 flexDirection: 'row',
@@ -550,8 +608,8 @@ export default function SettingsScreen() {
             >
               <Ionicons name="notifications" size={24} color="#666666" style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>구독 만료 알림</Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>만료 7일 전, 당일 알림</Text>
+                <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('settings.subscriptionAlert')}</Text>
+                <Text style={{ fontSize: 12, color: '#9CA3AF' }}>{t('settings.subscriptionAlertSub')}</Text>
               </View>
               <Switch
                 value={settings.subscriptionNotificationEnabled}
@@ -570,7 +628,6 @@ export default function SettingsScreen() {
               />
             </View>
 
-            {/* 테스트 알림 - 개발자 전용 */}
             {__DEV__ && (
               <TouchableOpacity
                 style={{
@@ -580,20 +637,20 @@ export default function SettingsScreen() {
                 }}
                 onPress={async () => {
                   await sendRandomDailyReminder();
-                  Alert.alert('알림 테스트', '유쾌한 기록 알림을 발송했습니다!');
+                  Alert.alert(t('settings.testNotification'), t('settings.testNotificationSent'));
                 }}
               >
                 <Ionicons name="happy" size={24} color="#666666" style={{ marginRight: 12 }} />
-                <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>테스트 알림 발송</Text>
+                <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.testNotification')}</Text>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </TouchableOpacity>
             )}
           </View>
         </View>
 
-        {/* 데이터 */}
+        {/* Data */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>데이터</Text>
+          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.data')}</Text>
 
           <View
             style={{
@@ -613,9 +670,9 @@ export default function SettingsScreen() {
               onPress={() => router.push('/(modals)/card-list')}
             >
               <Ionicons name="card" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>카드 관리</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.cardManagement')}</Text>
               <Text style={{ fontSize: 14, color: '#9CA3AF', marginRight: 8 }}>
-                {cards.length}장
+                {cards.length}{t('common.cards_unit')}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -630,8 +687,8 @@ export default function SettingsScreen() {
               }}
             >
               <Ionicons name="pricetag" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>카테고리 관리</Text>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginRight: 8 }}>준비 중</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.categoryManagement')}</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginRight: 8 }}>{t('common.comingSoon')}</Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
 
@@ -648,7 +705,7 @@ export default function SettingsScreen() {
             >
               <Ionicons name="cloud-upload" size={24} color="#666666" style={{ marginRight: 12 }} />
               <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>
-                {isBackingUp ? '백업 중...' : '데이터 백업'}
+                {isBackingUp ? t('settings.backingUp') : t('settings.backup')}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -662,15 +719,15 @@ export default function SettingsScreen() {
               onPress={handleRestore}
             >
               <Ionicons name="cloud-download" size={24} color="#666666" style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>데이터 복원</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: '#1A1A1A' }}>{t('settings.restore')}</Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* 앱 정보 */}
+        {/* App info */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>앱 정보</Text>
+          <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.appInfo')}</Text>
 
           <View
             style={{
@@ -686,7 +743,7 @@ export default function SettingsScreen() {
                 marginBottom: 12,
               }}
             >
-              <Text style={{ fontSize: 14, color: '#666666' }}>앱 이름</Text>
+              <Text style={{ fontSize: 14, color: '#666666' }}>{t('settings.appName')}</Text>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ fontSize: 14, color: '#1A1A1A', fontWeight: '500' }}>SYBA</Text>
                 <Text style={{ fontSize: 10, color: '#9CA3AF' }}>Start Your Bitcoin Adoption</Text>
@@ -699,7 +756,7 @@ export default function SettingsScreen() {
                 marginBottom: 12,
               }}
             >
-              <Text style={{ fontSize: 14, color: '#666666' }}>버전</Text>
+              <Text style={{ fontSize: 14, color: '#666666' }}>{t('settings.version')}</Text>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                   {Constants.expoConfig?.version || '0.1.0'}
@@ -718,7 +775,7 @@ export default function SettingsScreen() {
                 marginBottom: 12,
               }}
             >
-              <Text style={{ fontSize: 14, color: '#666666' }}>개발자</Text>
+              <Text style={{ fontSize: 14, color: '#666666' }}>{t('settings.developer')}</Text>
               <Text
                 style={{
                   fontSize: 14,
@@ -735,11 +792,11 @@ export default function SettingsScreen() {
                 justifyContent: 'space-between',
               }}
             >
-              <Text style={{ fontSize: 14, color: '#666666' }}>문의/제보</Text>
+              <Text style={{ fontSize: 14, color: '#666666' }}>{t('settings.contact')}</Text>
               <TouchableOpacity
                 onPress={() => {
                   Clipboard.setStringAsync('AsadoConKimchi@proton.me');
-                  Alert.alert('복사 완료', '이메일 주소가 클립보드에 복사되었습니다.');
+                  Alert.alert(t('common.copied'), t('settings.emailCopied'));
                 }}
               >
                 <Text
@@ -754,7 +811,6 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          {/* 카드 산정기간 안내 */}
           <View
             style={{
               backgroundColor: '#FEF3C7',
@@ -764,19 +820,18 @@ export default function SettingsScreen() {
             }}
           >
             <Text style={{ fontSize: 12, color: '#92400E', marginBottom: 4 }}>
-              카드사별 결제일/산정기간 정보 안내
+              {t('settings.billingInfo')}
             </Text>
             <Text style={{ fontSize: 11, color: '#78716C', lineHeight: 16 }}>
-              카드 등록 시 표시되는 결제일별 산정기간은 각 카드사 공식 자료를 참고하여 작성되었습니다.
-              혹시 정보가 실제와 다르다면 위 이메일로 알려주시면 수정하겠습니다.
+              {t('settings.billingInfoDetail')}
             </Text>
           </View>
         </View>
 
-        {/* 개발자 도구 - 개발 모드에서만 표시 */}
+        {/* Dev tools */}
         {__DEV__ && (
           <View style={{ padding: 20 }}>
-            <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>개발자 도구</Text>
+            <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 12 }}>{t('settings.devTools')}</Text>
 
             <View
               style={{
@@ -796,23 +851,22 @@ export default function SettingsScreen() {
                 disabled={isDummyLoading}
                 onPress={async () => {
                   if (!encryptionKey) {
-                    Alert.alert('오류', '인증이 필요합니다.');
+                    Alert.alert(t('common.error'), t('common.authRequired'));
                     return;
                   }
 
                   Alert.alert(
-                    '테스트 데이터 추가',
-                    '6개월치 더미 데이터(스냅샷, 기록, 자산, 부채)를 추가합니다.\n\n기존 데이터는 유지됩니다.',
+                    t('settings.addDummyData'),
+                    t('settings.addDummyConfirm'),
                     [
-                      { text: '취소', style: 'cancel' },
+                      { text: t('common.cancel'), style: 'cancel' },
                       {
-                        text: '추가',
+                        text: t('common.add'),
                         onPress: async () => {
                           setIsDummyLoading(true);
                           try {
                             const result = await addDummyData(encryptionKey);
 
-                            // 스토어 다시 로드
                             await Promise.all([
                               loadRecords(),
                               loadDebts(encryptionKey),
@@ -822,12 +876,17 @@ export default function SettingsScreen() {
 
                             setHasDummy(true);
                             Alert.alert(
-                              '완료',
-                              `테스트 데이터 추가 완료!\n\n- 스냅샷: ${result.snapshots}개\n- 기록: ${result.records}개\n- 자산: ${result.assets}개\n- 대출: ${result.loans}개`
+                              t('common.done'),
+                              t('settings.addDummyDone', {
+                                snapshots: result.snapshots,
+                                records: result.records,
+                                assets: result.assets,
+                                loans: result.loans,
+                              })
                             );
                           } catch (error) {
-                            console.error('더미 데이터 추가 실패:', error);
-                            Alert.alert('오류', '데이터 추가에 실패했습니다.');
+                            console.error('Dummy data add failed:', error);
+                            Alert.alert(t('common.error'), t('settings.addDummyFailed'));
                           } finally {
                             setIsDummyLoading(false);
                           }
@@ -840,10 +899,10 @@ export default function SettingsScreen() {
                 <Ionicons name="flask" size={24} color="#DC2626" style={{ marginRight: 12 }} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 16, color: '#DC2626' }}>
-                    {isDummyLoading ? '처리 중...' : '테스트 데이터 추가'}
+                    {isDummyLoading ? t('common.processing') : t('settings.addDummyData')}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
-                    6개월치 더미 데이터 생성
+                    {t('settings.addDummyDataSub')}
                   </Text>
                 </View>
                 <Ionicons name="add-circle" size={24} color="#DC2626" />
@@ -859,24 +918,23 @@ export default function SettingsScreen() {
                 disabled={isDummyLoading || !hasDummy}
                 onPress={async () => {
                   if (!encryptionKey) {
-                    Alert.alert('오류', '인증이 필요합니다.');
+                    Alert.alert(t('common.error'), t('common.authRequired'));
                     return;
                   }
 
                   Alert.alert(
-                    '테스트 데이터 삭제',
-                    '추가했던 더미 데이터만 삭제합니다.\n\n실제 데이터는 유지됩니다.',
+                    t('settings.removeDummyData'),
+                    t('settings.removeDummyConfirm'),
                     [
-                      { text: '취소', style: 'cancel' },
+                      { text: t('common.cancel'), style: 'cancel' },
                       {
-                        text: '삭제',
+                        text: t('common.delete'),
                         style: 'destructive',
                         onPress: async () => {
                           setIsDummyLoading(true);
                           try {
                             const result = await removeDummyData(encryptionKey);
 
-                            // 스토어 다시 로드
                             await Promise.all([
                               loadRecords(),
                               loadDebts(encryptionKey),
@@ -886,12 +944,17 @@ export default function SettingsScreen() {
 
                             setHasDummy(false);
                             Alert.alert(
-                              '완료',
-                              `테스트 데이터 삭제 완료!\n\n- 스냅샷: ${result.snapshots}개\n- 기록: ${result.records}개\n- 자산: ${result.assets}개\n- 대출: ${result.loans}개`
+                              t('common.done'),
+                              t('settings.removeDummyDone', {
+                                snapshots: result.snapshots,
+                                records: result.records,
+                                assets: result.assets,
+                                loans: result.loans,
+                              })
                             );
                           } catch (error) {
-                            console.error('더미 데이터 삭제 실패:', error);
-                            Alert.alert('오류', '데이터 삭제에 실패했습니다.');
+                            console.error('Dummy data remove failed:', error);
+                            Alert.alert(t('common.error'), t('settings.removeDummyFailed'));
                           } finally {
                             setIsDummyLoading(false);
                           }
@@ -904,10 +967,10 @@ export default function SettingsScreen() {
                 <Ionicons name="trash" size={24} color={hasDummy ? '#DC2626' : '#9CA3AF'} style={{ marginRight: 12 }} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 16, color: hasDummy ? '#DC2626' : '#9CA3AF' }}>
-                    테스트 데이터 삭제
+                    {t('settings.removeDummyData')}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
-                    {hasDummy ? '더미 데이터만 삭제' : '삭제할 더미 데이터 없음'}
+                    {hasDummy ? t('settings.removeDummyDataSub') : t('settings.noDummyData')}
                   </Text>
                 </View>
                 <Ionicons name="remove-circle" size={24} color={hasDummy ? '#DC2626' : '#9CA3AF'} />
@@ -915,10 +978,9 @@ export default function SettingsScreen() {
             </View>
 
             <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
-              테스트 데이터는 "DUMMY_" 접두사로 구분되어 안전하게 삭제됩니다
+              {t('settings.dummySafeNote')}
             </Text>
 
-            {/* 환경 변수 상태 */}
             <View
               style={{
                 backgroundColor: '#F0F9FF',
@@ -928,13 +990,13 @@ export default function SettingsScreen() {
               }}
             >
               <Text style={{ fontSize: 12, fontWeight: '600', color: '#0369A1', marginBottom: 8 }}>
-                환경 변수 상태
+                {t('settings.envStatus')}
               </Text>
               <Text style={{ fontSize: 11, color: '#0C4A6E', fontFamily: 'monospace' }}>
-                SUPABASE_URL: {SUPABASE_CONFIG.URL ? '✅ 설정됨' : '❌ 없음'}
+                SUPABASE_URL: {SUPABASE_CONFIG.URL ? `✅ ${t('settings.envSet')}` : `❌ ${t('settings.envMissing')}`}
               </Text>
               <Text style={{ fontSize: 11, color: '#0C4A6E', fontFamily: 'monospace' }}>
-                ANON_KEY: {SUPABASE_CONFIG.ANON_KEY ? '✅ 설정됨' : '❌ 없음'}
+                ANON_KEY: {SUPABASE_CONFIG.ANON_KEY ? `✅ ${t('settings.envSet')}` : `❌ ${t('settings.envMissing')}`}
               </Text>
               <Text style={{ fontSize: 11, color: '#0C4A6E', fontFamily: 'monospace', marginTop: 4 }}>
                 URL: {SUPABASE_CONFIG.URL?.substring(0, 30) || 'N/A'}...
@@ -943,11 +1005,10 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* 하단 여백 */}
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* 자동 잠금 선택 모달 */}
+      {/* Auto lock picker modal */}
       <Modal visible={showAutoLockPicker} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <View
@@ -966,13 +1027,13 @@ export default function SettingsScreen() {
                 marginBottom: 16,
               }}
             >
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>자동 잠금 시간</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('settings.autoLockTime')}</Text>
               <TouchableOpacity onPress={() => setShowAutoLockPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
             </View>
 
-            {(Object.keys(AUTO_LOCK_LABELS) as AutoLockTime[]).map((key) => (
+            {(Object.keys(AUTO_LOCK_KEYS) as AutoLockTime[]).map((key) => (
               <TouchableOpacity
                 key={key}
                 style={{
@@ -990,7 +1051,7 @@ export default function SettingsScreen() {
                     textAlign: 'center',
                   }}
                 >
-                  {AUTO_LOCK_LABELS[key]}
+                  {t(AUTO_LOCK_KEYS[key])}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -998,7 +1059,7 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
-      {/* 알림 시간 선택 모달 */}
+      {/* Reminder time picker modal */}
       <Modal visible={showReminderTimePicker} transparent animationType="slide">
         <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <View
@@ -1017,13 +1078,13 @@ export default function SettingsScreen() {
                 marginBottom: 16,
               }}
             >
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>알림 시간</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('settings.reminderTime')}</Text>
               <TouchableOpacity onPress={() => setShowReminderTimePicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
             </View>
 
-            {['09:00', '12:00', '18:00', '20:00', '21:00', '22:00'].map((time) => (
+            {REMINDER_TIMES.map((time) => (
               <TouchableOpacity
                 key={time}
                 style={{
@@ -1047,13 +1108,134 @@ export default function SettingsScreen() {
                     textAlign: 'center',
                   }}
                 >
-                  {time === '09:00' && '오전 9시'}
-                  {time === '12:00' && '오후 12시'}
-                  {time === '18:00' && '오후 6시'}
-                  {time === '20:00' && '오후 8시'}
-                  {time === '21:00' && '오후 9시 (기본)'}
-                  {time === '22:00' && '오후 10시'}
+                  {t(REMINDER_TIME_KEYS[time])}
                 </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Language picker modal */}
+      <Modal visible={showLanguagePicker} transparent animationType="slide">
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 20,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 16,
+              }}
+            >
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('settings.language')}</Text>
+              <TouchableOpacity onPress={() => setShowLanguagePicker(false)}>
+                <Ionicons name="close" size={24} color="#666666" />
+              </TouchableOpacity>
+            </View>
+
+            {(Object.keys(SUPPORTED_LANGUAGES) as SupportedLanguage[]).map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={{
+                  padding: 16,
+                  borderRadius: 8,
+                  backgroundColor: i18n.language === lang ? '#F7931A' : '#F3F4F6',
+                  marginBottom: 8,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+                onPress={() => handleLanguageChange(lang)}
+              >
+                <Text style={{ fontSize: 24, marginRight: 12 }}>
+                  {SUPPORTED_LANGUAGES[lang].flag}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: i18n.language === lang ? '#FFFFFF' : '#1A1A1A',
+                    flex: 1,
+                  }}
+                >
+                  {SUPPORTED_LANGUAGES[lang].nativeName}
+                </Text>
+                {i18n.language === lang && (
+                  <Ionicons name="checkmark" size={24} color="#FFFFFF" />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Region picker modal */}
+      <Modal visible={showRegionPicker} transparent animationType="slide">
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <View
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 20,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 16,
+              }}
+            >
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('settings.region')}</Text>
+              <TouchableOpacity onPress={() => setShowRegionPicker(false)}>
+                <Ionicons name="close" size={24} color="#666666" />
+              </TouchableOpacity>
+            </View>
+
+            {SUPPORTED_REGIONS.map((region) => (
+              <TouchableOpacity
+                key={region.id}
+                style={{
+                  padding: 16,
+                  borderRadius: 8,
+                  backgroundColor: currentRegion === region.id ? '#F7931A' : '#F3F4F6',
+                  marginBottom: 8,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+                onPress={() => handleRegionChange(region.id)}
+              >
+                <Text style={{ fontSize: 24, marginRight: 12 }}>
+                  {region.flag}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: currentRegion === region.id ? '#FFFFFF' : '#1A1A1A',
+                    flex: 1,
+                  }}
+                >
+                  {t(region.nameKey)}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: currentRegion === region.id ? '#FFFFFF99' : '#9CA3AF',
+                  }}
+                >
+                  {region.currency}
+                </Text>
+                {currentRegion === region.id && (
+                  <Ionicons name="checkmark" size={24} color="#FFFFFF" style={{ marginLeft: 8 }} />
+                )}
               </TouchableOpacity>
             ))}
           </View>

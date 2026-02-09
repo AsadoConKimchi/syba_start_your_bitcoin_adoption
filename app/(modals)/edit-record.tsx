@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { usePriceStore } from '../../src/stores/priceStore';
@@ -28,19 +29,20 @@ type PaymentMethod = 'cash' | 'card' | 'lightning' | 'onchain' | 'bank';
 type CurrencyMode = 'KRW' | 'SATS';
 
 const INSTALLMENT_OPTIONS = [
-  { value: 1, label: '일시불' },
-  { value: 2, label: '2개월' },
-  { value: 3, label: '3개월' },
-  { value: 4, label: '4개월' },
-  { value: 5, label: '5개월' },
-  { value: 6, label: '6개월' },
-  { value: 10, label: '10개월' },
-  { value: 12, label: '12개월' },
-  { value: 24, label: '24개월' },
-  { value: -1, label: '직접입력' },
+  { value: 1, labelKey: 'lumpSum' },
+  { value: 2, labelKey: '2' },
+  { value: 3, labelKey: '3' },
+  { value: 4, labelKey: '4' },
+  { value: 5, labelKey: '5' },
+  { value: 6, labelKey: '6' },
+  { value: 10, labelKey: '10' },
+  { value: 12, labelKey: '12' },
+  { value: 24, labelKey: '24' },
+  { value: -1, labelKey: 'custom' },
 ];
 
 export default function EditRecordScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { records, updateRecord, deleteRecord } = useLedgerStore();
   const { cards } = useCardStore();
@@ -126,7 +128,7 @@ export default function EditRecordScreen() {
   if (!record) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-        <Text>기록을 찾을 수 없습니다.</Text>
+        <Text>{t('editRecord.notFound')}</Text>
       </SafeAreaView>
     );
   }
@@ -175,18 +177,18 @@ export default function EditRecordScreen() {
 
   const handleSave = async () => {
     if (!amountNumber) {
-      Alert.alert('오류', '금액을 입력해주세요.');
+      Alert.alert(t('common.error'), t('editRecord.amountRequired'));
       return;
     }
 
     const finalCategory = showCustomCategory ? customCategory : category;
     if (!finalCategory) {
-      Alert.alert('오류', '카테고리를 선택하거나 입력해주세요.');
+      Alert.alert(t('common.error'), t('editRecord.categoryRequired'));
       return;
     }
 
     if (isExpenseRecord && paymentMethod === 'card' && !selectedCardId) {
-      Alert.alert('오류', '카드를 선택해주세요.');
+      Alert.alert(t('common.error'), t('editRecord.cardRequired'));
       return;
     }
 
@@ -217,7 +219,7 @@ export default function EditRecordScreen() {
       await updateRecord(record.id, updates);
       router.back();
     } catch (error) {
-      Alert.alert('오류', '수정에 실패했습니다.');
+      Alert.alert(t('common.error'), t('editRecord.editFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -225,12 +227,12 @@ export default function EditRecordScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      '삭제 확인',
-      '이 기록을 삭제하시겠습니까?',
+      t('editRecord.deleteConfirm'),
+      t('editRecord.deleteMessage'),
       [
-        { text: '취소', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '삭제',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             await deleteRecord(record.id);
@@ -242,6 +244,13 @@ export default function EditRecordScreen() {
   };
 
   const categories = isExpenseRecord ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_INCOME_CATEGORIES;
+
+  // 할부 옵션 레이블 생성 함수
+  const getInstallmentLabel = (value: number) => {
+    if (value === 1) return t('home.lumpSum');
+    if (value === -1) return t('expense.customCategory');
+    return `${value}${t('common.months')}`;
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
@@ -258,7 +267,7 @@ export default function EditRecordScreen() {
           }}
         >
           <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
-            {isExpenseRecord ? '지출 수정' : '수입 수정'}
+            {t('editRecord.title')}
           </Text>
           <View style={{ flexDirection: 'row', gap: 16 }}>
             <TouchableOpacity onPress={handleDelete}>
@@ -273,7 +282,7 @@ export default function EditRecordScreen() {
         <ScrollView style={{ flex: 1, padding: 20 }}>
           {/* 날짜 선택 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>날짜</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.date')}</Text>
             <TouchableOpacity
               style={{
                 flexDirection: 'row',
@@ -300,7 +309,7 @@ export default function EditRecordScreen() {
               <DateTimePicker
                 value={selectedDate}
                 mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 onChange={handleDateChange}
                 maximumDate={new Date()}
                 locale="ko-KR"
@@ -311,7 +320,7 @@ export default function EditRecordScreen() {
           {/* 금액 */}
           <View style={{ marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ fontSize: 14, color: '#666666' }}>금액</Text>
+              <Text style={{ fontSize: 14, color: '#666666' }}>{t('common.amount')}</Text>
               <TouchableOpacity
                 style={{
                   flexDirection: 'row',
@@ -324,7 +333,7 @@ export default function EditRecordScreen() {
                 onPress={toggleCurrencyMode}
               >
                 <Text style={{ fontSize: 12, color: currencyMode === 'KRW' ? '#666666' : '#F7931A', fontWeight: '600' }}>
-                  {currencyMode === 'KRW' ? '원화 (KRW)' : 'sats'}
+                  {currencyMode === 'KRW' ? t('common.krwAmount') : t('common.sats')}
                 </Text>
                 <Ionicons name="swap-horizontal" size={14} color={currencyMode === 'KRW' ? '#666666' : '#F7931A'} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
@@ -350,18 +359,18 @@ export default function EditRecordScreen() {
                 value={amount}
                 onChangeText={handleAmountChange}
               />
-              {currencyMode === 'SATS' && <Text style={{ fontSize: 14, color: '#F7931A' }}>sats</Text>}
+              {currencyMode === 'SATS' && <Text style={{ fontSize: 14, color: '#F7931A' }}>{t('common.sats')}</Text>}
             </View>
             {amountNumber > 0 && btcKrw && (
               <Text style={{ fontSize: 12, color: '#F7931A', marginTop: 4 }}>
-                {currencyMode === 'KRW' ? `= ${formatSats(satsAmount)} (현재 시세)` : `= ${formatKrw(krwAmount)} (현재 시세)`}
+                {currencyMode === 'KRW' ? `= ${formatSats(satsAmount)} (${t('common.currentRate')})` : `= ${formatKrw(krwAmount)} (${t('common.currentRate')})`}
               </Text>
             )}
           </View>
 
           {/* 카테고리 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>카테고리</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.category')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {categories.map(cat => (
                 <TouchableOpacity
@@ -375,7 +384,7 @@ export default function EditRecordScreen() {
                   onPress={() => handleCategorySelect(cat.name)}
                 >
                   <Text style={{ fontSize: 14, color: category === cat.name && !showCustomCategory ? '#FFFFFF' : '#666666' }}>
-                    {cat.icon} {cat.name}
+                    {cat.icon} {t('categories.' + cat.id)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -388,7 +397,7 @@ export default function EditRecordScreen() {
                 }}
                 onPress={() => handleCategorySelect('', true)}
               >
-                <Text style={{ fontSize: 14, color: showCustomCategory ? '#FFFFFF' : '#666666' }}>✏️ 직접입력</Text>
+                <Text style={{ fontSize: 14, color: showCustomCategory ? '#FFFFFF' : '#666666' }}>{t('expense.customCategory')}</Text>
               </TouchableOpacity>
             </View>
             {showCustomCategory && (
@@ -402,7 +411,7 @@ export default function EditRecordScreen() {
                   fontSize: 16,
                   color: '#1A1A1A',
                 }}
-                placeholder="카테고리 직접 입력"
+                placeholder={t('expense.customCategoryPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={customCategory}
                 onChangeText={setCustomCategory}
@@ -414,12 +423,12 @@ export default function EditRecordScreen() {
           {isExpenseRecord && (
             <>
               <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>결제 수단</Text>
+                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.paymentMethod')}</Text>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {[
-                    { id: 'cash', label: '현금' },
-                    { id: 'card', label: '카드' },
-                    { id: 'bank', label: '계좌이체' },
+                    { id: 'cash', label: t('expense.cash') },
+                    { id: 'card', label: t('expense.card') },
+                    { id: 'bank', label: t('expense.bankTransfer') },
                     { id: 'lightning', label: '⚡' },
                     { id: 'onchain', label: '₿' },
                   ].map(method => (
@@ -449,7 +458,7 @@ export default function EditRecordScreen() {
               {(paymentMethod === 'bank' || paymentMethod === 'lightning' || paymentMethod === 'onchain') && (
                 <View style={{ marginBottom: 24 }}>
                   <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-                    {paymentMethod === 'bank' ? '출금 계좌' : paymentMethod === 'lightning' ? 'Lightning 지갑' : 'Onchain 지갑'}
+                    {paymentMethod === 'bank' ? t('expense.selectAccount') : paymentMethod === 'lightning' ? t('expense.selectLightningWallet') : t('expense.selectOnchainWallet')}
                   </Text>
                   {availableAssets.length === 0 ? (
                     <TouchableOpacity
@@ -464,7 +473,7 @@ export default function EditRecordScreen() {
                       onPress={() => router.push('/(modals)/add-asset')}
                     >
                       <Text style={{ color: '#9CA3AF' }}>
-                        + {paymentMethod === 'bank' ? '계좌 추가하기' : '지갑 추가하기'}
+                        {paymentMethod === 'bank' ? t('expense.addAccount') : t('expense.addWallet')}
                       </Text>
                     </TouchableOpacity>
                   ) : (
@@ -482,14 +491,14 @@ export default function EditRecordScreen() {
                     >
                       <Text style={{ fontSize: 16, color: linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
                         {linkedAssetId
-                          ? availableAssets.find(a => a.id === linkedAssetId)?.name ?? '선택'
-                          : `${paymentMethod === 'bank' ? '계좌' : '지갑'} 선택 (선택)`}
+                          ? availableAssets.find(a => a.id === linkedAssetId)?.name ?? t('common.search')
+                          : paymentMethod === 'bank' ? t('expense.accountSelectHint') : t('expense.walletSelectHint')}
                       </Text>
                       <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                     </TouchableOpacity>
                   )}
                   <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
-                    선택하면 지출 시 자산에서 자동 차감됩니다
+                    {t('expense.autoDeductHint')}
                   </Text>
                 </View>
               )}
@@ -497,7 +506,7 @@ export default function EditRecordScreen() {
               {/* 카드 선택 */}
               {paymentMethod === 'card' && (
                 <View style={{ marginBottom: 24 }}>
-                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>카드 선택</Text>
+                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.selectCard')}</Text>
                   {cards.length === 0 ? (
                     <TouchableOpacity
                       style={{
@@ -510,7 +519,7 @@ export default function EditRecordScreen() {
                       }}
                       onPress={() => router.push('/(modals)/add-card')}
                     >
-                      <Text style={{ color: '#9CA3AF' }}>+ 카드 등록하기</Text>
+                      <Text style={{ color: '#9CA3AF' }}>{t('expense.addCard')}</Text>
                     </TouchableOpacity>
                   ) : (
                     <View style={{ gap: 8 }}>
@@ -546,7 +555,7 @@ export default function EditRecordScreen() {
               {/* 할부 */}
               {paymentMethod === 'card' && selectedCardId && (
                 <View style={{ marginBottom: 24 }}>
-                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>할부</Text>
+                  <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('expense.installment')}</Text>
                   {showCustomInstallmentInput ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <TextInput
@@ -559,7 +568,7 @@ export default function EditRecordScreen() {
                           fontSize: 16,
                           color: '#1A1A1A',
                         }}
-                        placeholder="개월 수 입력"
+                        placeholder={t('expense.monthsInput')}
                         placeholderTextColor="#9CA3AF"
                         keyboardType="numeric"
                         value={customInstallment}
@@ -569,7 +578,7 @@ export default function EditRecordScreen() {
                           if (num) setInstallmentMonths(parseInt(num));
                         }}
                       />
-                      <Text style={{ fontSize: 16, color: '#666666' }}>개월</Text>
+                      <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.months')}</Text>
                       <TouchableOpacity
                         onPress={() => {
                           setShowCustomInstallmentInput(false);
@@ -594,7 +603,7 @@ export default function EditRecordScreen() {
                       onPress={() => setShowInstallmentPicker(true)}
                     >
                       <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
-                        {installmentMonths === 1 ? '일시불' : `${installmentMonths}개월`}
+                        {installmentMonths === 1 ? t('home.lumpSum') : `${installmentMonths}${t('common.months')}`}
                       </Text>
                       <Ionicons name="chevron-down" size={20} color="#666666" />
                     </TouchableOpacity>
@@ -614,7 +623,7 @@ export default function EditRecordScreen() {
                         onPress={() => setIsInterestFree(true)}
                       >
                         <Text style={{ fontSize: 14, color: isInterestFree ? '#FFFFFF' : '#666666', fontWeight: '600' }}>
-                          무이자
+                          {t('common.noInterest')}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -628,7 +637,7 @@ export default function EditRecordScreen() {
                         onPress={() => setIsInterestFree(false)}
                       >
                         <Text style={{ fontSize: 14, color: !isInterestFree ? '#FFFFFF' : '#666666', fontWeight: '600' }}>
-                          유이자
+                          {t('common.withInterest')}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -636,8 +645,11 @@ export default function EditRecordScreen() {
 
                   {installmentMonths > 1 && krwAmount > 0 && (
                     <Text style={{ fontSize: 12, color: '#666666', marginTop: 8 }}>
-                      월 {formatKrw(Math.ceil(krwAmount / installmentMonths))} × {installmentMonths}개월
-                      {isInterestFree ? ' (무이자)' : ' (유이자)'}
+                      {t('expense.installmentSummary', {
+                        amount: formatKrw(Math.ceil(krwAmount / installmentMonths)),
+                        months: installmentMonths,
+                        interest: isInterestFree ? `(${t('common.noInterest')})` : `(${t('common.withInterest')})`,
+                      })}
                     </Text>
                   )}
                 </View>
@@ -648,7 +660,7 @@ export default function EditRecordScreen() {
           {/* 수입: 수입원 */}
           {!isExpenseRecord && (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>수입원 (선택)</Text>
+              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('income.source')}</Text>
               <TextInput
                 style={{
                   borderWidth: 1,
@@ -658,7 +670,7 @@ export default function EditRecordScreen() {
                   fontSize: 16,
                   color: '#1A1A1A',
                 }}
-                placeholder="예: 회사, 프리랜서"
+                placeholder={t('income.sourcePlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={source}
                 onChangeText={setSource}
@@ -668,7 +680,7 @@ export default function EditRecordScreen() {
 
           {/* 메모 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>메모 (선택)</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.memo')}</Text>
             <TextInput
               style={{
                 borderWidth: 1,
@@ -678,7 +690,7 @@ export default function EditRecordScreen() {
                 fontSize: 16,
                 color: '#1A1A1A',
               }}
-              placeholder="메모를 입력하세요"
+              placeholder={t('common.memoPlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={memo}
               onChangeText={setMemo}
@@ -688,16 +700,16 @@ export default function EditRecordScreen() {
           {/* 기록 정보 */}
           <View style={{ marginBottom: 24, padding: 12, backgroundColor: '#F9FAFB', borderRadius: 8 }}>
             <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
-              생성: {new Date(record.createdAt).toLocaleString('ko-KR')}
+              {t('editRecord.created')}: {new Date(record.createdAt).toLocaleString()}
             </Text>
             {record.updatedAt !== record.createdAt && (
               <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
-                수정: {new Date(record.updatedAt).toLocaleString('ko-KR')}
+                {t('editRecord.modified')}: {new Date(record.updatedAt).toLocaleString()}
               </Text>
             )}
             {record.satsEquivalent && (
               <Text style={{ fontSize: 12, color: '#F7931A', marginTop: 4 }}>
-                기록 당시: {formatSats(record.satsEquivalent)}
+                {t('editRecord.recordedRate')}: {formatSats(record.satsEquivalent)}
               </Text>
             )}
           </View>
@@ -717,7 +729,7 @@ export default function EditRecordScreen() {
             disabled={isLoading}
           >
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {isLoading ? '저장 중...' : '수정 완료'}
+              {isLoading ? t('common.saving') : t('common.done')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -727,7 +739,7 @@ export default function EditRecordScreen() {
           <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
             <View style={{ backgroundColor: '#FFFFFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>할부 선택</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('expense.selectInstallment')}</Text>
                 <TouchableOpacity onPress={() => setShowInstallmentPicker(false)}>
                   <Ionicons name="close" size={24} color="#666666" />
                 </TouchableOpacity>
@@ -762,7 +774,7 @@ export default function EditRecordScreen() {
                         textAlign: 'center',
                       }}
                     >
-                      {option.label}
+                      {getInstallmentLabel(option.value)}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -784,7 +796,7 @@ export default function EditRecordScreen() {
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
                 <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
-                  {paymentMethod === 'bank' ? '출금 계좌 선택' : paymentMethod === 'lightning' ? 'Lightning 지갑 선택' : 'Onchain 지갑 선택'}
+                  {paymentMethod === 'bank' ? t('expense.selectAccount') : paymentMethod === 'lightning' ? t('expense.selectLightningWallet') : t('expense.selectOnchainWallet')}
                 </Text>
                 <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
                   <Ionicons name="close" size={24} color="#666666" />
@@ -844,7 +856,7 @@ export default function EditRecordScreen() {
                   setShowAssetPicker(false);
                 }}
               >
-                <Text style={{ fontSize: 16, color: '#666666' }}>선택 안함</Text>
+                <Text style={{ fontSize: 16, color: '#666666' }}>{t('income.noSelection')}</Text>
               </TouchableOpacity>
             </View>
           </View>

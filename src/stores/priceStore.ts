@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import i18n from '../i18n';
 import { fetchAllPrices } from '../services/api/price';
 import { PriceCache } from '../types/settings';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -73,7 +74,7 @@ export const usePriceStore = create<PriceState & PriceActions>((set, get) => ({
       }
 
       set({
-        error: '오프라인 - 마지막 시세 사용 중',
+        error: i18n.t('errors.offlineUsingCache'),
         isLoading: false,
         isOffline: true,
       });

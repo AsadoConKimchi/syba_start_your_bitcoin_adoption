@@ -9,23 +9,25 @@ import {
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/stores/authStore';
 
 export default function SetupScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   const { setupPassword, biometricAvailable } = useAuthStore();
 
   const handleSetup = async () => {
     if (password.length < 12) {
-      Alert.alert('오류', '비밀번호는 12자 이상이어야 합니다.');
+      Alert.alert(t('common.error'), t('auth.passwordTooShort'));
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('오류', '비밀번호가 일치하지 않습니다.');
+      Alert.alert(t('common.error'), t('auth.passwordMismatch'));
       return;
     }
 
@@ -39,7 +41,7 @@ export default function SetupScreen() {
         router.replace('/(tabs)');
       }
     } catch (error) {
-      Alert.alert('오류', '비밀번호 설정에 실패했습니다.');
+      Alert.alert(t('common.error'), t('auth.setupFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +53,6 @@ export default function SetupScreen() {
       style={{ flex: 1, backgroundColor: '#FFFFFF' }}
     >
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-        {/* 헤더 */}
         <View style={{ alignItems: 'center', marginBottom: 48 }}>
           <Text style={{ fontSize: 48, marginBottom: 16 }}>🔐</Text>
           <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#1A1A1A' }}>
@@ -62,10 +63,9 @@ export default function SetupScreen() {
           </Text>
         </View>
 
-        {/* 폼 */}
         <View style={{ marginBottom: 24 }}>
           <Text style={{ fontSize: 16, color: '#1A1A1A', marginBottom: 8 }}>
-            비밀번호를 설정해주세요
+            {t('auth.setupPassword')}
           </Text>
 
           <TextInput
@@ -78,7 +78,7 @@ export default function SetupScreen() {
               marginBottom: 12,
               color: '#1A1A1A',
             }}
-            placeholder="비밀번호 (12자 이상)"
+            placeholder={t('auth.passwordMin12')}
             placeholderTextColor="#9CA3AF"
             secureTextEntry
             value={password}
@@ -95,7 +95,7 @@ export default function SetupScreen() {
               fontSize: 16,
               color: '#1A1A1A',
             }}
-            placeholder="비밀번호 확인"
+            placeholder={t('auth.passwordConfirm')}
             placeholderTextColor="#9CA3AF"
             secureTextEntry
             value={confirmPassword}
@@ -104,7 +104,6 @@ export default function SetupScreen() {
           />
         </View>
 
-        {/* 버튼 */}
         <TouchableOpacity
           style={{
             backgroundColor: '#F7931A',
@@ -117,15 +116,13 @@ export default function SetupScreen() {
           disabled={isLoading}
         >
           <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-            {isLoading ? '설정 중...' : '다음'}
+            {isLoading ? t('auth.settingUp') : t('common.next')}
           </Text>
         </TouchableOpacity>
 
-        {/* 경고 */}
         <View style={{ marginTop: 24, padding: 16, backgroundColor: '#FEF3C7', borderRadius: 8 }}>
           <Text style={{ fontSize: 14, color: '#92400E', textAlign: 'center' }}>
-            ⚠️ 비밀번호 분실 시 데이터 복구가 불가합니다.{'\n'}
-            안전한 곳에 기록해두세요.
+            {t('auth.passwordWarning')}
           </Text>
         </View>
       </View>

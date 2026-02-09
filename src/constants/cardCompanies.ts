@@ -1,3 +1,5 @@
+import i18n from '../i18n';
+
 export const CARD_COMPANIES = [
   { id: 'samsung', name: '삼성카드', color: '#1428A0' },
   { id: 'shinhan', name: '신한카드', color: '#E60012' },
@@ -20,6 +22,10 @@ export function getCardCompanyById(id: CardCompanyId) {
   return CARD_COMPANIES.find(c => c.id === id);
 }
 
-export function getCardCompanyColor(id: CardCompanyId): string {
-  return getCardCompanyById(id)?.color ?? '#9CA3AF';
+export function getCardCompanyColor(id: string): string {
+  return CARD_COMPANIES.find(c => c.id === id)?.color ?? '#9CA3AF';
+}
+
+export function getCardCompanyName(id: string): string {
+  return i18n.t(`cardCompanies.${id}`, { defaultValue: id });
 }

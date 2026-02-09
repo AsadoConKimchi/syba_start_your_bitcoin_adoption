@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useAssetStore } from '../../src/stores/assetStore';
@@ -25,6 +26,7 @@ import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
 type CurrencyMode = 'KRW' | 'SATS';
 
 export default function AddIncomeScreen() {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState('');
   const [currencyMode, setCurrencyMode] = useState<CurrencyMode>('KRW');
   const [category, setCategory] = useState('');
@@ -97,19 +99,19 @@ export default function AddIncomeScreen() {
 
   const handleSave = async () => {
     if (!amountNumber) {
-      Alert.alert('오류', '금액을 입력해주세요.');
+      Alert.alert(t('common.error'), t('income.amountRequired'));
       return;
     }
 
     const finalCategory = showCustomCategory ? customCategory : category;
     if (!finalCategory) {
-      Alert.alert('오류', '카테고리를 선택하거나 입력해주세요.');
+      Alert.alert(t('common.error'), t('income.categoryRequired'));
       return;
     }
 
     // sats 모드일 때 시세가 없으면 저장 불가
     if (currencyMode === 'SATS' && !btcKrw) {
-      Alert.alert('오류', 'BTC 시세를 가져올 수 없습니다. 네트워크를 확인해주세요.');
+      Alert.alert(t('common.error'), t('common.networkError'));
       return;
     }
 
@@ -130,7 +132,7 @@ export default function AddIncomeScreen() {
 
       router.back();
     } catch (error) {
-      Alert.alert('오류', '저장에 실패했습니다.');
+      Alert.alert(t('common.error'), t('editRecord.editFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -153,7 +155,7 @@ export default function AddIncomeScreen() {
             borderBottomColor: '#E5E7EB',
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>수입 입력</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('income.title')}</Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="close" size={24} color="#666666" />
           </TouchableOpacity>
@@ -162,7 +164,7 @@ export default function AddIncomeScreen() {
         <ScrollView style={{ flex: 1, padding: 20 }}>
           {/* 날짜 선택 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>날짜</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.date')}</Text>
             <TouchableOpacity
               style={{
                 flexDirection: 'row',
@@ -189,7 +191,7 @@ export default function AddIncomeScreen() {
               <DateTimePicker
                 value={selectedDate}
                 mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
                 onChange={handleDateChange}
                 maximumDate={new Date()}
                 locale="ko-KR"
@@ -200,7 +202,7 @@ export default function AddIncomeScreen() {
           {/* 금액 */}
           <View style={{ marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ fontSize: 14, color: '#666666' }}>금액</Text>
+              <Text style={{ fontSize: 14, color: '#666666' }}>{t('common.amount')}</Text>
               <TouchableOpacity
                 style={{
                   flexDirection: 'row',
@@ -213,7 +215,7 @@ export default function AddIncomeScreen() {
                 onPress={toggleCurrencyMode}
               >
                 <Text style={{ fontSize: 12, color: currencyMode === 'KRW' ? '#666666' : '#F7931A', fontWeight: '600' }}>
-                  {currencyMode === 'KRW' ? '원화 (KRW)' : 'sats'}
+                  {currencyMode === 'KRW' ? t('common.krwAmount') : t('common.sats')}
                 </Text>
                 <Ionicons name="swap-horizontal" size={14} color={currencyMode === 'KRW' ? '#666666' : '#F7931A'} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
@@ -240,14 +242,14 @@ export default function AddIncomeScreen() {
                 onChangeText={handleAmountChange}
               />
               {currencyMode === 'SATS' && (
-                <Text style={{ fontSize: 14, color: '#F7931A' }}>sats</Text>
+                <Text style={{ fontSize: 14, color: '#F7931A' }}>{t('common.sats')}</Text>
               )}
             </View>
             {amountNumber > 0 && btcKrw && (
               <Text style={{ fontSize: 12, color: '#F7931A', marginTop: 4 }}>
                 {currencyMode === 'KRW'
-                  ? `= ${formatSats(satsAmount)} (현재 시세)`
-                  : `= ${formatKrw(krwAmount)} (현재 시세)`
+                  ? `= ${formatSats(satsAmount)} (${t('common.currentRate')})`
+                  : `= ${formatKrw(krwAmount)} (${t('common.currentRate')})`
                 }
               </Text>
             )}
@@ -255,7 +257,7 @@ export default function AddIncomeScreen() {
 
           {/* 카테고리 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>카테고리</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('income.category')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {DEFAULT_INCOME_CATEGORIES.map(cat => (
                 <TouchableOpacity
@@ -274,7 +276,7 @@ export default function AddIncomeScreen() {
                       color: category === cat.name && !showCustomCategory ? '#FFFFFF' : '#666666',
                     }}
                   >
-                    {cat.icon} {cat.name}
+                    {cat.icon} {t('categories.' + cat.id)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -294,7 +296,7 @@ export default function AddIncomeScreen() {
                     color: showCustomCategory ? '#FFFFFF' : '#666666',
                   }}
                 >
-                  ✏️ 직접입력
+                  {t('income.customCategory')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -310,7 +312,7 @@ export default function AddIncomeScreen() {
                   fontSize: 16,
                   color: '#1A1A1A',
                 }}
-                placeholder="카테고리 직접 입력"
+                placeholder={t('income.customCategoryPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 value={customCategory}
                 onChangeText={setCustomCategory}
@@ -321,7 +323,7 @@ export default function AddIncomeScreen() {
 
           {/* 수입원 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>수입원 (선택)</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('income.source')}</Text>
             <TextInput
               style={{
                 borderWidth: 1,
@@ -331,7 +333,7 @@ export default function AddIncomeScreen() {
                 fontSize: 16,
                 color: '#1A1A1A',
               }}
-              placeholder="예: 회사, 프리랜서"
+              placeholder={t('income.sourcePlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={source}
               onChangeText={setSource}
@@ -340,7 +342,7 @@ export default function AddIncomeScreen() {
 
           {/* 입금 계좌/지갑 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>입금 계좌/지갑 (선택)</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('income.depositAccount')}</Text>
             {assets.length === 0 ? (
               <TouchableOpacity
                 style={{
@@ -353,7 +355,7 @@ export default function AddIncomeScreen() {
                 }}
                 onPress={() => router.push('/(modals)/add-asset')}
               >
-                <Text style={{ color: '#9CA3AF' }}>+ 계좌/지갑 추가하기</Text>
+                <Text style={{ color: '#9CA3AF' }}>{t('income.addAccountOrWallet')}</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
@@ -370,20 +372,20 @@ export default function AddIncomeScreen() {
               >
                 <Text style={{ fontSize: 16, color: linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
                   {linkedAssetId
-                    ? assets.find(a => a.id === linkedAssetId)?.name ?? '선택'
-                    : '입금 계좌/지갑 선택'}
+                    ? assets.find(a => a.id === linkedAssetId)?.name ?? t('common.search')
+                    : t('income.selectDepositAccount')}
                 </Text>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </TouchableOpacity>
             )}
             <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
-              선택하면 수입 시 자산에 자동 추가됩니다
+              {t('income.autoAddHint')}
             </Text>
           </View>
 
           {/* 메모 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>메모 (선택)</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.memo')}</Text>
             <TextInput
               style={{
                 borderWidth: 1,
@@ -393,7 +395,7 @@ export default function AddIncomeScreen() {
                 fontSize: 16,
                 color: '#1A1A1A',
               }}
-              placeholder="메모를 입력하세요"
+              placeholder={t('common.memoPlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={memo}
               onChangeText={setMemo}
@@ -415,7 +417,7 @@ export default function AddIncomeScreen() {
             disabled={isLoading}
           >
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {isLoading ? '저장 중...' : '저장'}
+              {isLoading ? t('common.saving') : t('common.save')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -433,7 +435,7 @@ export default function AddIncomeScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>입금 계좌/지갑 선택</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('income.selectDepositAccount')}</Text>
                 <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
                   <Ionicons name="close" size={24} color="#666666" />
                 </TouchableOpacity>
@@ -443,7 +445,7 @@ export default function AddIncomeScreen() {
                 {/* 법정화폐 계좌 */}
                 {assets.filter(isFiatAsset).length > 0 && (
                   <View style={{ marginBottom: 16 }}>
-                    <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 8 }}>은행 계좌</Text>
+                    <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 8 }}>{t('income.bankAccounts')}</Text>
                     {assets.filter(isFiatAsset).map((asset) => (
                       <TouchableOpacity
                         key={asset.id}
@@ -485,7 +487,7 @@ export default function AddIncomeScreen() {
                 {/* 비트코인 지갑 */}
                 {assets.filter(isBitcoinAsset).length > 0 && (
                   <View style={{ marginBottom: 16 }}>
-                    <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 8 }}>비트코인 지갑</Text>
+                    <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 8 }}>{t('income.btcWallets')}</Text>
                     {assets.filter(isBitcoinAsset).map((asset) => (
                       <TouchableOpacity
                         key={asset.id}
@@ -546,7 +548,7 @@ export default function AddIncomeScreen() {
                   setShowAssetPicker(false);
                 }}
               >
-                <Text style={{ fontSize: 16, color: '#666666' }}>선택 안함</Text>
+                <Text style={{ fontSize: 16, color: '#666666' }}>{t('income.noSelection')}</Text>
               </TouchableOpacity>
             </View>
           </View>

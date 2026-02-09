@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
@@ -33,6 +34,7 @@ const CARD_COLORS = [
 ];
 
 export default function AddCardScreen() {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [company, setCompany] = useState<CardCompanyId | null>(null);
   const [cardType, setCardType] = useState<CardType>('credit');
@@ -84,38 +86,38 @@ export default function AddCardScreen() {
     if (!paymentDay || !company || !billingStartDay || !billingEndDay) return null;
 
     const rules = CARD_COMPANY_BILLING_RULES[company]?.rules[paymentDay];
-    if (!rules) return `전월 ${billingStartDay}일 ~ 당월 ${billingEndDay}일`;
+    if (!rules) return `${t('card.prevMonth')} ${billingStartDay}${t('card.dayUnit')} ~ ${t('card.currentMonth')} ${billingEndDay}${t('card.dayUnit')}`;
 
-    const startMonth = rules.start.monthOffset === -2 ? '전전월' : '전월';
-    const endMonth = rules.end.monthOffset === -1 ? '전월' : '당월';
+    const startMonth = rules.start.monthOffset === -2 ? t('card.twoMonthsAgo') : t('card.prevMonth');
+    const endMonth = rules.end.monthOffset === -1 ? t('card.prevMonth') : t('card.currentMonth');
 
-    return `${startMonth} ${billingStartDay}일 ~ ${endMonth} ${billingEndDay}일`;
-  }, [paymentDay, company, billingStartDay, billingEndDay]);
+    return `${startMonth} ${billingStartDay}${t('card.dayUnit')} ~ ${endMonth} ${billingEndDay}${t('card.dayUnit')}`;
+  }, [paymentDay, company, billingStartDay, billingEndDay, t]);
 
   const selectedCompanyName = company
-    ? CARD_COMPANIES.find(c => c.id === company)?.name ?? ''
+    ? t('cardCompanies.' + company)
     : '';
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('오류', '카드 이름을 입력해주세요.');
+      Alert.alert(t('common.error'), t('card.nameRequired'));
       return;
     }
 
     if (!company) {
-      Alert.alert('오류', '카드사를 선택해주세요.');
+      Alert.alert(t('common.error'), t('card.companyRequired'));
       return;
     }
 
     // 무료 사용자 카드 3장 제한 체크
     if (!isSubscribed && cards.length >= FREE_CARD_LIMIT) {
       Alert.alert(
-        '카드 등록 제한',
-        `무료 사용자는 최대 ${FREE_CARD_LIMIT}장까지 등록할 수 있습니다.\n\n프리미엄 구독 시 무제한으로 등록할 수 있습니다.`,
+        t('card.registerLimitTitle'),
+        t('card.registerLimitMessage', { max: FREE_CARD_LIMIT }),
         [
-          { text: '취소', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: '프리미엄 구독',
+            text: t('card.premiumSubscribe'),
             onPress: () => router.push('/(modals)/subscription'),
           },
         ]
@@ -144,7 +146,7 @@ export default function AddCardScreen() {
 
       router.back();
     } catch (error) {
-      Alert.alert('오류', '카드 등록에 실패했습니다.');
+      Alert.alert(t('common.error'), t('card.registerFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -167,7 +169,7 @@ export default function AddCardScreen() {
             borderBottomColor: '#E5E7EB',
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>카드 등록</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('card.register')}</Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="close" size={24} color="#666666" />
           </TouchableOpacity>
@@ -187,15 +189,15 @@ export default function AddCardScreen() {
           >
             <View>
               <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
-                {selectedCompanyName || '카드사'}
+                {selectedCompanyName || t('card.company')}
               </Text>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#FFFFFF', marginTop: 4 }}>
-                {name || '카드 이름'}
+                {name || t('card.cardName')}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
               <Text style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)' }}>
-                {cardType === 'credit' ? '신용카드' : cardType === 'debit' ? '체크카드' : '선불카드'}
+                {cardType === 'credit' ? t('card.credit') : cardType === 'debit' ? t('card.debit') : t('card.prepaid')}
               </Text>
               <Ionicons name="card" size={32} color="rgba(255,255,255,0.5)" />
             </View>
@@ -203,7 +205,7 @@ export default function AddCardScreen() {
 
           {/* 카드 이름 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>카드 이름</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.cardName')}</Text>
             <TextInput
               style={{
                 borderWidth: 1,
@@ -213,7 +215,7 @@ export default function AddCardScreen() {
                 fontSize: 16,
                 color: '#1A1A1A',
               }}
-              placeholder="예: 내 신용카드"
+              placeholder={t('card.cardNamePlaceholder')}
               placeholderTextColor="#9CA3AF"
               value={name}
               onChangeText={setName}
@@ -222,7 +224,7 @@ export default function AddCardScreen() {
 
           {/* 카드사 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>카드사</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.company')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {CARD_COMPANIES.map(comp => (
                 <TouchableOpacity
@@ -241,7 +243,7 @@ export default function AddCardScreen() {
                       color: company === comp.id ? '#FFFFFF' : '#666666',
                     }}
                   >
-                    {comp.name}
+                    {t('cardCompanies.' + comp.id)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -250,12 +252,12 @@ export default function AddCardScreen() {
 
           {/* 카드 종류 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>카드 종류</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.cardType')}</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {[
-                { id: 'credit', label: '신용카드' },
-                { id: 'debit', label: '체크카드' },
-                { id: 'prepaid', label: '선불카드' },
+                { id: 'credit', label: t('card.credit') },
+                { id: 'debit', label: t('card.debit') },
+                { id: 'prepaid', label: t('card.prepaid') },
               ].map(type => (
                 <TouchableOpacity
                   key={type.id}
@@ -284,7 +286,7 @@ export default function AddCardScreen() {
           {/* 결제일 (신용카드만) */}
           {cardType === 'credit' && (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>결제일</Text>
+              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.paymentDay')}</Text>
               <TouchableOpacity
                 style={{
                   borderWidth: 1,
@@ -298,18 +300,18 @@ export default function AddCardScreen() {
                 onPress={() => setShowPaymentDayPicker(true)}
               >
                 <Text style={{ fontSize: 16, color: paymentDay ? '#1A1A1A' : '#9CA3AF' }}>
-                  {paymentDay ? `매월 ${paymentDay}일` : '결제일 선택 (선택)'}
+                  {paymentDay ? t('card.paymentDayFormat', { day: paymentDay }) : t('card.selectPaymentDay')}
                 </Text>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </TouchableOpacity>
               {billingPeriodText && (
                 <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
-                  산정기간: {billingPeriodText}
+                  {t('card.billingPeriod', { period: billingPeriodText })}
                 </Text>
               )}
               {!company && cardType === 'credit' && (
                 <Text style={{ fontSize: 12, color: '#F7931A', marginTop: 8 }}>
-                  * 카드사를 먼저 선택해주세요
+                  * {t('card.selectCompanyFirst')}
                 </Text>
               )}
             </View>
@@ -318,7 +320,7 @@ export default function AddCardScreen() {
           {/* 결제 계좌 (신용카드만) */}
           {cardType === 'credit' && (
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>결제 계좌</Text>
+              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.linkedAccount')}</Text>
               <TouchableOpacity
                 style={{
                   borderWidth: 1,
@@ -333,20 +335,20 @@ export default function AddCardScreen() {
               >
                 <Text style={{ fontSize: 16, color: linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
                   {linkedAssetId
-                    ? fiatAssets.find(a => a.id === linkedAssetId)?.name ?? '계좌 선택'
-                    : '결제 계좌 선택 (선택)'}
+                    ? fiatAssets.find(a => a.id === linkedAssetId)?.name ?? t('card.linkedAccount')
+                    : t('card.selectLinkedAccount')}
                 </Text>
                 <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
               </TouchableOpacity>
               <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
-                결제일에 이 계좌에서 자동으로 차감됩니다
+                {t('card.autoDeductHint')}
               </Text>
             </View>
           )}
 
           {/* 카드 색상 */}
           <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>카드 색상</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('card.cardColor')}</Text>
             <View style={{ flexDirection: 'row', gap: 12 }}>
               {CARD_COLORS.map(c => (
                 <TouchableOpacity
@@ -386,7 +388,7 @@ export default function AddCardScreen() {
             disabled={isLoading}
           >
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {isLoading ? '등록 중...' : '카드 등록'}
+              {isLoading ? t('card.registering') : t('card.register')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -404,7 +406,7 @@ export default function AddCardScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>결제일 선택</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('card.selectPaymentDayTitle')}</Text>
               <TouchableOpacity onPress={() => setShowPaymentDayPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -412,7 +414,7 @@ export default function AddCardScreen() {
 
             {company && (
               <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 16 }}>
-                {CARD_COMPANIES.find(c => c.id === company)?.name} 가용 결제일
+                {t('card.availablePaymentDays', { company: t('cardCompanies.' + company) })}
               </Text>
             )}
 
@@ -439,7 +441,7 @@ export default function AddCardScreen() {
                       color: paymentDay === day ? '#FFFFFF' : '#1A1A1A',
                     }}
                   >
-                    {day}일
+                    {t('card.dayFormat', { day })}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -447,7 +449,7 @@ export default function AddCardScreen() {
 
             {availablePaymentDays.length === 0 && (
               <Text style={{ fontSize: 14, color: '#9CA3AF', textAlign: 'center', marginBottom: 16 }}>
-                카드사를 먼저 선택해주세요
+                {t('card.selectCompanyFirst')}
               </Text>
             )}
 
@@ -466,7 +468,7 @@ export default function AddCardScreen() {
                 setShowPaymentDayPicker(false);
               }}
             >
-              <Text style={{ fontSize: 16, color: '#666666' }}>설정 안함</Text>
+              <Text style={{ fontSize: 16, color: '#666666' }}>{t('card.noSettings')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -485,7 +487,7 @@ export default function AddCardScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>결제 계좌 선택</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('card.selectAccountTitle')}</Text>
               <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -495,7 +497,7 @@ export default function AddCardScreen() {
               <View style={{ padding: 32, alignItems: 'center' }}>
                 <Ionicons name="wallet-outline" size={48} color="#9CA3AF" />
                 <Text style={{ fontSize: 14, color: '#9CA3AF', marginTop: 12, textAlign: 'center' }}>
-                  등록된 계좌가 없습니다{'\n'}자산 탭에서 계좌를 먼저 추가해주세요
+                  {t('card.noAccounts')}
                 </Text>
               </View>
             ) : (
@@ -552,7 +554,7 @@ export default function AddCardScreen() {
                 setShowAssetPicker(false);
               }}
             >
-              <Text style={{ fontSize: 16, color: '#666666' }}>설정 안함</Text>
+              <Text style={{ fontSize: 16, color: '#666666' }}>{t('card.noSettings')}</Text>
             </TouchableOpacity>
           </View>
         </View>

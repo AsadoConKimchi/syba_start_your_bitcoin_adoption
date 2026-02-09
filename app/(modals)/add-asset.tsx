@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { usePriceStore } from '../../src/stores/priceStore';
@@ -21,6 +22,7 @@ type AssetType = 'fiat' | 'bitcoin';
 type WalletType = 'onchain' | 'lightning';
 
 export default function AddAssetScreen() {
+  const { t } = useTranslation();
   const [assetType, setAssetType] = useState<AssetType>('fiat');
   const [name, setName] = useState('');
   const [balance, setBalance] = useState('');
@@ -75,28 +77,28 @@ export default function AddAssetScreen() {
 
   const handleSave = async () => {
     if (!encryptionKey) {
-      Alert.alert('오류', '인증이 필요합니다.');
+      Alert.alert(t('common.error'), t('common.authRequired'));
       return;
     }
 
     if (!name.trim()) {
-      Alert.alert('오류', '자산명을 입력해주세요.');
+      Alert.alert(t('common.error'), t('asset.nameRequired'));
       return;
     }
 
     // 마이너스통장 유효성 검사
     if (isOverdraft) {
       if (creditLimitNumber <= 0) {
-        Alert.alert('오류', '마이너스통장 한도를 입력해주세요.');
+        Alert.alert(t('common.error'), t('asset.creditLimitRequired'));
         return;
       }
       if (interestRateNumber <= 0 || interestRateNumber > 30) {
-        Alert.alert('오류', '연이자율을 올바르게 입력해주세요. (0.1~30%)');
+        Alert.alert(t('common.error'), t('asset.rateInvalid'));
         return;
       }
       // 마이너스 잔액이 한도를 초과하는지 확인
       if (isNegativeBalance && balanceNumber > creditLimitNumber) {
-        Alert.alert('오류', '마이너스 잔액이 한도를 초과할 수 없습니다.');
+        Alert.alert(t('common.error'), t('asset.overdraftExceeded'));
         return;
       }
     }
@@ -131,7 +133,7 @@ export default function AddAssetScreen() {
       router.back();
     } catch (error) {
       console.error('자산 추가 실패:', error);
-      Alert.alert('오류', '자산 추가에 실패했습니다.');
+      Alert.alert(t('common.error'), t('asset.addFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -155,9 +157,9 @@ export default function AddAssetScreen() {
           }}
         >
           <TouchableOpacity onPress={() => router.back()}>
-            <Text style={{ fontSize: 16, color: '#666666' }}>취소</Text>
+            <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.cancel')}</Text>
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>자산 추가</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('asset.addTitle')}</Text>
           <TouchableOpacity onPress={handleSave} disabled={isSubmitting}>
             <Text
               style={{
@@ -166,7 +168,7 @@ export default function AddAssetScreen() {
                 color: isSubmitting ? '#9CA3AF' : '#22C55E',
               }}
             >
-              저장
+              {t('common.save')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -175,7 +177,7 @@ export default function AddAssetScreen() {
           <View style={{ padding: 20 }}>
             {/* 자산 유형 선택 */}
             <View style={{ marginBottom: 24 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12 }}>자산 유형</Text>
+              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 12 }}>{t('asset.assetType')}</Text>
               <View style={{ flexDirection: 'row', gap: 12 }}>
                 <TouchableOpacity
                   style={{
@@ -195,7 +197,7 @@ export default function AddAssetScreen() {
                       color: assetType === 'fiat' ? '#FFFFFF' : '#666666',
                     }}
                   >
-                    법정화폐
+                    {t('asset.fiat')}
                   </Text>
                   <Text
                     style={{
@@ -203,7 +205,7 @@ export default function AddAssetScreen() {
                       color: assetType === 'fiat' ? 'rgba(255,255,255,0.8)' : '#9CA3AF',
                     }}
                   >
-                    은행, 증권 등
+                    {t('asset.fiatSub')}
                   </Text>
                 </TouchableOpacity>
 
@@ -225,7 +227,7 @@ export default function AddAssetScreen() {
                       color: assetType === 'bitcoin' ? '#FFFFFF' : '#666666',
                     }}
                   >
-                    비트코인
+                    {t('asset.bitcoin')}
                   </Text>
                   <Text
                     style={{
@@ -233,7 +235,7 @@ export default function AddAssetScreen() {
                       color: assetType === 'bitcoin' ? 'rgba(255,255,255,0.8)' : '#9CA3AF',
                     }}
                   >
-                    sats 단위
+                    {t('asset.bitcoinSub')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -242,7 +244,7 @@ export default function AddAssetScreen() {
             {/* 자산명 */}
             <View style={{ marginBottom: 24 }}>
               <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-                {assetType === 'fiat' ? '계좌/자산명' : '지갑명'} *
+                {assetType === 'fiat' ? t('asset.accountName') : t('asset.walletName')} *
               </Text>
               <TextInput
                 style={{
@@ -252,7 +254,7 @@ export default function AddAssetScreen() {
                   fontSize: 16,
                   color: '#1A1A1A',
                 }}
-                placeholder={assetType === 'fiat' ? '예: KB국민 급여통장' : '예: 콜드월렛'}
+                placeholder={assetType === 'fiat' ? t('asset.accountPlaceholder') : t('asset.walletPlaceholder')}
                 value={name}
                 onChangeText={setName}
               />
@@ -286,10 +288,10 @@ export default function AddAssetScreen() {
                     <Text style={{ fontSize: 20, marginRight: 12 }}>💳</Text>
                     <View>
                       <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
-                        마이너스통장
+                        {t('asset.overdraft')}
                       </Text>
                       <Text style={{ fontSize: 12, color: '#9CA3AF' }}>
-                        한도 내 마이너스 잔액 허용
+                        {t('asset.overdraftHint')}
                       </Text>
                     </View>
                   </View>
@@ -315,7 +317,7 @@ export default function AddAssetScreen() {
                 {/* 한도 */}
                 <View style={{ marginBottom: 24 }}>
                   <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-                    마이너스 한도 (원) *
+                    {t('asset.creditLimit')} *
                   </Text>
                   <View
                     style={{
@@ -335,21 +337,21 @@ export default function AddAssetScreen() {
                         paddingVertical: 16,
                         color: '#1A1A1A',
                       }}
-                      placeholder="10,000,000"
+                      placeholder={t('asset.creditLimitPlaceholder')}
                       keyboardType="number-pad"
                       value={creditLimit}
                       onChangeText={handleCreditLimitChange}
                     />
                   </View>
                   <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
-                    예: 1,000만원 한도라면 10,000,000 입력
+                    {t('asset.creditLimitHint')}
                   </Text>
                 </View>
 
                 {/* 연이자율 */}
                 <View style={{ marginBottom: 24 }}>
                   <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-                    연이자율 (%) *
+                    {t('asset.annualRate')} *
                   </Text>
                   <View
                     style={{
@@ -368,7 +370,7 @@ export default function AddAssetScreen() {
                         paddingVertical: 16,
                         color: '#1A1A1A',
                       }}
-                      placeholder="10.5"
+                      placeholder={t('asset.annualRatePlaceholder')}
                       keyboardType="decimal-pad"
                       value={interestRate}
                       onChangeText={handleInterestRateChange}
@@ -376,7 +378,7 @@ export default function AddAssetScreen() {
                     <Text style={{ fontSize: 18, color: '#EF4444' }}>%</Text>
                   </View>
                   <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>
-                    연 이자율 입력 (예: 연 10.5%라면 10.5 입력)
+                    {t('asset.annualRateHint')}
                   </Text>
                 </View>
               </>
@@ -385,7 +387,7 @@ export default function AddAssetScreen() {
             {/* 비트코인 지갑 유형 */}
             {assetType === 'bitcoin' && (
               <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>지갑 유형</Text>
+                <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('asset.walletType')}</Text>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   <TouchableOpacity
                     style={{
@@ -436,7 +438,7 @@ export default function AddAssetScreen() {
             <View style={{ marginBottom: 24 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <Text style={{ fontSize: 14, color: '#666666' }}>
-                  잔액 {assetType === 'bitcoin' ? '(sats)' : '(원)'}
+                  {assetType === 'bitcoin' ? t('asset.balanceSats') : t('asset.balanceFiat')}
                 </Text>
                 {/* 마이너스 잔액 토글 (마이너스통장인 경우만) */}
                 {assetType === 'fiat' && isOverdraft && (
@@ -452,7 +454,7 @@ export default function AddAssetScreen() {
                     onPress={() => setIsNegativeBalance(!isNegativeBalance)}
                   >
                     <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#666666', fontWeight: '600' }}>
-                      {isNegativeBalance ? '- 마이너스' : '+ 플러스'}
+                      {isNegativeBalance ? t('asset.negative') : t('asset.positive')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -496,14 +498,14 @@ export default function AddAssetScreen() {
               {/* 원화 환산 (비트코인인 경우) */}
               {assetType === 'bitcoin' && btcKrw && balanceNumber > 0 && (
                 <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 8 }}>
-                  = {formatKrw(Math.round(btcKrwValue))} (현재 시세)
+                  = {formatKrw(Math.round(btcKrwValue))} ({t('asset.currentRate')})
                 </Text>
               )}
 
               {/* 마이너스통장 가용 금액 표시 */}
               {assetType === 'fiat' && isOverdraft && creditLimitNumber > 0 && (
                 <Text style={{ fontSize: 12, color: isNegativeBalance ? '#EF4444' : '#22C55E', marginTop: 8 }}>
-                  가용 한도: {formatKrw(creditLimitNumber - (isNegativeBalance ? balanceNumber : 0))}
+                  {t('asset.availableLimit', { amount: formatKrw(creditLimitNumber - (isNegativeBalance ? balanceNumber : 0)) })}
                 </Text>
               )}
             </View>
@@ -519,13 +521,13 @@ export default function AddAssetScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                 <Ionicons name="information-circle" size={20} color="#0284C7" />
                 <Text style={{ fontSize: 14, fontWeight: '600', color: '#0284C7', marginLeft: 8 }}>
-                  참고
+                  {t('asset.note')}
                 </Text>
               </View>
               <Text style={{ fontSize: 13, color: '#0369A1', lineHeight: 20 }}>
                 {assetType === 'fiat'
-                  ? '잔액은 수동으로 업데이트해주세요. 자동 연동 기능은 추후 지원 예정입니다.'
-                  : '비트코인 잔액은 sats 단위로 입력해주세요. 1 BTC = 100,000,000 sats'}
+                  ? t('asset.manualUpdateNote')
+                  : t('asset.satsNote')}
               </Text>
             </View>
           </View>

@@ -70,7 +70,7 @@ export function decrypt<T>(encryptedString: string, key: string): T {
     });
     const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
     if (!jsonString) {
-      throw new Error('복호화 실패: 잘못된 비밀번호');
+      throw new Error('Decryption failed: incorrect password');
     }
     return JSON.parse(jsonString) as T;
   } else {
@@ -78,7 +78,7 @@ export function decrypt<T>(encryptedString: string, key: string): T {
     const decrypted = CryptoJS.AES.decrypt(encryptedString, key);
     const jsonString = decrypted.toString(CryptoJS.enc.Utf8);
     if (!jsonString) {
-      throw new Error('복호화 실패: 잘못된 비밀번호');
+      throw new Error('Decryption failed: incorrect password');
     }
     return JSON.parse(jsonString) as T;
   }

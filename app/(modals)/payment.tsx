@@ -11,12 +11,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
+import { useTranslation } from 'react-i18next';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
 import { waitForPayment, PaymentStatus } from '../../src/services/blinkProxy';
 import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
 
 export default function PaymentScreen() {
+  const { t } = useTranslation();
   const {
     lightningInvoice,
     pendingPayment,
@@ -67,22 +69,22 @@ export default function PaymentScreen() {
 
         if (confirmed) {
           setStatus('success');
-          Alert.alert('결제 완료', '프리미엄 구독이 활성화되었습니다!', [
-            { text: '확인', onPress: () => router.replace('/(tabs)/settings') },
+          Alert.alert(t('subscription.paymentComplete'), t('subscription.paymentDone'), [
+            { text: t('common.confirm'), onPress: () => router.replace('/(tabs)/settings') },
           ]);
         } else {
           setStatus('error');
           Alert.alert(
-            '처리 오류',
-            '결제는 완료되었으나 구독 활성화에 실패했습니다. 고객센터에 문의해주세요.',
-            [{ text: '확인', onPress: () => router.back() }]
+            t('subscription.processingError'),
+            t('subscription.activationFailed'),
+            [{ text: t('common.confirm'), onPress: () => router.back() }]
           );
         }
       } else {
         if (!isCancelledRef.current) {
           setStatus('expired');
-          Alert.alert('결제 만료', 'Invoice가 만료되었습니다. 다시 시도해주세요.', [
-            { text: '확인', onPress: () => router.back() },
+          Alert.alert(t('subscription.expired'), t('subscription.invoiceExpired'), [
+            { text: t('common.confirm'), onPress: () => router.back() },
           ]);
         }
       }
@@ -108,7 +110,7 @@ export default function PaymentScreen() {
   if (!lightningInvoice) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#666666' }}>Invoice를 생성 중...</Text>
+        <Text style={{ color: '#666666' }}>{t('common.processing')}</Text>
         <ActivityIndicator style={{ marginTop: 16 }} color="#F7931A" />
       </SafeAreaView>
     );
@@ -128,7 +130,7 @@ export default function PaymentScreen() {
         }}
       >
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
-          Lightning 결제
+          {t('subscription.lightningPayment')}
         </Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={24} color="#666666" />
@@ -138,7 +140,7 @@ export default function PaymentScreen() {
       <View style={{ flex: 1, alignItems: 'center', padding: 20 }}>
         {/* 금액 */}
         <View style={{ marginBottom: 24, alignItems: 'center' }}>
-          <Text style={{ fontSize: 14, color: '#666666', marginBottom: 4 }}>결제 금액</Text>
+          <Text style={{ fontSize: 14, color: '#666666', marginBottom: 4 }}>{t('subscription.paymentAmount')}</Text>
           <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#F7931A' }}>
             {subscriptionPrice.toLocaleString()} sats
           </Text>
@@ -168,7 +170,7 @@ export default function PaymentScreen() {
             color="#000000"
           />
           <Text style={{ marginTop: 12, fontSize: 12, color: copied ? '#22C55E' : '#9CA3AF' }}>
-            {copied ? '복사됨!' : 'QR 탭하여 Invoice 복사'}
+            {copied ? t('common.copied') : t('subscription.tapToCopyInvoice')}
           </Text>
         </TouchableOpacity>
 
@@ -183,31 +185,31 @@ export default function PaymentScreen() {
           {status === 'waiting' && (
             <>
               <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#666666' }}>결제 대기 중...</Text>
+              <Text style={{ color: '#666666' }}>{t('subscription.waitingPayment')}</Text>
             </>
           )}
           {status === 'checking' && (
             <>
               <ActivityIndicator size="small" color="#F7931A" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#666666' }}>구독 활성화 중...</Text>
+              <Text style={{ color: '#666666' }}>{t('subscription.activating')}</Text>
             </>
           )}
           {status === 'success' && (
             <>
               <Ionicons name="checkmark-circle" size={20} color="#22C55E" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#22C55E', fontWeight: '600' }}>결제 완료!</Text>
+              <Text style={{ color: '#22C55E', fontWeight: '600' }}>{t('subscription.paymentComplete')}</Text>
             </>
           )}
           {status === 'expired' && (
             <>
               <Ionicons name="close-circle" size={20} color="#EF4444" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#EF4444' }}>만료됨</Text>
+              <Text style={{ color: '#EF4444' }}>{t('subscription.expired')}</Text>
             </>
           )}
           {status === 'error' && (
             <>
               <Ionicons name="warning" size={20} color="#F59E0B" style={{ marginRight: 8 }} />
-              <Text style={{ color: '#F59E0B' }}>처리 오류</Text>
+              <Text style={{ color: '#F59E0B' }}>{t('subscription.processingError')}</Text>
             </>
           )}
         </View>
@@ -232,8 +234,7 @@ export default function PaymentScreen() {
         {/* 안내 문구 */}
         <View style={{ marginTop: 24, alignItems: 'center' }}>
           <Text style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center' }}>
-            Lightning 지갑으로 QR 코드를 스캔하거나{'\n'}
-            Invoice를 복사하여 결제해주세요
+            {t('subscription.paymentInstructions')}
           </Text>
         </View>
       </View>

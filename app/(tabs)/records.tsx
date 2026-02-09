@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
@@ -14,18 +15,17 @@ export default function RecordsScreen() {
   const { records, getRecordsByMonth } = useLedgerStore();
   const { settings } = useSettingsStore();
   const { isSubscribed } = useSubscriptionStore();
+  const { t } = useTranslation();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const year = selectedDate.getFullYear();
   const month = selectedDate.getMonth() + 1;
 
-  // 현재 월인지 확인
   const now = new Date();
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
 
   const monthRecords = getRecordsByMonth(year, month);
 
-  // 날짜별로 그룹화
   const recordsByDate = monthRecords.reduce((acc, record) => {
     if (!acc[record.date]) {
       acc[record.date] = [];
@@ -37,15 +37,14 @@ export default function RecordsScreen() {
   const sortedDates = Object.keys(recordsByDate).sort((a, b) => b.localeCompare(a));
 
   const goToPrevMonth = () => {
-    // 프리미엄이 아니면 과거 월 접근 차단
     if (!isSubscribed) {
       Alert.alert(
-        '프리미엄 기능',
-        '과거 기록 조회는 프리미엄 구독자만 이용할 수 있습니다.',
+        t('records.premiumRequired'),
+        t('records.premiumDescription'),
         [
-          { text: '취소', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: '구독하기',
+            text: t('records.subscribe'),
             onPress: () => router.push('/(modals)/subscription'),
           },
         ]
@@ -56,7 +55,6 @@ export default function RecordsScreen() {
   };
 
   const goToNextMonth = () => {
-    // 미래 월로는 이동 가능 (현재 월까지만)
     const nextMonth = new Date(year, month, 1);
     const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     if (nextMonth > currentMonth) return;
@@ -66,7 +64,6 @@ export default function RecordsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-      {/* 헤더 */}
       <View
         style={{
           flexDirection: 'row',
@@ -77,7 +74,7 @@ export default function RecordsScreen() {
           borderBottomColor: '#E5E7EB',
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>기록</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>{t('records.title')}</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
           <TouchableOpacity onPress={() => router.push('/(modals)/add-income')}>
             <Ionicons name="add-circle" size={28} color="#22C55E" />
@@ -88,7 +85,6 @@ export default function RecordsScreen() {
         </View>
       </View>
 
-      {/* 월 선택 */}
       <View
         style={{
           flexDirection: 'row',
@@ -102,7 +98,7 @@ export default function RecordsScreen() {
           <Ionicons name="chevron-back" size={24} color="#666666" />
         </TouchableOpacity>
         <Text style={{ fontSize: 18, fontWeight: '600', color: '#1A1A1A' }}>
-          {year}년 {month}월
+          {t('records.yearMonth', { year, month })}
         </Text>
         <TouchableOpacity onPress={goToNextMonth}>
           <Ionicons name="chevron-forward" size={24} color="#666666" />
@@ -110,21 +106,19 @@ export default function RecordsScreen() {
       </View>
 
       <ScrollView style={{ flex: 1, padding: 20 }}>
-        {/* 카테고리별 파이차트 - 프리미엄 기능 */}
         <View style={{ marginBottom: 20 }}>
           {isSubscribed ? (
             <CategoryPieChart year={year} month={month} />
           ) : (
-            <PremiumBanner feature="카테고리별 지출 차트" />
+            <PremiumBanner feature={t('records.title')} />
           )}
         </View>
 
-        {/* 월별 지출 흐름 (토글) - 프리미엄 기능 */}
         <View style={{ marginBottom: 20 }}>
           {isSubscribed ? (
             <SpendingTrendChart />
           ) : (
-            <PremiumBanner feature="월별 지출 흐름 차트" />
+            <PremiumBanner feature={t('records.title')} />
           )}
         </View>
 
@@ -132,7 +126,7 @@ export default function RecordsScreen() {
           <View style={{ alignItems: 'center', paddingVertical: 48 }}>
             <Text style={{ fontSize: 48, marginBottom: 16 }}>📝</Text>
             <Text style={{ fontSize: 16, color: '#9CA3AF', textAlign: 'center' }}>
-              이번 달 기록이 없습니다{'\n'}첫 번째 기록을 추가해보세요!
+              {t('records.noRecords')}
             </Text>
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
               <TouchableOpacity
@@ -144,7 +138,7 @@ export default function RecordsScreen() {
                 }}
                 onPress={() => router.push('/(modals)/add-income')}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>+ 수입</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('records.addIncome')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
@@ -155,7 +149,7 @@ export default function RecordsScreen() {
                 }}
                 onPress={() => router.push('/(modals)/add-expense')}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>- 지출</Text>
+                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('records.subtractExpense')}</Text>
               </TouchableOpacity>
             </View>
           </View>

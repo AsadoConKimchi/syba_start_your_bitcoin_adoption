@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import i18n from '../i18n';
 import { v4 as uuidv4 } from 'uuid';
 import { LedgerRecord, Expense, Income } from '../types/ledger';
 import { saveEncrypted, loadEncrypted, FILE_PATHS } from '../utils/storage';
@@ -59,7 +60,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
   loadRecords: async () => {
     const encryptionKey = useAuthStore.getState().encryptionKey;
     if (!encryptionKey) {
-      set({ error: '인증 필요' });
+      set({ error: i18n.t('errors.authRequired') });
       return;
     }
 
@@ -73,7 +74,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       );
       set({ records, isLoading: false, error: null });
     } catch (error) {
-      set({ error: '데이터 로드 실패', isLoading: false });
+      set({ error: i18n.t('errors.dataLoadFailed'), isLoading: false });
     }
   },
 
@@ -85,7 +86,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
 
     if (!encryptionKey) {
       console.log('[DEBUG] encryptionKey가 없어서 저장 중단');
-      set({ error: '암호화 키 없음' });
+      set({ error: i18n.t('errors.noEncryptionKey') });
       return;
     }
 
@@ -95,7 +96,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       console.log('[DEBUG] saveEncrypted 성공');
     } catch (error) {
       console.log('[DEBUG] saveEncrypted 실패:', error);
-      set({ error: '저장 실패' });
+      set({ error: i18n.t('errors.saveFailed') });
     }
   },
 
@@ -399,7 +400,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     let totalExpense = 0;
 
     for (const expense of expenses) {
-      const category = expense.category || '미분류';
+      const category = expense.category || i18n.t('categories.uncategorized');
       categoryTotals[category] = (categoryTotals[category] || 0) + expense.amount;
       totalExpense += expense.amount;
     }
@@ -433,7 +434,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
 
     if (othersTotal > 0) {
       result.push({
-        category: '기타',
+        category: i18n.t('categories.etc'),
         amount: othersTotal,
         percentage: Math.round((othersTotal / totalExpense) * 100),
         color: CHART_COLORS[5],

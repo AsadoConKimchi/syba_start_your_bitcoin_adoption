@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useAuthStore } from '../../src/stores/authStore';
@@ -23,6 +24,7 @@ import { calculateInstallmentPayment, calculatePaidMonths } from '../../src/util
 const INSTALLMENT_MONTHS = [2, 3, 6, 12, 18, 24, 36];
 
 export default function InstallmentDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { encryptionKey } = useAuthStore();
   const { installments, updateInstallment, deleteInstallment } = useDebtStore();
@@ -65,12 +67,12 @@ export default function InstallmentDetailScreen() {
   if (!installment) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#9CA3AF' }}>할부 정보를 찾을 수 없습니다</Text>
+        <Text style={{ color: '#9CA3AF' }}>{t('common.notFound')}</Text>
         <TouchableOpacity
           style={{ marginTop: 16, padding: 12, backgroundColor: '#F7931A', borderRadius: 8 }}
           onPress={() => router.back()}
         >
-          <Text style={{ color: '#FFFFFF' }}>돌아가기</Text>
+          <Text style={{ color: '#FFFFFF' }}>{t('common.back')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -93,22 +95,22 @@ export default function InstallmentDetailScreen() {
 
   const handleSave = async () => {
     if (!encryptionKey) {
-      Alert.alert('오류', '인증이 필요합니다.');
+      Alert.alert(t('common.error'), t('common.authRequired'));
       return;
     }
 
     if (!storeName.trim()) {
-      Alert.alert('오류', '상점명을 입력해주세요.');
+      Alert.alert(t('common.error'), t('installment.storeRequired'));
       return;
     }
 
     if (amount <= 0) {
-      Alert.alert('오류', '결제 금액을 입력해주세요.');
+      Alert.alert(t('common.error'), t('installment.amountRequired'));
       return;
     }
 
     if (!selectedCardId) {
-      Alert.alert('오류', '카드를 선택해주세요.');
+      Alert.alert(t('common.error'), t('installment.cardRequired'));
       return;
     }
 
@@ -131,10 +133,10 @@ export default function InstallmentDetailScreen() {
       );
 
       setIsEditing(false);
-      Alert.alert('완료', '할부 정보가 수정되었습니다.');
+      Alert.alert(t('common.done'), t('installment.editDone'));
     } catch (error) {
       console.error('할부 수정 실패:', error);
-      Alert.alert('오류', '할부 수정에 실패했습니다.');
+      Alert.alert(t('common.error'), t('installment.editFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -142,12 +144,12 @@ export default function InstallmentDetailScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      '할부 삭제',
-      `"${installment.storeName}" 할부를 삭제하시겠습니까?`,
+      t('installment.deleteConfirm'),
+      t('installment.deleteMessage', { name: installment.storeName }),
       [
-        { text: '취소', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '삭제',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             if (!encryptionKey) return;
@@ -156,7 +158,7 @@ export default function InstallmentDetailScreen() {
               router.back();
             } catch (error) {
               console.error('할부 삭제 실패:', error);
-              Alert.alert('오류', '할부 삭제에 실패했습니다.');
+              Alert.alert(t('common.error'), t('installment.deleteFailed'));
             }
           },
         },
@@ -184,9 +186,9 @@ export default function InstallmentDetailScreen() {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#666666" />
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>할부 상세</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('installment.detailTitle')}</Text>
           <TouchableOpacity onPress={() => setIsEditing(true)}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#F7931A' }}>수정</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#F7931A' }}>{t('common.edit')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -216,7 +218,7 @@ export default function InstallmentDetailScreen() {
                 />
               )}
               <Text style={{ fontSize: 14, color: '#9CA3AF' }}>
-                {card?.name || '삭제된 카드'}
+                {card?.name || t('debts.deletedCard')}
               </Text>
             </View>
           </View>
@@ -231,19 +233,19 @@ export default function InstallmentDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ fontSize: 14, color: '#991B1B' }}>총 결제 금액</Text>
+              <Text style={{ fontSize: 14, color: '#991B1B' }}>{t('installment.totalAmount')}</Text>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#EF4444' }}>
                 {formatKrw(installment.totalAmount)}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ fontSize: 14, color: '#991B1B' }}>월 납부액</Text>
+              <Text style={{ fontSize: 14, color: '#991B1B' }}>{t('installment.monthlyPayment')}</Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#EF4444' }}>
                 {formatKrw(installment.monthlyPayment)}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 14, color: '#991B1B' }}>남은 금액</Text>
+              <Text style={{ fontSize: 14, color: '#991B1B' }}>{t('installment.remainingAmount')}</Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#EF4444' }}>
                 {formatKrw(installment.remainingAmount)}
               </Text>
@@ -260,7 +262,7 @@ export default function InstallmentDetailScreen() {
             }}
           >
             <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 }}>
-              진행 상태
+              {t('installment.progressStatus')}
             </Text>
             <View
               style={{
@@ -282,10 +284,10 @@ export default function InstallmentDetailScreen() {
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={{ fontSize: 14, color: '#666666' }}>
-                {installment.paidMonths}/{installment.months}개월 납부
+                {t('debts.paidMonths', { paid: installment.paidMonths, total: installment.months })}
               </Text>
               <Text style={{ fontSize: 14, fontWeight: '600', color: '#F7931A' }}>
-                {remainingMonths}개월 남음
+                {t('debts.remainingMonths', { count: remainingMonths })}
               </Text>
             </View>
           </View>
@@ -300,23 +302,23 @@ export default function InstallmentDetailScreen() {
             }}
           >
             <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 }}>
-              상세 정보
+              {t('installment.detailInfo')}
             </Text>
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>할부 조건</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('installment.conditions')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
-                {installment.months}개월 • {installment.isInterestFree ? '무이자' : `연 ${installment.interestRate}%`}
+                {t('installment.monthsFormat', { count: installment.months })} • {installment.isInterestFree ? t('common.interestFree') : t('installment.annualRateValue', { rate: installment.interestRate })}
               </Text>
             </View>
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>시작일 ~ 종료일</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('installment.startEndDate')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                 {new Date(installment.startDate).toLocaleDateString('ko-KR')} ~ {new Date(installment.endDate).toLocaleDateString('ko-KR')}
               </Text>
             </View>
             {!installment.isInterestFree && installment.totalInterest > 0 && (
               <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>총 이자</Text>
+                <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('installment.totalInterest')}</Text>
                 <Text style={{ fontSize: 14, color: '#EF4444' }}>
                   {formatKrw(installment.totalInterest)}
                 </Text>
@@ -324,7 +326,7 @@ export default function InstallmentDetailScreen() {
             )}
             {installment.memo && (
               <View>
-                <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>메모</Text>
+                <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('common.memo')}</Text>
                 <Text style={{ fontSize: 14, color: '#1A1A1A' }}>{installment.memo}</Text>
               </View>
             )}
@@ -341,7 +343,7 @@ export default function InstallmentDetailScreen() {
             }}
             onPress={handleDelete}
           >
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#DC2626' }}>할부 삭제</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#DC2626' }}>{t('installment.deleteConfirm')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -363,9 +365,9 @@ export default function InstallmentDetailScreen() {
         }}
       >
         <TouchableOpacity onPress={() => setIsEditing(false)}>
-          <Text style={{ fontSize: 16, color: '#666666' }}>취소</Text>
+          <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.cancel')}</Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>할부 수정</Text>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('installment.editTitle')}</Text>
         <TouchableOpacity onPress={handleSave} disabled={isSubmitting}>
           <Text
             style={{
@@ -374,7 +376,7 @@ export default function InstallmentDetailScreen() {
               color: isSubmitting ? '#9CA3AF' : '#F7931A',
             }}
           >
-            저장
+            {t('common.save')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -383,7 +385,7 @@ export default function InstallmentDetailScreen() {
         <View style={{ padding: 20 }}>
           {/* 상점명 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>상점명 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.storeName')} *</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -399,7 +401,7 @@ export default function InstallmentDetailScreen() {
 
           {/* 결제 금액 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>총 결제 금액 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.totalAmount')} *</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -425,7 +427,7 @@ export default function InstallmentDetailScreen() {
 
           {/* 카드 선택 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>결제 카드 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.selectCard')} *</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -450,7 +452,7 @@ export default function InstallmentDetailScreen() {
                   />
                 )}
                 <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
-                  {selectedCard?.name || '카드 선택'}
+                  {selectedCard?.name || t('installment.selectCard')}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
@@ -459,7 +461,7 @@ export default function InstallmentDetailScreen() {
 
           {/* 할부 개월 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>할부 개월 수 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.months')} *</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -472,7 +474,7 @@ export default function InstallmentDetailScreen() {
               onPress={() => setShowMonthPicker(true)}
             >
               <Text style={{ fontSize: 16, color: '#1A1A1A' }}>
-                {customMonths || months}개월
+                {t('installment.monthsFormat', { count: Number(customMonths) || months })}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -481,7 +483,7 @@ export default function InstallmentDetailScreen() {
           {/* 무이자/유이자 */}
           <View style={{ marginBottom: 20 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, color: '#666666' }}>무이자 할부</Text>
+              <Text style={{ fontSize: 14, color: '#666666' }}>{t('installment.interestFree')}</Text>
               <Switch
                 value={isInterestFree}
                 onValueChange={setIsInterestFree}
@@ -491,7 +493,7 @@ export default function InstallmentDetailScreen() {
 
             {!isInterestFree && (
               <View style={{ marginTop: 12 }}>
-                <Text style={{ fontSize: 12, color: '#666666', marginBottom: 8 }}>연 이자율 (%)</Text>
+                <Text style={{ fontSize: 12, color: '#666666', marginBottom: 8 }}>{t('installment.annualRate')}</Text>
                 <TextInput
                   style={{
                     backgroundColor: '#F9FAFB',
@@ -500,7 +502,7 @@ export default function InstallmentDetailScreen() {
                     fontSize: 16,
                     color: '#1A1A1A',
                   }}
-                  placeholder="예: 15.9"
+                  placeholder={t('installment.annualRatePlaceholder')}
                   keyboardType="decimal-pad"
                   value={interestRate}
                   onChangeText={setInterestRate}
@@ -511,7 +513,7 @@ export default function InstallmentDetailScreen() {
 
           {/* 시작일 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>시작일</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.startDate')}</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -533,7 +535,7 @@ export default function InstallmentDetailScreen() {
           {/* 이미 납부한 개월 */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-              이미 납부한 개월 수
+              {t('installment.paidMonths')}
             </Text>
             <TextInput
               style={{
@@ -551,7 +553,7 @@ export default function InstallmentDetailScreen() {
 
           {/* 메모 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>메모</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.memo')}</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -561,7 +563,7 @@ export default function InstallmentDetailScreen() {
                 color: '#1A1A1A',
                 minHeight: 80,
               }}
-              placeholder="메모 (선택)"
+              placeholder={t('common.memoPlaceholder')}
               multiline
               value={memo}
               onChangeText={setMemo}
@@ -579,17 +581,17 @@ export default function InstallmentDetailScreen() {
               }}
             >
               <Text style={{ fontSize: 14, fontWeight: '600', color: '#92400E', marginBottom: 12 }}>
-                계산 결과
+                {t('installment.calculationResult')}
               </Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ color: '#92400E' }}>월 납부액</Text>
+                <Text style={{ color: '#92400E' }}>{t('installment.monthlyPayment')}</Text>
                 <Text style={{ fontWeight: 'bold', color: '#B45309' }}>
                   {formatKrw(monthlyPayment)}
                 </Text>
               </View>
               {!isInterestFree && totalInterest > 0 && (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                  <Text style={{ color: '#92400E' }}>총 이자</Text>
+                  <Text style={{ color: '#92400E' }}>{t('installment.totalInterest')}</Text>
                   <Text style={{ color: '#B45309' }}>{formatKrw(totalInterest)}</Text>
                 </View>
               )}
@@ -611,7 +613,7 @@ export default function InstallmentDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>카드 선택</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('installment.selectCardTitle')}</Text>
               <TouchableOpacity onPress={() => setShowCardPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -664,7 +666,7 @@ export default function InstallmentDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>할부 개월 수</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('installment.selectMonths')}</Text>
               <TouchableOpacity onPress={() => setShowMonthPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -694,13 +696,13 @@ export default function InstallmentDetailScreen() {
                       color: months === m && !customMonths ? '#FFFFFF' : '#1A1A1A',
                     }}
                   >
-                    {m}개월
+                    {t('installment.monthsFormat', { count: m })}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
 
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>직접 입력</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('installment.customInput')}</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -709,7 +711,7 @@ export default function InstallmentDetailScreen() {
                 fontSize: 16,
                 color: '#1A1A1A',
               }}
-              placeholder="개월 수 입력"
+              placeholder={t('installment.customMonthsPlaceholder')}
               keyboardType="number-pad"
               value={customMonths}
               onChangeText={setCustomMonths}
@@ -725,7 +727,7 @@ export default function InstallmentDetailScreen() {
               }}
               onPress={() => setShowMonthPicker(false)}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>확인</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('common.confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -744,7 +746,7 @@ export default function InstallmentDetailScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>날짜 선택</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('common.selectDate')}</Text>
                 <TouchableOpacity onPress={() => setShowDatePicker(false)}>
                   <Ionicons name="close" size={24} color="#666666" />
                 </TouchableOpacity>
@@ -772,7 +774,7 @@ export default function InstallmentDetailScreen() {
                   }}
                   onPress={() => setShowDatePicker(false)}
                 >
-                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>확인</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('common.confirm')}</Text>
                 </TouchableOpacity>
               )}
             </View>

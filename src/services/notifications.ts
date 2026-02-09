@@ -2,7 +2,8 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DAILY_REMINDER_MESSAGES, SUBSCRIPTION_MESSAGES } from '../constants/messages';
+import { getDailyReminderMessages, getSubscriptionMessages } from '../constants/messages';
+import i18n from '../i18n';
 
 // 알림 설정
 Notifications.setNotificationHandler({
@@ -47,7 +48,7 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   // Android 채널 설정
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('subscription', {
-      name: '구독 알림',
+      name: i18n.t('notifications.channelName'),
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#F7931A',
@@ -132,13 +133,15 @@ export async function scheduleSubscriptionExpiryNotifications(expiresAt: Date): 
   const now = new Date();
   const expiryTime = new Date(expiresAt);
 
-  // 7일 전 알림
+  const subMessages = getSubscriptionMessages();
+
+  // 7 days before expiry
   const sevenDaysBefore = new Date(expiryTime.getTime() - 7 * 24 * 60 * 60 * 1000);
   if (sevenDaysBefore > now) {
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: SUBSCRIPTION_MESSAGES.sevenDaysBefore.title,
-        body: SUBSCRIPTION_MESSAGES.sevenDaysBefore.body,
+        title: subMessages.sevenDaysBefore.title,
+        body: subMessages.sevenDaysBefore.body,
         data: { type: 'subscription_expiry_7days' },
       },
       trigger: {
@@ -154,17 +157,17 @@ export async function scheduleSubscriptionExpiryNotifications(expiresAt: Date): 
       scheduledAt: sevenDaysBefore.toISOString(),
     });
 
-    console.log('[Notifications] 7일 전 알림 스케줄됨:', sevenDaysBefore.toISOString());
+    console.log('[Notifications] 7-day reminder scheduled:', sevenDaysBefore.toISOString());
   }
 
-  // 만료 당일 알림
+  // Expiry day notification
   const expiryDay = new Date(expiryTime);
-  expiryDay.setHours(9, 0, 0, 0); // 만료일 오전 9시
+  expiryDay.setHours(9, 0, 0, 0);
   if (expiryDay > now) {
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: SUBSCRIPTION_MESSAGES.expiryDay.title,
-        body: SUBSCRIPTION_MESSAGES.expiryDay.body,
+        title: subMessages.expiryDay.title,
+        body: subMessages.expiryDay.body,
         data: { type: 'subscription_expiry' },
       },
       trigger: {
@@ -180,17 +183,17 @@ export async function scheduleSubscriptionExpiryNotifications(expiresAt: Date): 
       scheduledAt: expiryDay.toISOString(),
     });
 
-    console.log('[Notifications] 만료일 알림 스케줄됨:', expiryDay.toISOString());
+    console.log('[Notifications] Expiry day reminder scheduled:', expiryDay.toISOString());
   }
 
-  // 만료 후 알림 (1일 후)
+  // Post-expiry notification (1 day after)
   const oneDayAfter = new Date(expiryTime.getTime() + 24 * 60 * 60 * 1000);
-  oneDayAfter.setHours(10, 0, 0, 0); // 만료 다음날 오전 10시
+  oneDayAfter.setHours(10, 0, 0, 0);
   if (oneDayAfter > now) {
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: SUBSCRIPTION_MESSAGES.expired.title,
-        body: SUBSCRIPTION_MESSAGES.expired.body,
+        title: subMessages.expired.title,
+        body: subMessages.expired.body,
         data: { type: 'subscription_expired' },
       },
       trigger: {
@@ -206,28 +209,28 @@ export async function scheduleSubscriptionExpiryNotifications(expiresAt: Date): 
       scheduledAt: oneDayAfter.toISOString(),
     });
 
-    console.log('[Notifications] 만료 후 알림 스케줄됨:', oneDayAfter.toISOString());
+    console.log('[Notifications] Post-expiry reminder scheduled:', oneDayAfter.toISOString());
   }
 }
 
-// 테스트용 즉시 알림
+// Test notification (instant)
 export async function sendTestNotification(): Promise<void> {
   const hasPermission = await requestNotificationPermissions();
   if (!hasPermission) {
-    console.log('[Notifications] 테스트 알림 실패: 권한 없음');
+    console.log('[Notifications] Test notification failed: no permission');
     return;
   }
 
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'SYBA 알림 테스트',
-      body: '알림이 정상적으로 작동합니다!',
+      title: 'SYBA',
+      body: i18n.t('settings.testNotificationSent'),
       data: { type: 'test' },
     },
-    trigger: null, // 즉시 발송
+    trigger: null,
   });
 
-  console.log('[Notifications] 테스트 알림 발송됨');
+  console.log('[Notifications] Test notification sent');
 }
 
 const DAILY_REMINDER_ID_KEY = 'SYBA_DAILY_REMINDER_ID';
@@ -246,13 +249,14 @@ export async function scheduleDailyReminder(timeString: string): Promise<void> {
   // 시간 파싱 (HH:mm)
   const [hours, minutes] = timeString.split(':').map(Number);
 
-  // 랜덤 메시지 선택 (매일 다른 메시지를 위해 날짜 기반 인덱스)
+  // Select message based on day of year for daily variety
   const today = new Date();
   const dayOfYear = Math.floor(
     (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24)
   );
-  const messageIndex = dayOfYear % DAILY_REMINDER_MESSAGES.length;
-  const message = DAILY_REMINDER_MESSAGES[messageIndex];
+  const messages = getDailyReminderMessages();
+  const messageIndex = dayOfYear % messages.length;
+  const message = messages[messageIndex];
 
   const id = await Notifications.scheduleNotificationAsync({
     content: {
@@ -286,13 +290,14 @@ export async function cancelDailyReminder(): Promise<void> {
   }
 }
 
-// 랜덤 메시지로 즉시 알림 (테스트용)
+// Random daily reminder (test)
 export async function sendRandomDailyReminder(): Promise<void> {
   const hasPermission = await requestNotificationPermissions();
   if (!hasPermission) return;
 
-  const randomIndex = Math.floor(Math.random() * DAILY_REMINDER_MESSAGES.length);
-  const message = DAILY_REMINDER_MESSAGES[randomIndex];
+  const messages = getDailyReminderMessages();
+  const randomIndex = Math.floor(Math.random() * messages.length);
+  const message = messages[randomIndex];
 
   await Notifications.scheduleNotificationAsync({
     content: {
@@ -347,8 +352,8 @@ export async function scheduleMonthlySummaryNotification(): Promise<void> {
 
   const id = await Notifications.scheduleNotificationAsync({
     content: {
-      title: `${month}월 가계부 정리 완료!`,
-      body: '이번 달 수입/지출을 분석했어요. 확인해보세요!',
+      title: i18n.t('notifications.monthlySummaryTitle', { month }),
+      body: i18n.t('notifications.monthlySummaryBody'),
       data: { type: 'monthly_summary' },
     },
     trigger: {

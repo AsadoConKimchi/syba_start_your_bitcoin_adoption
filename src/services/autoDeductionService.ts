@@ -14,6 +14,7 @@ import { calculateAllCardsPayment } from '../utils/cardPaymentCalculator';
 import { createLoanRepaymentRecordData } from './debtAutoRecord';
 import { Card } from '../types/card';
 import { Loan } from '../types/debt';
+import i18n from '../i18n';
 
 const STORAGE_KEYS = {
   LAST_CARD_DEDUCTION: 'lastCardDeduction', // { cardId: 'YYYY-MM' }
@@ -46,7 +47,7 @@ export async function processCardPayments(): Promise<{
 
   const encryptionKey = useAuthStore.getState().encryptionKey;
   if (!encryptionKey) {
-    result.errors.push('인증 필요');
+    result.errors.push(i18n.t('errors.authRequired'));
     return result;
   }
 
@@ -136,7 +137,7 @@ export async function processLoanRepayments(): Promise<{
 
   const encryptionKey = useAuthStore.getState().encryptionKey;
   if (!encryptionKey) {
-    result.errors.push('인증 필요');
+    result.errors.push(i18n.t('errors.authRequired'));
     return result;
   }
 
@@ -276,7 +277,7 @@ export async function processInstallmentPayments(): Promise<{
 
   const encryptionKey = useAuthStore.getState().encryptionKey;
   if (!encryptionKey) {
-    result.errors.push('인증 필요');
+    result.errors.push(i18n.t('errors.authRequired'));
     return result;
   }
 
@@ -328,13 +329,13 @@ export async function processInstallmentPayments(): Promise<{
         date: todayDateStr,
         amount: installment.monthlyPayment,
         currency: 'KRW',
-        category: '할부',
+        category: 'installment',
         paymentMethod: 'card',
         cardId: installment.cardId,
         installmentMonths: null, // 이미 할부로 등록된 건이므로 null
         isInterestFree: null,
         installmentId: installment.id,
-        memo: `${installment.storeName} 할부 ${installment.paidMonths + 1}/${installment.months}회차`,
+        memo: i18n.t('notifications.installmentMemo', { name: installment.storeName, current: installment.paidMonths + 1, total: installment.months }),
         linkedAssetId: null, // 카드 결제이므로 자산 직접 연동 안 함
       });
 

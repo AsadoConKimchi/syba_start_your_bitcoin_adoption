@@ -9,7 +9,7 @@ export async function fetchUsdKrw(): Promise<number> {
   const response = await fetch(API_URL);
 
   if (!response.ok) {
-    throw new Error('환율 API 오류');
+    throw new Error('Exchange rate API error');
   }
 
   const data: ExchangeRateResponse = await response.json();

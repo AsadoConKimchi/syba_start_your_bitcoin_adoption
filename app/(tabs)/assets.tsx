@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useAuthStore } from '../../src/stores/authStore';
@@ -15,6 +16,7 @@ import { PremiumGate } from '../../src/components/PremiumGate';
 
 export default function AssetsScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const { t } = useTranslation();
 
   const { encryptionKey } = useAuthStore();
   const { isSubscribed } = useSubscriptionStore();
@@ -37,11 +39,9 @@ export default function AssetsScreen() {
     unsubscribeRealTimePrice,
   } = usePriceStore();
 
-  // 탭 포커스 시 WebSocket 연결, 포커스 해제 시 연결 해제
   useFocusEffect(
     useCallback(() => {
       subscribeRealTimePrice();
-
       return () => {
         unsubscribeRealTimePrice();
       };
@@ -54,9 +54,7 @@ export default function AssetsScreen() {
   const totalAssetKrw = getTotalAssetKrw(btcKrw);
   const btcRatio = getBtcRatio(btcKrw);
 
-  // 총 자산을 sats로 환산 (btcKrw가 있을 때만)
   const totalAssetSats = btcKrw ? Math.round(totalAssetKrw / (btcKrw / 100_000_000)) : 0;
-  // 법정화폐를 sats로 환산
   const totalFiatSats = btcKrw ? Math.round(totalFiat / (btcKrw / 100_000_000)) : 0;
 
   const fiatAssets = assets.filter(isFiatAsset);
@@ -71,18 +69,16 @@ export default function AssetsScreen() {
     setRefreshing(false);
   }, [encryptionKey]);
 
-  // 프리미엄이 아니면 프리미엄 게이트 표시
   if (!isSubscribed) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-        <PremiumGate feature="자산 관리" />
+        <PremiumGate feature={t('assets.management')} />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-      {/* 헤더 */}
       <View
         style={{
           flexDirection: 'row',
@@ -93,7 +89,7 @@ export default function AssetsScreen() {
           borderBottomColor: '#E5E7EB',
         }}
       >
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>자산</Text>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#1A1A1A' }}>{t('assets.title')}</Text>
         <TouchableOpacity onPress={() => router.push('/(modals)/add-asset')}>
           <Ionicons name="add-circle" size={28} color="#22C55E" />
         </TouchableOpacity>
@@ -105,7 +101,6 @@ export default function AssetsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#22C55E" />
         }
       >
-        {/* 총 자산 요약 */}
         <View style={{ padding: 20 }}>
           <View
             style={{
@@ -115,7 +110,7 @@ export default function AssetsScreen() {
               marginBottom: 24,
             }}
           >
-            <Text style={{ fontSize: 14, color: '#166534', marginBottom: 8 }}>총 자산</Text>
+            <Text style={{ fontSize: 14, color: '#166534', marginBottom: 8 }}>{t('assets.totalAssets')}</Text>
             {settings.displayUnit === 'BTC' ? (
               <>
                 <Text style={{ fontSize: 36, fontWeight: 'bold', color: '#F7931A', marginBottom: 4 }}>
@@ -131,10 +126,9 @@ export default function AssetsScreen() {
               </Text>
             )}
 
-            {/* 자산 구성 */}
             <View style={{ flexDirection: 'row', gap: 16 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: '#666666' }}>법정화폐</Text>
+                <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.fiatAssets')}</Text>
                 {settings.displayUnit === 'BTC' ? (
                   <>
                     <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
@@ -151,7 +145,7 @@ export default function AssetsScreen() {
                 )}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12, color: '#666666' }}>비트코인</Text>
+                <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.btcAssets')}</Text>
                 <Text style={{ fontSize: 16, fontWeight: '600', color: '#F7931A' }}>
                   {formatSats(totalBtc)}
                 </Text>
@@ -163,11 +157,10 @@ export default function AssetsScreen() {
               </View>
             </View>
 
-            {/* BTC 비중 바 */}
             {totalAssetKrw > 0 && (
               <View style={{ marginTop: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <Text style={{ fontSize: 12, color: '#666666' }}>BTC 비중</Text>
+                  <Text style={{ fontSize: 12, color: '#666666' }}>{t('assets.btcRatio')}</Text>
                   <Text style={{ fontSize: 12, fontWeight: '600', color: '#F7931A' }}>
                     {btcRatio.toFixed(1)}%
                   </Text>
@@ -193,11 +186,11 @@ export default function AssetsScreen() {
             )}
           </View>
 
-          {/* 법정화폐 자산 */}
+          {/* Fiat assets */}
           <View style={{ marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
-                법정화폐 ({fiatAssets.length})
+                {t('assets.fiatCount', { count: fiatAssets.length })}
               </Text>
               {settings.displayUnit === 'BTC' ? (
                 <View style={{ alignItems: 'flex-end' }}>
@@ -230,7 +223,7 @@ export default function AssetsScreen() {
               >
                 <Ionicons name="add-circle-outline" size={32} color="#9CA3AF" />
                 <Text style={{ fontSize: 14, color: '#9CA3AF', marginTop: 8 }}>
-                  계좌/자산 추가
+                  {t('assets.addAccount')}
                 </Text>
               </TouchableOpacity>
             ) : (
@@ -290,11 +283,11 @@ export default function AssetsScreen() {
             )}
           </View>
 
-          {/* 비트코인 자산 */}
+          {/* Bitcoin assets */}
           <View style={{ marginBottom: 24 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#1A1A1A' }}>
-                비트코인 ({btcAssets.length})
+                {t('assets.btcCount', { count: btcAssets.length })}
               </Text>
               <Text style={{ fontSize: 14, color: '#F7931A', fontWeight: '600' }}>
                 {formatSats(totalBtc)}
@@ -316,7 +309,7 @@ export default function AssetsScreen() {
               >
                 <Text style={{ fontSize: 32 }}>₿</Text>
                 <Text style={{ fontSize: 14, color: '#92400E', marginTop: 8 }}>
-                  비트코인 지갑 추가
+                  {t('assets.addBtcWallet')}
                 </Text>
               </TouchableOpacity>
             ) : (
@@ -355,7 +348,7 @@ export default function AssetsScreen() {
                         {asset.name}
                       </Text>
                       <Text style={{ fontSize: 11, color: '#92400E' }}>
-                        {asset.walletType === 'onchain' ? 'Onchain' : 'Lightning'}
+                        {asset.walletType === 'onchain' ? t('assets.onchain') : t('assets.lightning')}
                       </Text>
                     </View>
                   </View>
@@ -374,7 +367,7 @@ export default function AssetsScreen() {
             )}
           </View>
 
-          {/* BTC 시세 */}
+          {/* BTC price */}
           {btcKrw && (
             <View style={{ marginBottom: 24 }}>
               <View
@@ -429,7 +422,7 @@ export default function AssetsScreen() {
                         }}
                       >
                         <Text style={{ fontSize: 10, color: '#FFFFFF', fontWeight: '600' }}>
-                          오프라인
+                          {t('common.offline')}
                         </Text>
                       </View>
                     )}

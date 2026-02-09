@@ -13,11 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useTranslation } from 'react-i18next';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { isFiatAsset } from '../../src/types/asset';
-import { formatKrw } from '../../src/utils/formatters';
+import { formatKrw, formatKrwPlain } from '../../src/utils/formatters';
 import { calculateLoanPayment, generateRepaymentSchedule } from '../../src/utils/debtCalculator';
 import {
   RepaymentType,
@@ -29,6 +30,7 @@ import { BANKS } from '../../src/constants/banks';
 const LOAN_TERMS = [12, 24, 36, 48, 60, 120, 240, 360];
 
 export default function LoanDetailScreen() {
+  const { t } = useTranslation();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { encryptionKey } = useAuthStore();
   const { loans, updateLoan, deleteLoan } = useDebtStore();
@@ -83,12 +85,12 @@ export default function LoanDetailScreen() {
   if (!loan) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
-        <Text style={{ color: '#9CA3AF' }}>대출 정보를 찾을 수 없습니다</Text>
+        <Text style={{ color: '#9CA3AF' }}>{t('common.notFound')}</Text>
         <TouchableOpacity
           style={{ marginTop: 16, padding: 12, backgroundColor: '#3B82F6', borderRadius: 8 }}
           onPress={() => router.back()}
         >
-          <Text style={{ color: '#FFFFFF' }}>돌아가기</Text>
+          <Text style={{ color: '#FFFFFF' }}>{t('common.back')}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -118,36 +120,32 @@ export default function LoanDetailScreen() {
   );
 
   const formatTermLabel = (months: number): string => {
-    if (months < 12) return `${months}개월`;
-    const years = Math.floor(months / 12);
-    const remainingM = months % 12;
-    if (remainingM === 0) return `${years}년`;
-    return `${years}년 ${remainingM}개월`;
+    return t('installment.monthsFormat', { count: months });
   };
 
   const handleSave = async () => {
     if (!encryptionKey) {
-      Alert.alert('오류', '인증이 필요합니다.');
+      Alert.alert(t('common.error'), t('common.authRequired'));
       return;
     }
 
     if (!name.trim()) {
-      Alert.alert('오류', '대출명을 입력해주세요.');
+      Alert.alert(t('common.error'), t('loan.nameRequired'));
       return;
     }
 
     if (!institution.trim()) {
-      Alert.alert('오류', '대출 기관을 입력해주세요.');
+      Alert.alert(t('common.error'), t('loan.lenderRequired'));
       return;
     }
 
     if (amount <= 0) {
-      Alert.alert('오류', '대출 원금을 입력해주세요.');
+      Alert.alert(t('common.error'), t('loan.principalRequired'));
       return;
     }
 
     if (rate <= 0) {
-      Alert.alert('오류', '이자율을 입력해주세요.');
+      Alert.alert(t('common.error'), t('loan.rateRequired'));
       return;
     }
 
@@ -172,10 +170,10 @@ export default function LoanDetailScreen() {
       );
 
       setIsEditing(false);
-      Alert.alert('완료', '대출 정보가 수정되었습니다.');
+      Alert.alert(t('common.done'), t('loan.editDone'));
     } catch (error) {
       console.error('대출 수정 실패:', error);
-      Alert.alert('오류', '대출 수정에 실패했습니다.');
+      Alert.alert(t('common.error'), t('loan.editFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -183,12 +181,12 @@ export default function LoanDetailScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      '대출 삭제',
-      `"${loan.name}" 대출을 삭제하시겠습니까?`,
+      t('loan.deleteConfirm'),
+      t('loan.deleteMessage', { name: loan.name }),
       [
-        { text: '취소', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '삭제',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             if (!encryptionKey) return;
@@ -197,7 +195,7 @@ export default function LoanDetailScreen() {
               router.back();
             } catch (error) {
               console.error('대출 삭제 실패:', error);
-              Alert.alert('오류', '대출 삭제에 실패했습니다.');
+              Alert.alert(t('common.error'), t('loan.deleteFailed'));
             }
           },
         },
@@ -223,9 +221,9 @@ export default function LoanDetailScreen() {
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#666666" />
           </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>대출 상세</Text>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('loan.detailTitle')}</Text>
           <TouchableOpacity onPress={() => setIsEditing(true)}>
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#3B82F6' }}>수정</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#3B82F6' }}>{t('common.edit')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -255,21 +253,21 @@ export default function LoanDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ fontSize: 14, color: '#1E40AF' }}>대출 원금</Text>
+              <Text style={{ fontSize: 14, color: '#1E40AF' }}>{t('loan.principal')}</Text>
               <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#2563EB' }}>
                 {formatKrw(loan.principal)}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
               <Text style={{ fontSize: 14, color: '#1E40AF' }}>
-                월 상환금 {loan.repaymentType === 'bullet' && '(이자)'}
+                {t('loan.monthlyPayment')} {loan.repaymentType === 'bullet' && `(${t('loan.monthlyPaymentInterest').replace(t('loan.monthlyPayment') + ' ', '')})`}
               </Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#2563EB' }}>
                 {formatKrw(loan.monthlyPayment)}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontSize: 14, color: '#1E40AF' }}>잔여 원금</Text>
+              <Text style={{ fontSize: 14, color: '#1E40AF' }}>{t('loan.remainingPrincipal')}</Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: '#EF4444' }}>
                 {formatKrw(loan.remainingPrincipal)}
               </Text>
@@ -286,7 +284,7 @@ export default function LoanDetailScreen() {
             }}
           >
             <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 }}>
-              진행 상태
+              {t('loan.progressStatus')}
             </Text>
             <View
               style={{
@@ -308,10 +306,10 @@ export default function LoanDetailScreen() {
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={{ fontSize: 14, color: '#666666' }}>
-                {loan.paidMonths}/{loan.termMonths}개월 상환
+                {t('debts.repaidMonths', { paid: loan.paidMonths, total: loan.termMonths })}
               </Text>
               <Text style={{ fontSize: 14, fontWeight: '600', color: '#3B82F6' }}>
-                {remainingMonths}개월 남음
+                {t('debts.remainingMonths', { count: remainingMonths })}
               </Text>
             </View>
           </View>
@@ -326,10 +324,10 @@ export default function LoanDetailScreen() {
             }}
           >
             <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 }}>
-              상세 정보
+              {t('loan.detailInfo')}
             </Text>
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>상환 방식</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('loan.repaymentType')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                 {REPAYMENT_TYPE_LABELS[loan.repaymentType]}
               </Text>
@@ -338,44 +336,44 @@ export default function LoanDetailScreen() {
               </Text>
             </View>
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>연 이자율</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('loan.annualRate')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>{loan.interestRate}%</Text>
             </View>
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>대출 기간</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('loan.loanTerm')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                 {formatTermLabel(loan.termMonths)}
               </Text>
             </View>
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>시작일 ~ 종료일</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('loan.startEndDate')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
                 {new Date(loan.startDate).toLocaleDateString('ko-KR')} ~ {new Date(loan.endDate).toLocaleDateString('ko-KR')}
               </Text>
             </View>
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>상환일</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('loan.repaymentDay')}</Text>
               <Text style={{ fontSize: 14, color: '#1A1A1A' }}>
-                {loan.repaymentDay ? `매월 ${loan.repaymentDay}일` : `시작일 기준 (매월 ${parseInt(loan.startDate.split('-')[2])}일)`}
+                {loan.repaymentDay ? t('loan.repaymentDayFormat', { day: loan.repaymentDay }) : `${t('loan.repaymentDayDefault')} (${t('loan.repaymentDayFormat', { day: parseInt(loan.startDate.split('-')[2]) })})`}
               </Text>
             </View>
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>연결 계좌</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('loan.linkedAccount')}</Text>
               <Text style={{ fontSize: 14, color: loan.linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
                 {loan.linkedAssetId
-                  ? fiatAssets.find((a) => a.id === loan.linkedAssetId)?.name || '알 수 없는 계좌'
-                  : '연결 안 함'}
+                  ? fiatAssets.find((a) => a.id === loan.linkedAssetId)?.name || t('loan.unknownAccount')
+                  : t('loan.noLinkedAccount')}
               </Text>
             </View>
             <View style={{ marginBottom: 12 }}>
-              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>총 예상 이자</Text>
+              <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('loan.totalInterest')}</Text>
               <Text style={{ fontSize: 14, color: '#EF4444' }}>
                 {formatKrw(loan.totalInterest)}
               </Text>
             </View>
             {loan.memo && (
               <View>
-                <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>메모</Text>
+                <Text style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 4 }}>{t('common.memo')}</Text>
                 <Text style={{ fontSize: 14, color: '#1A1A1A' }}>{loan.memo}</Text>
               </View>
             )}
@@ -396,7 +394,7 @@ export default function LoanDetailScreen() {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="calendar-outline" size={24} color="#3B82F6" style={{ marginRight: 12 }} />
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#2563EB' }}>상환 스케줄 보기</Text>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#2563EB' }}>{t('loan.viewSchedule')}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#3B82F6" />
           </TouchableOpacity>
@@ -412,7 +410,7 @@ export default function LoanDetailScreen() {
             }}
             onPress={handleDelete}
           >
-            <Text style={{ fontSize: 16, fontWeight: '600', color: '#DC2626' }}>대출 삭제</Text>
+            <Text style={{ fontSize: 16, fontWeight: '600', color: '#DC2626' }}>{t('loan.deleteConfirm')}</Text>
           </TouchableOpacity>
         </ScrollView>
 
@@ -438,7 +436,7 @@ export default function LoanDetailScreen() {
                   borderBottomColor: '#E5E7EB',
                 }}
               >
-                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>상환 스케줄</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('loan.repaymentSchedule')}</Text>
                 <TouchableOpacity onPress={() => setShowSchedule(false)}>
                   <Ionicons name="close" size={24} color="#666666" />
                 </TouchableOpacity>
@@ -456,19 +454,19 @@ export default function LoanDetailScreen() {
                   }}
                 >
                   <Text style={{ flex: 1, fontSize: 12, fontWeight: '600', color: '#666666', textAlign: 'center' }}>
-                    회차
+                    {t('loan.scheduleNumber')}
                   </Text>
                   <Text style={{ flex: 2, fontSize: 12, fontWeight: '600', color: '#666666', textAlign: 'center' }}>
-                    날짜
+                    {t('common.date')}
                   </Text>
                   <Text style={{ flex: 2, fontSize: 12, fontWeight: '600', color: '#666666', textAlign: 'right' }}>
-                    원금
+                    {t('loan.schedulePrincipal')}
                   </Text>
                   <Text style={{ flex: 2, fontSize: 12, fontWeight: '600', color: '#666666', textAlign: 'right' }}>
-                    이자
+                    {t('loan.scheduleInterest')}
                   </Text>
                   <Text style={{ flex: 2, fontSize: 12, fontWeight: '600', color: '#666666', textAlign: 'right' }}>
-                    합계
+                    {t('loan.scheduleTotal')}
                   </Text>
                 </View>
 
@@ -514,7 +512,7 @@ export default function LoanDetailScreen() {
                           textAlign: 'right',
                         }}
                       >
-                        {(item.principal / 10000).toFixed(1)}만
+                        {formatKrwPlain(item.principal)}
                       </Text>
                       <Text
                         style={{
@@ -524,7 +522,7 @@ export default function LoanDetailScreen() {
                           textAlign: 'right',
                         }}
                       >
-                        {(item.interest / 10000).toFixed(1)}만
+                        {formatKrwPlain(item.interest)}
                       </Text>
                       <Text
                         style={{
@@ -535,7 +533,7 @@ export default function LoanDetailScreen() {
                           textAlign: 'right',
                         }}
                       >
-                        {(item.total / 10000).toFixed(1)}만
+                        {formatKrwPlain(item.total)}
                       </Text>
                     </View>
                   );
@@ -565,9 +563,9 @@ export default function LoanDetailScreen() {
         }}
       >
         <TouchableOpacity onPress={() => setIsEditing(false)}>
-          <Text style={{ fontSize: 16, color: '#666666' }}>취소</Text>
+          <Text style={{ fontSize: 16, color: '#666666' }}>{t('common.cancel')}</Text>
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>대출 수정</Text>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('loan.editTitle')}</Text>
         <TouchableOpacity onPress={handleSave} disabled={isSubmitting}>
           <Text
             style={{
@@ -576,7 +574,7 @@ export default function LoanDetailScreen() {
               color: isSubmitting ? '#9CA3AF' : '#3B82F6',
             }}
           >
-            저장
+            {t('common.save')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -585,7 +583,7 @@ export default function LoanDetailScreen() {
         <View style={{ padding: 20 }}>
           {/* 대출명 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>대출명 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.loanName')} *</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -601,7 +599,7 @@ export default function LoanDetailScreen() {
 
           {/* 대출 기관 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>대출 기관 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.lender')} *</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -614,7 +612,7 @@ export default function LoanDetailScreen() {
               onPress={() => setShowBankPicker(true)}
             >
               <Text style={{ fontSize: 16, color: institution ? '#1A1A1A' : '#9CA3AF' }}>
-                {institution || '은행/기관 선택'}
+                {institution || t('loan.selectLender')}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -622,7 +620,7 @@ export default function LoanDetailScreen() {
 
           {/* 대출 원금 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>대출 원금 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.principal')} *</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -648,7 +646,7 @@ export default function LoanDetailScreen() {
 
           {/* 연 이자율 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>연 이자율 (%) *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.annualRate')}</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -665,7 +663,7 @@ export default function LoanDetailScreen() {
 
           {/* 상환 방식 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>상환 방식 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.repaymentType')} *</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -688,7 +686,7 @@ export default function LoanDetailScreen() {
 
           {/* 대출 기간 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>대출 기간 *</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.loanTerm')} *</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -709,7 +707,7 @@ export default function LoanDetailScreen() {
 
           {/* 시작일 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>대출 시작일</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.startDate')}</Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#F9FAFB',
@@ -731,7 +729,7 @@ export default function LoanDetailScreen() {
           {/* 이미 상환한 개월 */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-              이미 상환한 개월 수
+              {t('loan.paidMonths')}
             </Text>
             <TextInput
               style={{
@@ -750,7 +748,7 @@ export default function LoanDetailScreen() {
           {/* 상환일 */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-              상환일 (매월)
+              {t('loan.repaymentDay')}
             </Text>
             <TouchableOpacity
               style={{
@@ -764,7 +762,7 @@ export default function LoanDetailScreen() {
               onPress={() => setShowRepaymentDayPicker(true)}
             >
               <Text style={{ fontSize: 16, color: repaymentDay ? '#1A1A1A' : '#9CA3AF' }}>
-                {repaymentDay ? `매월 ${repaymentDay}일` : '시작일 기준 (기본값)'}
+                {repaymentDay ? t('loan.repaymentDayFormat', { day: repaymentDay }) : t('loan.repaymentDayDefault')}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -773,7 +771,7 @@ export default function LoanDetailScreen() {
           {/* 연결 계좌 */}
           <View style={{ marginBottom: 20 }}>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-              연결 계좌 (자동 차감)
+              {t('loan.linkedAccount')}
             </Text>
             <TouchableOpacity
               style={{
@@ -788,8 +786,8 @@ export default function LoanDetailScreen() {
             >
               <Text style={{ fontSize: 16, color: linkedAssetId ? '#1A1A1A' : '#9CA3AF' }}>
                 {linkedAssetId
-                  ? fiatAssets.find((a) => a.id === linkedAssetId)?.name || '계좌 선택'
-                  : '계좌 선택 (선택사항)'}
+                  ? fiatAssets.find((a) => a.id === linkedAssetId)?.name || t('loan.selectAccount')
+                  : t('loan.selectAccount')}
               </Text>
               <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
             </TouchableOpacity>
@@ -797,7 +795,7 @@ export default function LoanDetailScreen() {
 
           {/* 메모 */}
           <View style={{ marginBottom: 20 }}>
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>메모</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('common.memo')}</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -807,7 +805,7 @@ export default function LoanDetailScreen() {
                 color: '#1A1A1A',
                 minHeight: 80,
               }}
-              placeholder="메모 (선택)"
+              placeholder={t('common.memo')}
               multiline
               value={memo}
               onChangeText={setMemo}
@@ -825,16 +823,16 @@ export default function LoanDetailScreen() {
               }}
             >
               <Text style={{ fontSize: 14, fontWeight: '600', color: '#1E40AF', marginBottom: 12 }}>
-                계산 결과
+                {t('loan.calculationResult')}
               </Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                <Text style={{ color: '#1E40AF' }}>월 상환금</Text>
+                <Text style={{ color: '#1E40AF' }}>{t('loan.monthlyPayment')}</Text>
                 <Text style={{ fontWeight: 'bold', color: '#2563EB' }}>
                   {formatKrw(monthlyPayment)}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ color: '#1E40AF' }}>총 예상 이자</Text>
+                <Text style={{ color: '#1E40AF' }}>{t('loan.totalInterest')}</Text>
                 <Text style={{ color: '#2563EB' }}>{formatKrw(totalInterest)}</Text>
               </View>
             </View>
@@ -855,7 +853,7 @@ export default function LoanDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>대출 기관 선택</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectLenderTitle')}</Text>
               <TouchableOpacity onPress={() => setShowBankPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -888,7 +886,7 @@ export default function LoanDetailScreen() {
 
             {/* 직접 입력 */}
             <View style={{ marginTop: 16 }}>
-              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>직접 입력</Text>
+              <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.customLender')}</Text>
               <View style={{ flexDirection: 'row' }}>
                 <TextInput
                   style={{
@@ -899,7 +897,7 @@ export default function LoanDetailScreen() {
                     fontSize: 16,
                     color: '#1A1A1A',
                   }}
-                  placeholder="기관명 입력"
+                  placeholder={t('loan.customLenderPlaceholder')}
                   value={selectedBankId === 'custom' ? institution : ''}
                   onChangeText={(text) => {
                     setSelectedBankId('custom');
@@ -916,7 +914,7 @@ export default function LoanDetailScreen() {
                   }}
                   onPress={() => setShowBankPicker(false)}
                 >
-                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>확인</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('common.confirm')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -936,7 +934,7 @@ export default function LoanDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>상환 방식</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectRepaymentType')}</Text>
               <TouchableOpacity onPress={() => setShowTypePicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -987,7 +985,7 @@ export default function LoanDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>대출 기간</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectLoanTerm')}</Text>
               <TouchableOpacity onPress={() => setShowTermPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -1023,7 +1021,7 @@ export default function LoanDetailScreen() {
               ))}
             </View>
 
-            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>직접 입력 (개월)</Text>
+            <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>{t('loan.customTermInput')}</Text>
             <TextInput
               style={{
                 backgroundColor: '#F9FAFB',
@@ -1032,7 +1030,7 @@ export default function LoanDetailScreen() {
                 fontSize: 16,
                 color: '#1A1A1A',
               }}
-              placeholder="개월 수 입력"
+              placeholder={t('loan.customTermPlaceholder')}
               keyboardType="number-pad"
               value={customTerm}
               onChangeText={setCustomTerm}
@@ -1048,7 +1046,7 @@ export default function LoanDetailScreen() {
               }}
               onPress={() => setShowTermPicker(false)}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>확인</Text>
+              <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('common.confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1067,7 +1065,7 @@ export default function LoanDetailScreen() {
               }}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>날짜 선택</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('common.selectDate')}</Text>
                 <TouchableOpacity onPress={() => setShowDatePicker(false)}>
                   <Ionicons name="close" size={24} color="#666666" />
                 </TouchableOpacity>
@@ -1095,7 +1093,7 @@ export default function LoanDetailScreen() {
                   }}
                   onPress={() => setShowDatePicker(false)}
                 >
-                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>확인</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('common.confirm')}</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -1116,7 +1114,7 @@ export default function LoanDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>상환일 선택</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectRepaymentDay')}</Text>
               <TouchableOpacity onPress={() => setShowRepaymentDayPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -1140,7 +1138,7 @@ export default function LoanDetailScreen() {
                 setShowRepaymentDayPicker(false);
               }}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>시작일 기준 (기본값)</Text>
+              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('loan.repaymentDayDefault')}</Text>
               {repaymentDay === null && (
                 <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
               )}
@@ -1195,7 +1193,7 @@ export default function LoanDetailScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>연결 계좌 선택</Text>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>{t('loan.selectAccountTitle')}</Text>
               <TouchableOpacity onPress={() => setShowAssetPicker(false)}>
                 <Ionicons name="close" size={24} color="#666666" />
               </TouchableOpacity>
@@ -1219,7 +1217,7 @@ export default function LoanDetailScreen() {
                 setShowAssetPicker(false);
               }}
             >
-              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>연결 안 함</Text>
+              <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{t('loan.noLinkedAccount')}</Text>
               {linkedAssetId === null && (
                 <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
               )}
@@ -1229,7 +1227,7 @@ export default function LoanDetailScreen() {
               <View style={{ padding: 20, alignItems: 'center' }}>
                 <Ionicons name="wallet-outline" size={48} color="#9CA3AF" />
                 <Text style={{ color: '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
-                  등록된 계좌가 없습니다.{'\n'}자산 탭에서 계좌를 먼저 추가해주세요.
+                  {t('loan.noAccountsHint')}
                 </Text>
               </View>
             ) : (
@@ -1256,8 +1254,8 @@ export default function LoanDetailScreen() {
                     <View>
                       <Text style={{ fontSize: 16, color: '#1A1A1A' }}>{asset.name}</Text>
                       <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>
-                        {asset.balance.toLocaleString()}원
-                        {asset.isOverdraft && ' (마이너스통장)'}
+                        {asset.balance.toLocaleString()}{t('common.won')}
+                        {asset.isOverdraft && ` (${t('assets.overdraft')})`}
                       </Text>
                     </View>
                     {linkedAssetId === asset.id && (

@@ -16,7 +16,7 @@ export async function fetchCurrentBtcKrw(): Promise<number> {
   const response = await fetch(`${UPBIT_BASE_URL}/ticker?markets=KRW-BTC`);
 
   if (!response.ok) {
-    throw new Error('업비트 API 오류');
+    throw new Error('Upbit API error');
   }
 
   const data: UpbitTicker[] = await response.json();
@@ -33,13 +33,13 @@ export async function fetchHistoricalBtcPrice(date: string): Promise<number> {
   );
 
   if (!response.ok) {
-    throw new Error('업비트 API 오류');
+    throw new Error('Upbit API error');
   }
 
   const data: UpbitCandle[] = await response.json();
 
   if (data.length === 0) {
-    throw new Error('해당 날짜 시세 없음');
+    throw new Error('No price data for the given date');
   }
 
   return data[0].trade_price;
@@ -52,7 +52,7 @@ export async function fetchDailyPrices(days: number = 200): Promise<Map<string, 
   );
 
   if (!response.ok) {
-    throw new Error('업비트 API 오류');
+    throw new Error('Upbit API error');
   }
 
   const data: UpbitCandle[] = await response.json();

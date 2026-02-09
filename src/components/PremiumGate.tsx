@@ -2,23 +2,22 @@ import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
 import { getSubscriptionPriceSats } from '../services/appConfigService';
 import { CONFIG } from '../constants/config';
 
 interface PremiumGateProps {
   children: React.ReactNode;
-  feature?: string; // 어떤 기능인지 설명 (예: "자산 관리", "차트 보기")
+  feature?: string;
 }
 
-/**
- * 프리미엄 기능을 감싸는 게이트 컴포넌트
- * - isSubscribed가 true면 children을 렌더링
- * - false면 프리미엄 구독 안내 UI를 표시
- */
-export function PremiumGate({ children, feature = '이 기능' }: PremiumGateProps) {
+export function PremiumGate({ children, feature }: PremiumGateProps) {
   const { isSubscribed } = useSubscriptionStore();
+  const { t } = useTranslation();
   const [subscriptionPrice, setSubscriptionPrice] = useState(CONFIG.SUBSCRIPTION_PRICE_SATS);
+
+  const displayFeature = feature || t('premium.feature');
 
   useEffect(() => {
     getSubscriptionPriceSats().then(setSubscriptionPrice);
@@ -61,7 +60,7 @@ export function PremiumGate({ children, feature = '이 기능' }: PremiumGatePro
           textAlign: 'center',
         }}
       >
-        프리미엄 기능
+        {t('premium.feature')}
       </Text>
 
       <Text
@@ -73,7 +72,7 @@ export function PremiumGate({ children, feature = '이 기능' }: PremiumGatePro
           lineHeight: 24,
         }}
       >
-        {feature}은(는) 프리미엄 구독자만{'\n'}이용할 수 있습니다.
+        {t('premium.featureDescription', { feature: displayFeature })}
       </Text>
 
       <View
@@ -86,15 +85,15 @@ export function PremiumGate({ children, feature = '이 기능' }: PremiumGatePro
         }}
       >
         <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 12 }}>
-          프리미엄 기능
+          {t('premium.benefits')}
         </Text>
         <View style={{ gap: 8 }}>
-          <FeatureItem text="무제한 과거 기록 보관/조회" />
-          <FeatureItem text="할부/대출 관리" />
-          <FeatureItem text="자산 현황" />
-          <FeatureItem text="차트 및 통계" />
-          <FeatureItem text="카드 무제한 등록" />
-          <FeatureItem text="데이터 백업" />
+          <FeatureItem text={t('premium.unlimitedRecords')} />
+          <FeatureItem text={t('premium.debtManagement')} />
+          <FeatureItem text={t('premium.assetStatus')} />
+          <FeatureItem text={t('premium.chartsStats')} />
+          <FeatureItem text={t('premium.unlimitedCards')} />
+          <FeatureItem text={t('premium.dataBackup')} />
         </View>
       </View>
 
@@ -112,12 +111,12 @@ export function PremiumGate({ children, feature = '이 기능' }: PremiumGatePro
       >
         <Ionicons name="diamond" size={20} color="#FFFFFF" />
         <Text style={{ fontSize: 16, fontWeight: '600', color: '#FFFFFF' }}>
-          프리미엄 구독하기
+          {t('premium.subscribe')}
         </Text>
       </TouchableOpacity>
 
       <Text style={{ fontSize: 14, color: '#F7931A', marginTop: 12, fontWeight: '600' }}>
-        월 {subscriptionPrice.toLocaleString()} sats
+        {t('premium.monthlyPrice', { price: subscriptionPrice.toLocaleString() })}
       </Text>
     </View>
   );
@@ -132,11 +131,11 @@ function FeatureItem({ text }: { text: string }) {
   );
 }
 
-/**
- * 프리미엄이 아닐 때 표시되는 인라인 배너 (차트 등에 사용)
- */
-export function PremiumBanner({ feature = '이 기능' }: { feature?: string }) {
+export function PremiumBanner({ feature }: { feature?: string }) {
   const { isSubscribed } = useSubscriptionStore();
+  const { t } = useTranslation();
+
+  const displayFeature = feature || t('premium.feature');
 
   if (isSubscribed) {
     return null;
@@ -168,10 +167,10 @@ export function PremiumBanner({ feature = '이 기능' }: { feature?: string }) 
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 14, fontWeight: '600', color: '#92400E' }}>
-          {feature}
+          {t('premium.bannerFeature', { feature: displayFeature })}
         </Text>
         <Text style={{ fontSize: 12, color: '#B45309' }}>
-          프리미엄 구독으로 이용하세요
+          {t('premium.bannerHint')}
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={20} color="#92400E" />

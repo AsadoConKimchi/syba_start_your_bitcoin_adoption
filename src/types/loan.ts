@@ -22,6 +22,13 @@ export interface Loan {
   updatedAt: string;
 }
 
+export const REPAYMENT_TYPE_LABEL_KEYS: Record<RepaymentType, string> = {
+  bullet: 'loan.bullet',
+  equal_principal_interest: 'loan.equalPrincipalInterest',
+  equal_principal: 'loan.equalPrincipal',
+};
+
+// Legacy fallback
 export const REPAYMENT_TYPE_LABELS: Record<RepaymentType, string> = {
   bullet: '만기일시상환',
   equal_principal_interest: '원리금균등상환',

@@ -1,7 +1,7 @@
 # 다음 빌드 대기 중인 변경사항
 
-**현재 배포 버전:** v0.1.5
-**다음 예정 버전:** v0.1.6
+**현재 배포 버전:** v0.1.6
+**다음 예정 버전:** v0.1.7
 
 ---
 
@@ -22,15 +22,22 @@
 
 ## 추후 구현 예정
 
-### 1. 백업 로컬 저장 기능 추가
-- **현재 상태**: `Sharing.shareAsync()`는 시스템 공유 시트만 열림 → Google Drive/Gmail 등 외부 공유는 되지만, 기기 로컬 저장소에 직접 저장하는 옵션이 없음
-- **파일**: `app/(tabs)/settings.tsx` — `handleBackup()` 함수
+### 1. ~~백업 로컬 저장 기능 추가~~ ✅ v0.1.6에서 완료
+- StorageAccessFramework + Alert 3버튼(취소/기기에 저장/외부 공유) 구현 완료
+
+### 2. 결제 상태 확인: 폴링 → Supabase Realtime 전환
+- **현재 상태**: `blinkProxy.ts`의 `waitForPayment()`가 3초마다 Edge Function 폴링 → 콜드 스타트 시 첫 요청 실패 에러 발생
+- **수정 파일**:
+  1. `src/services/blinkProxy.ts` — `waitForPayment()` 폴링 제거, Supabase Realtime 구독으로 교체 (~20줄)
+  2. `app/(modals)/subscription.tsx` — 호출부 조정 (~5줄)
+  3. Supabase Edge Function (`blink-proxy`) — 결제 확인 시 `payments` 테이블 status를 PAID로 업데이트 추가 (~10줄)
 - **수정 방법**:
-  1. `expo-file-system`의 `StorageAccessFramework` 사용
-  2. `SAF.requestDirectoryPermissionsAsync()`로 사용자가 저장 위치 선택
-  3. `SAF.createFileAsync()`로 `.enc` 파일을 선택한 위치에 저장
-  4. Alert에서 "로컬 저장" / "외부 공유" 선택지 제공
-- **관련 Phase**: Phase C (Google Drive/iCloud 백업과 연계)
+  1. 인보이스 생성 시 `payments` 테이블에 레코드 생성 (status: PENDING)
+  2. 앱에서 `supabase.channel().on('postgres_changes', ...)` 로 해당 레코드 구독
+  3. Edge Function에서 Blink 결제 확인 → `payments` 테이블 PAID 업데이트
+  4. Realtime이 앱에 즉시 알림 → 구독 활성화
+- **장점**: Edge Function 반복 호출 제거, 콜드 스타트 문제 해결, 실시간 반응
+- **비용**: Supabase Realtime은 무료 티어에 포함 (추가 비용 없음)
 
 ---
 

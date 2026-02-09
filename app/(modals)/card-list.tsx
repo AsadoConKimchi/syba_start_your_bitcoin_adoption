@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { Card } from '../../src/types/card';
@@ -16,6 +17,7 @@ import { Card } from '../../src/types/card';
 const FREE_CARD_LIMIT = 3;
 
 export default function CardListScreen() {
+  const { t } = useTranslation();
   const { cards, deleteCard, setDefaultCard } = useCardStore();
   const { isSubscribed } = useSubscriptionStore();
   const [editMode, setEditMode] = useState(false);
@@ -25,12 +27,12 @@ export default function CardListScreen() {
 
   const handleDelete = (card: Card) => {
     Alert.alert(
-      '카드 삭제',
-      `"${card.name}" 카드를 삭제하시겠습니까?`,
+      t('card.deleteConfirm'),
+      t('card.deleteMessage', { name: card.name }),
       [
-        { text: '취소', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: '삭제',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: () => deleteCard(card.id),
         },
@@ -40,7 +42,7 @@ export default function CardListScreen() {
 
   const handleSetDefault = (card: Card) => {
     setDefaultCard(card.id);
-    Alert.alert('기본 카드 설정', `"${card.name}"이(가) 기본 카드로 설정되었습니다.`);
+    Alert.alert(t('card.setDefault'), t('card.setDefaultMessage', { name: card.name }));
   };
 
   return (
@@ -59,10 +61,10 @@ export default function CardListScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#666666" />
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>카드 관리</Text>
+        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>{t('card.management')}</Text>
         <TouchableOpacity onPress={() => setEditMode(!editMode)}>
           <Text style={{ fontSize: 14, color: '#F7931A' }}>
-            {editMode ? '완료' : '편집'}
+            {editMode ? t('common.done') : t('common.edit')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -79,7 +81,7 @@ export default function CardListScreen() {
           >
             <Text style={{ fontSize: 48, marginBottom: 12 }}>💳</Text>
             <Text style={{ fontSize: 16, color: '#666666', textAlign: 'center', marginBottom: 20 }}>
-              등록된 카드가 없습니다
+              {t('card.noCards')}
             </Text>
             <TouchableOpacity
               style={{
@@ -91,7 +93,7 @@ export default function CardListScreen() {
               onPress={() => router.push('/(modals)/add-card')}
             >
               <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '600' }}>
-                카드 등록하기
+                {t('card.addFirstCard')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -126,14 +128,14 @@ export default function CardListScreen() {
                           borderRadius: 4,
                         }}
                       >
-                        <Text style={{ fontSize: 10, color: '#FFFFFF' }}>기본</Text>
+                        <Text style={{ fontSize: 10, color: '#FFFFFF' }}>{t('card.defaultBadge')}</Text>
                       </View>
                     )}
                   </View>
 
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                     <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
-                      {card.type === 'credit' ? '신용카드' : card.type === 'debit' ? '체크카드' : '선불카드'}
+                      {card.type === 'credit' ? t('card.credit') : card.type === 'debit' ? t('card.debit') : t('card.prepaid')}
                     </Text>
 
                     {editMode ? (
@@ -179,8 +181,8 @@ export default function CardListScreen() {
           {!isSubscribed && (
             <View style={{ marginBottom: 12 }}>
               <Text style={{ fontSize: 12, color: '#9CA3AF', textAlign: 'center' }}>
-                {cards.length}/{FREE_CARD_LIMIT}장 등록됨
-                {!canAddMoreCards && ' (프리미엄 구독 시 무제한)'}
+                {t('card.cardCount', { count: cards.length, max: FREE_CARD_LIMIT })}
+                {!canAddMoreCards && ` ${t('card.premiumUnlimited')}`}
               </Text>
             </View>
           )}
@@ -199,12 +201,12 @@ export default function CardListScreen() {
                 router.push('/(modals)/add-card');
               } else {
                 Alert.alert(
-                  '카드 등록 제한',
-                  `무료 사용자는 최대 ${FREE_CARD_LIMIT}장까지 등록할 수 있습니다.`,
+                  t('card.registerLimitTitle'),
+                  t('card.registerLimitMessage', { max: FREE_CARD_LIMIT }),
                   [
-                    { text: '취소', style: 'cancel' },
+                    { text: t('common.cancel'), style: 'cancel' },
                     {
-                      text: '프리미엄 구독',
+                      text: t('card.premiumSubscribe'),
                       onPress: () => router.push('/(modals)/subscription'),
                     },
                   ]
@@ -214,7 +216,7 @@ export default function CardListScreen() {
           >
             <Ionicons name="add" size={20} color="#FFFFFF" />
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              새 카드 등록
+              {t('card.addNewCard')}
             </Text>
           </TouchableOpacity>
         </View>

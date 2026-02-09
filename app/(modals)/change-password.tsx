@@ -11,9 +11,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/stores/authStore';
 
 export default function ChangePasswordScreen() {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,27 +27,27 @@ export default function ChangePasswordScreen() {
 
   const handleSubmit = async () => {
     if (!currentPassword) {
-      Alert.alert('오류', '현재 비밀번호를 입력해주세요.');
+      Alert.alert(t('common.error'), t('changePassword.currentRequired'));
       return;
     }
 
     if (!newPassword) {
-      Alert.alert('오류', '새 비밀번호를 입력해주세요.');
+      Alert.alert(t('common.error'), t('changePassword.newRequired'));
       return;
     }
 
     if (newPassword.length < 12) {
-      Alert.alert('오류', '비밀번호는 12자 이상이어야 합니다.');
+      Alert.alert(t('common.error'), t('changePassword.tooShort'));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('오류', '새 비밀번호가 일치하지 않습니다.');
+      Alert.alert(t('common.error'), t('changePassword.confirmMismatch'));
       return;
     }
 
     if (currentPassword === newPassword) {
-      Alert.alert('오류', '현재 비밀번호와 다른 비밀번호를 입력해주세요.');
+      Alert.alert(t('common.error'), t('changePassword.samePassword'));
       return;
     }
 
@@ -54,14 +56,14 @@ export default function ChangePasswordScreen() {
     try {
       const success = await changePassword(currentPassword, newPassword);
       if (success) {
-        Alert.alert('완료', '비밀번호가 변경되었습니다.', [
-          { text: '확인', onPress: () => router.back() },
+        Alert.alert(t('common.done'), t('changePassword.success'), [
+          { text: t('common.confirm'), onPress: () => router.back() },
         ]);
       } else {
-        Alert.alert('오류', '현재 비밀번호가 일치하지 않습니다.');
+        Alert.alert(t('common.error'), t('changePassword.wrongCurrent'));
       }
     } catch (error) {
-      Alert.alert('오류', '비밀번호 변경에 실패했습니다.');
+      Alert.alert(t('common.error'), t('changePassword.failed'));
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +87,7 @@ export default function ChangePasswordScreen() {
           }}
         >
           <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1A1A1A' }}>
-            비밀번호 변경
+            {t('changePassword.title')}
           </Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Ionicons name="close" size={24} color="#666666" />
@@ -96,7 +98,7 @@ export default function ChangePasswordScreen() {
           {/* 현재 비밀번호 */}
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-              현재 비밀번호
+              {t('changePassword.currentPassword')}
             </Text>
             <View
               style={{
@@ -110,7 +112,7 @@ export default function ChangePasswordScreen() {
             >
               <TextInput
                 style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: '#1A1A1A' }}
-                placeholder="현재 비밀번호 입력"
+                placeholder={t('changePassword.currentPasswordPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showCurrentPassword}
                 value={currentPassword}
@@ -129,7 +131,7 @@ export default function ChangePasswordScreen() {
           {/* 새 비밀번호 */}
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-              새 비밀번호
+              {t('changePassword.newPassword')}
             </Text>
             <View
               style={{
@@ -143,7 +145,7 @@ export default function ChangePasswordScreen() {
             >
               <TextInput
                 style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: '#1A1A1A' }}
-                placeholder="새 비밀번호 입력 (12자 이상)"
+                placeholder={t('changePassword.newPasswordPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showNewPassword}
                 value={newPassword}
@@ -162,7 +164,7 @@ export default function ChangePasswordScreen() {
           {/* 새 비밀번호 확인 */}
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: '#666666', marginBottom: 8 }}>
-              새 비밀번호 확인
+              {t('changePassword.confirmNewPassword')}
             </Text>
             <View
               style={{
@@ -176,7 +178,7 @@ export default function ChangePasswordScreen() {
             >
               <TextInput
                 style={{ flex: 1, fontSize: 16, paddingVertical: 14, color: '#1A1A1A' }}
-                placeholder="새 비밀번호 다시 입력"
+                placeholder={t('changePassword.confirmPasswordPlaceholder')}
                 placeholderTextColor="#9CA3AF"
                 secureTextEntry={!showNewPassword}
                 value={confirmPassword}
@@ -185,7 +187,7 @@ export default function ChangePasswordScreen() {
             </View>
             {confirmPassword && newPassword !== confirmPassword && (
               <Text style={{ fontSize: 12, color: '#EF4444', marginTop: 4 }}>
-                비밀번호가 일치하지 않습니다
+                {t('changePassword.passwordMismatch')}
               </Text>
             )}
           </View>
@@ -205,7 +207,7 @@ export default function ChangePasswordScreen() {
             disabled={isLoading}
           >
             <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {isLoading ? '변경 중...' : '비밀번호 변경'}
+              {isLoading ? t('changePassword.changing') : t('changePassword.change')}
             </Text>
           </TouchableOpacity>
         </View>

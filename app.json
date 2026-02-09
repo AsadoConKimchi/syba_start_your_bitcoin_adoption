@@ -2,7 +2,7 @@
   "expo": {
     "name": "SYBA",
     "slug": "syba",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -46,7 +46,8 @@
         {
           "faceIDPermission": "생체 인증으로 앱에 로그인합니다"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "extra": {
       "router": {},

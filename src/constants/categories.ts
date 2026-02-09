@@ -1,3 +1,5 @@
+import i18n from '../i18n';
+
 export const DEFAULT_EXPENSE_CATEGORIES = [
   { id: 'food', name: '식비', icon: '🍚', color: '#FF6B6B' },
   { id: 'transport', name: '교통', icon: '🚌', color: '#4ECDC4' },
@@ -22,3 +24,7 @@ export const DEFAULT_INCOME_CATEGORIES = [
 
 export type ExpenseCategoryId = typeof DEFAULT_EXPENSE_CATEGORIES[number]['id'];
 export type IncomeCategoryId = typeof DEFAULT_INCOME_CATEGORIES[number]['id'];
+
+export function getCategoryName(id: string, type: 'expense' | 'income' = 'expense'): string {
+  return i18n.t(`categories.${id}`, { defaultValue: id });
+}

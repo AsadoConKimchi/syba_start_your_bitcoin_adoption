@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useCardStore } from '../../src/stores/cardStore';
@@ -10,12 +11,13 @@ import { useDebtStore } from '../../src/stores/debtStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useSnapshotStore } from '../../src/stores/snapshotStore';
-import {
-  scheduleLoanRepaymentNotifications,
-  scheduleInstallmentPaymentNotifications,
-} from '../../src/services/debtAutoRecord';
+// [TODO: 공식 배포 전 주석 해제] Push Notification - Personal 개발자 계정에서 미지원
+// import {
+//   scheduleLoanRepaymentNotifications,
+//   scheduleInstallmentPaymentNotifications,
+// } from '../../src/services/debtAutoRecord';
+// import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
 import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
-import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
 
 export default function TabsLayout() {
@@ -28,15 +30,12 @@ export default function TabsLayout() {
   const { loadCachedPrices, fetchPrices } = usePriceStore();
   const { loadSnapshots, checkAndSaveMonthlySnapshot } = useSnapshotStore();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
 
-  // 자동 차감 처리 여부 추적
   const autoDeductionProcessed = useRef(false);
-  // 스냅샷 체크 여부 추적
   const snapshotChecked = useRef(false);
-  // 무결성 검사 여부 추적
   const integrityChecked = useRef(false);
 
-  // 시세 초기화: 캐시 먼저 로드 → 네트워크에서 최신 데이터 시도
   useEffect(() => {
     const initPrices = async () => {
       await loadCachedPrices();
@@ -48,7 +47,6 @@ export default function TabsLayout() {
   useEffect(() => {
     const initData = async () => {
       if (isAuthenticated && encryptionKey) {
-        // 데이터 무결성 검사 (한 세션에 한 번만)
         if (!integrityChecked.current) {
           integrityChecked.current = true;
           try {
@@ -56,27 +54,26 @@ export default function TabsLayout() {
             if (!isHealthy) {
               const fileNames = corruptedFiles.map(f => f.split('/').pop()).join(', ');
               Alert.alert(
-                '데이터 손상 감지',
-                `일부 파일이 손상되었습니다:\n${fileNames}\n\n백업에서 복원하거나 손상된 파일을 삭제할 수 있습니다.`,
+                t('integrity.corruptedTitle'),
+                t('integrity.corruptedMessage', { files: fileNames }),
                 [
-                  { text: '무시', style: 'cancel' },
+                  { text: t('common.ignore'), style: 'cancel' },
                   {
-                    text: '손상된 파일 삭제',
+                    text: t('integrity.deleteCorrupted'),
                     style: 'destructive',
                     onPress: async () => {
                       await deleteCorruptedFiles(corruptedFiles);
-                      Alert.alert('완료', '손상된 파일이 삭제되었습니다. 앱을 다시 시작해주세요.');
+                      Alert.alert(t('common.done'), t('integrity.deleteDone'));
                     },
                   },
                 ]
               );
             }
           } catch (error) {
-            console.error('[TabsLayout] 무결성 검사 오류:', error);
+            console.error('[TabsLayout] Integrity check error:', error);
           }
         }
 
-        // 데이터 로드
         await Promise.all([
           loadRecords(),
           loadCards(),
@@ -85,59 +82,55 @@ export default function TabsLayout() {
           loadSnapshots(encryptionKey),
         ]);
 
-        // 자동 차감 처리 (한 세션에 한 번만)
         if (!autoDeductionProcessed.current) {
           autoDeductionProcessed.current = true;
           try {
             const result = await processAllAutoDeductions();
             if (result.cards.processed > 0 || result.loans.processed > 0) {
-              console.log('[TabsLayout] 자동 차감 완료:', result);
+              console.log('[TabsLayout] Auto deduction done:', result);
             }
           } catch (error) {
-            console.error('[TabsLayout] 자동 차감 오류:', error);
+            console.error('[TabsLayout] Auto deduction error:', error);
           }
         }
 
-        // 월별 스냅샷 체크 및 저장 (한 세션에 한 번만)
         if (!snapshotChecked.current) {
           snapshotChecked.current = true;
           try {
             const saved = await checkAndSaveMonthlySnapshot(encryptionKey);
             if (saved) {
-              console.log('[TabsLayout] 월별 스냅샷 저장됨');
+              console.log('[TabsLayout] Monthly snapshot saved');
             }
           } catch (error) {
-            console.error('[TabsLayout] 스냅샷 저장 오류:', error);
+            console.error('[TabsLayout] Snapshot save error:', error);
           }
 
-          // 월말 알림 스케줄링
-          try {
-            await scheduleMonthlySummaryNotification();
-          } catch (error) {
-            console.error('[TabsLayout] 월말 알림 스케줄링 오류:', error);
-          }
+          // [TODO: 공식 배포 전 주석 해제] Push Notification
+          // try {
+          //   await scheduleMonthlySummaryNotification();
+          // } catch (error) {
+          //   console.error('[TabsLayout] Monthly notification scheduling error:', error);
+          // }
         }
       }
     };
     initData();
   }, [isAuthenticated, encryptionKey]);
 
-  // 대출/할부 알림 스케줄링
-  useEffect(() => {
-    if (loans.length > 0 || installments.length > 0) {
-      // 대출 상환 알림 스케줄링
-      scheduleLoanRepaymentNotifications(loans).catch(console.error);
-
-      // 할부 결제 알림 스케줄링 (카드 결제일 정보 필요)
-      const cardPaymentDays = new Map<string, number>();
-      cards.forEach((card) => {
-        if (card.paymentDay) {
-          cardPaymentDays.set(card.id, card.paymentDay);
-        }
-      });
-      scheduleInstallmentPaymentNotifications(installments, cardPaymentDays).catch(console.error);
-    }
-  }, [loans, installments, cards]);
+  // [TODO: 공식 배포 전 주석 해제] Push Notification - 대출/할부 알림 스케줄링
+  // useEffect(() => {
+  //   if (loans.length > 0 || installments.length > 0) {
+  //     scheduleLoanRepaymentNotifications(loans).catch(console.error);
+  //
+  //     const cardPaymentDays = new Map<string, number>();
+  //     cards.forEach((card) => {
+  //       if (card.paymentDay) {
+  //         cardPaymentDays.set(card.id, card.paymentDay);
+  //       }
+  //     });
+  //     scheduleInstallmentPaymentNotifications(installments, cardPaymentDays).catch(console.error);
+  //   }
+  // }, [loans, installments, cards]);
 
   return (
     <Tabs
@@ -158,7 +151,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: '홈',
+          title: t('tabs.home'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -167,7 +160,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="records"
         options={{
-          title: '기록',
+          title: t('tabs.records'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="document-text-outline" size={size} color={color} />
           ),
@@ -176,7 +169,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="assets"
         options={{
-          title: '자산',
+          title: t('tabs.assets'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="wallet-outline" size={size} color={color} />
           ),
@@ -185,7 +178,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="debts"
         options={{
-          title: '부채',
+          title: t('tabs.debts'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="card-outline" size={size} color={color} />
           ),
@@ -194,7 +187,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: '설정',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
           ),

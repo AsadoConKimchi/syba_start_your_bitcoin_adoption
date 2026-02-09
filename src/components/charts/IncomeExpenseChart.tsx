@@ -1,6 +1,7 @@
 import { View, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useLedgerStore } from '../../stores/ledgerStore';
 import { formatKrw } from '../../utils/formatters';
 import { ChartEmptyState } from './ChartEmptyState';
@@ -22,11 +23,12 @@ const chartConfig = {
 };
 
 export function IncomeExpenseChart() {
+  const { t } = useTranslation();
   const { getMultiMonthTotals } = useLedgerStore();
   const [showIncome, setShowIncome] = useState(true);
   const [showExpense, setShowExpense] = useState(true);
 
-  // 데이터가 있는 월만 필터링 (최대 6개월)
+  // Filter months with data (max 6 months)
   const monthlyData = useMemo(() => {
     const allMonths = getMultiMonthTotals(6);
     return allMonths.filter(m => m.income > 0 || m.expense > 0);
@@ -35,7 +37,7 @@ export function IncomeExpenseChart() {
   if (monthlyData.length === 0) {
     return (
       <ChartEmptyState
-        message="기록이 없습니다"
+        message={t('charts.noRecords')}
         icon="📈"
       />
     );
@@ -43,14 +45,14 @@ export function IncomeExpenseChart() {
 
   const labels = monthlyData.map(m => m.month);
 
-  // 막대그래프 데이터 (수입/지출 동시 표시)
+  // Bar chart data (income/expense side by side)
   const barData = {
     labels,
     datasets: [
       ...(showIncome
         ? [
             {
-              data: monthlyData.map(m => m.income / 10000), // 만원 단위
+              data: monthlyData.map(m => m.income / 10000),
               color: () => '#22C55E',
             },
           ]
@@ -58,7 +60,7 @@ export function IncomeExpenseChart() {
       ...(showExpense
         ? [
             {
-              data: monthlyData.map(m => m.expense / 10000), // 만원 단위
+              data: monthlyData.map(m => m.expense / 10000),
               color: () => '#EF4444',
             },
           ]
@@ -67,7 +69,7 @@ export function IncomeExpenseChart() {
     legend: [],
   };
 
-  // 꺾은선 그래프 데이터
+  // Line chart data
   const lineData = {
     labels,
     datasets: [
@@ -92,7 +94,7 @@ export function IncomeExpenseChart() {
     ],
   };
 
-  // 평균 계산 (데이터가 있는 월 기준)
+  // Average calculation (based on months with data)
   const avgIncome = monthlyData.reduce((sum, m) => sum + m.income, 0) / monthlyData.length;
   const avgExpense = monthlyData.reduce((sum, m) => sum + m.expense, 0) / monthlyData.length;
 
@@ -105,10 +107,10 @@ export function IncomeExpenseChart() {
       }}
     >
       <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1A1A', marginBottom: 8 }}>
-        수입 vs 지출 흐름 {monthlyData.length > 1 ? `(최근 ${monthlyData.length}개월)` : ''}
+        {t('charts.incomeVsExpense')} {monthlyData.length > 1 ? `(${t('charts.recentMonths', { count: monthlyData.length })})` : ''}
       </Text>
 
-      {/* 토글 버튼 */}
+      {/* Toggle buttons */}
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
         <TouchableOpacity
           style={{
@@ -138,7 +140,7 @@ export function IncomeExpenseChart() {
               fontWeight: '500',
             }}
           >
-            수입
+            {t('charts.income')}
           </Text>
         </TouchableOpacity>
 
@@ -170,12 +172,12 @@ export function IncomeExpenseChart() {
               fontWeight: '500',
             }}
           >
-            지출
+            {t('charts.expense')}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* 막대그래프 */}
+      {/* Bar chart */}
       {(showIncome || showExpense) && (
         <View style={{ marginLeft: -16 }}>
           <BarChart
@@ -183,7 +185,7 @@ export function IncomeExpenseChart() {
             width={screenWidth - 40}
             height={180}
             yAxisLabel=""
-            yAxisSuffix="만"
+            yAxisSuffix=""
             chartConfig={{
               ...chartConfig,
               color: (opacity = 1, index) => {
@@ -202,7 +204,7 @@ export function IncomeExpenseChart() {
         </View>
       )}
 
-      {/* 꺾은선 그래프 (오버레이) */}
+      {/* Line chart (overlay) */}
       {(showIncome || showExpense) && lineData.datasets.length > 0 && (
         <View style={{ marginTop: 16, marginLeft: -16 }}>
           <LineChart
@@ -210,7 +212,7 @@ export function IncomeExpenseChart() {
             width={screenWidth - 40}
             height={140}
             yAxisLabel=""
-            yAxisSuffix="만"
+            yAxisSuffix=""
             chartConfig={{
               ...chartConfig,
               color: () => '#666666',
@@ -224,7 +226,7 @@ export function IncomeExpenseChart() {
         </View>
       )}
 
-      {/* 평균 표시 */}
+      {/* Average display */}
       <View
         style={{
           flexDirection: 'row',
@@ -236,13 +238,13 @@ export function IncomeExpenseChart() {
         }}
       >
         <View>
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>월평균 수입</Text>
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.monthlyAvgIncome')}</Text>
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#22C55E' }}>
             {formatKrw(Math.round(avgIncome))}
           </Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>월평균 지출</Text>
+          <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('charts.monthlyAvgExpense')}</Text>
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#EF4444' }}>
             {formatKrw(Math.round(avgExpense))}
           </Text>
