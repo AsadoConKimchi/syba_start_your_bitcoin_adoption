@@ -69,12 +69,13 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.text }}>
-            {settings.userName
-              ? t('home.greetingWithName', { name: settings.userName })
-              : t('home.greeting')} 👋
+          <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.text }}>
+            SYBA
           </Text>
-          <Text style={{ fontSize: 14, color: theme.textSecondary, marginTop: 4 }}>
+          <Text style={{ fontSize: 14, color: theme.textSecondary, marginTop: 2 }}>
+            Start Your Bitcoin Adoption
+          </Text>
+          <Text style={{ fontSize: 13, color: theme.textSecondary, marginTop: 4 }}>
             {formatDateWithDay(getTodayString())}
           </Text>
         </View>

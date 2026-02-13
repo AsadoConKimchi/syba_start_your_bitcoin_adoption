@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F7931A"
+      "backgroundColor": "#E99537"
     },
     "ios": {
       "supportsTablet": false,
@@ -24,7 +24,7 @@
       "package": "com.syba.finance",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F7931A"
+        "backgroundColor": "#E99537"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,

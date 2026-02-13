@@ -145,8 +145,7 @@ export default function TabsLayout() {
           backgroundColor: theme.tabBarBackground,
           borderTopWidth: 1,
           borderTopColor: theme.tabBarBorder,
-          height: 60 + (Platform.OS === 'android' ? insets.bottom : 0),
-          paddingBottom: 8 + (Platform.OS === 'android' ? insets.bottom : 0),
+          paddingBottom: insets.bottom || 8,
           paddingTop: 8,
         },
       }}
