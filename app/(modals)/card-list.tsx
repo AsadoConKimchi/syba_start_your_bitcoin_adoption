@@ -108,7 +108,7 @@ export default function CardListScreen() {
                   backgroundColor: card.color,
                   borderRadius: 12,
                   padding: 16,
-                  height: 120,
+                  minHeight: 120,
                 }}
               >
                 <View style={{ flex: 1, justifyContent: 'space-between' }}>

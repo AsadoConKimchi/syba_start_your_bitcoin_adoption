@@ -186,7 +186,7 @@ export default function AddCardScreen() {
               borderRadius: 12,
               padding: 20,
               marginBottom: 24,
-              height: 180,
+              minHeight: 180,
               justifyContent: 'space-between',
             }}
           >
