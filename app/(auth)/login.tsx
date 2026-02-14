@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
+import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { deleteSecure, SECURE_KEYS } from '../../src/utils/encryption';
 import { clearAllData } from '../../src/utils/storage';
 
@@ -96,6 +97,8 @@ export default function LoginScreen() {
           text: t('auth.resetConfirm'),
           style: 'destructive',
           onPress: async () => {
+            // Supabase 세션 로그아웃 (구독 정보는 서버에 유지, 로컬만 해제)
+            await useSubscriptionStore.getState().logout();
             await deleteSecure(SECURE_KEYS.PASSWORD_HASH);
             await deleteSecure(SECURE_KEYS.ENCRYPTION_SALT);
             await deleteSecure(SECURE_KEYS.ENCRYPTION_KEY);
