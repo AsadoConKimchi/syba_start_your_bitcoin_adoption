@@ -273,10 +273,10 @@ export function NetWorthChart() {
 
       {/* Line chart */}
       {(showAssets || showDebts || showNetWorth) && (
-        <View style={{ marginLeft: -24 }}>
+        <View style={{ marginLeft: -16 }}>
           <LineChart
             data={lineData}
-            width={screenWidth - 24}
+            width={screenWidth - 8}
             height={200}
             yAxisLabel=""
             yAxisSuffix=""
