@@ -228,13 +228,19 @@ export default function RecordsScreen() {
                           }}
                         >
                           {record.type === 'income' ? '+' : '-'}
-                          {formatKrw(getKrwAmount(record))}
+                          {record.currency === 'SATS'
+                            ? formatSats(record.amount)
+                            : formatKrw(getKrwAmount(record))}
                         </Text>
-                        {record.satsEquivalent && (
+                        {record.currency === 'SATS' ? (
+                          <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                            {formatKrw(getKrwAmount(record))}
+                          </Text>
+                        ) : record.satsEquivalent ? (
                           <Text style={{ fontSize: 11, color: theme.textMuted }}>
                             {formatSats(record.satsEquivalent)}
                           </Text>
-                        )}
+                        ) : null}
                       </>
                     )}
                   </View>

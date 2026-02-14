@@ -196,7 +196,10 @@ export function createLoanRepaymentRecordData(loan: Loan): {
  */
 export function getTodayLoanRepayments(loans: Loan[]): Loan[] {
   const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
 
   return loans.filter((loan) => {
     if (loan.status !== 'active') return false;

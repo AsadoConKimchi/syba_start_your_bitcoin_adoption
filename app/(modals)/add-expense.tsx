@@ -251,7 +251,7 @@ export default function AddExpenseScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={{ flex: 1, padding: 20 }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={{ flex: 1, padding: 20 }} contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
           {/* 날짜 선택 */}
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('common.date')}</Text>

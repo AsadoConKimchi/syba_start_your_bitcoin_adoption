@@ -7,6 +7,7 @@ import { useAuthStore } from './authStore';
 import { useAssetStore } from './assetStore';
 import { fetchHistoricalBtcPrice } from '../services/api/upbit';
 import { krwToSats, satsToKrw } from '../utils/calculations';
+import { getTodayString } from '../utils/formatters';
 
 interface LedgerState {
   records: LedgerRecord[];
@@ -510,7 +511,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
 
   // 오늘 합계
   getTodayTotal: () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayString();
     const todayRecords = get().getRecordsByDate(today);
 
     let income = 0;

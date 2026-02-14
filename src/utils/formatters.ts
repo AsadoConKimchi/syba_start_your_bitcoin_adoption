@@ -89,7 +89,10 @@ export function formatTimeAgo(dateString: string): string {
 // Today date string (YYYY-MM-DD)
 export function getTodayString(): string {
   const today = new Date();
-  return today.toISOString().split('T')[0];
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 // Current year-month (YYYY-MM)
