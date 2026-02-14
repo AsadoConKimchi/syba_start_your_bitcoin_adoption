@@ -7,6 +7,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -120,7 +122,19 @@ export default function LoginScreen() {
   if (isLocked) {
     return (
       <View style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <Text style={{ fontSize: 48, marginBottom: 24 }}>🔒</Text>
+        <Image 
+          source={require('../../assets/icon.png')} 
+          style={{ 
+            width: 72, 
+            height: 72, 
+            borderRadius: 16, 
+            marginBottom: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+          }} 
+        />
         <Text style={{ fontSize: 18, fontWeight: '600', color: theme.text, marginBottom: 8 }}>
           {t('auth.locked')}
         </Text>
@@ -141,7 +155,19 @@ export default function LoginScreen() {
     >
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
         <View style={{ alignItems: 'center', marginBottom: 48, paddingHorizontal: 20 }}>
-          <Text style={{ fontSize: 48, marginBottom: 16 }}>🔐</Text>
+          <Image 
+            source={require('../../assets/icon.png')} 
+            style={{ 
+              width: 72, 
+              height: 72, 
+              borderRadius: 16, 
+              marginBottom: 16,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+            }} 
+          />
           <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.text }}>
             SYBA
           </Text>
@@ -184,13 +210,29 @@ export default function LoginScreen() {
         </View>
 
         {isLoading ? (
-          <View style={{
-            borderRadius: 8,
-            overflow: 'hidden',
-            backgroundColor: theme.border,
-            height: 52,
-            justifyContent: 'center',
-          }}>
+          <View>
+            <View style={{
+              height: 36,
+              justifyContent: 'flex-end',
+              alignItems: 'flex-start',
+            }}>
+              <Image
+                source={require('../../assets/icon.png')}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  marginLeft: progress * (Dimensions.get('window').width - 48 - 32),
+                }}
+              />
+            </View>
+            <View style={{
+              borderRadius: 8,
+              overflow: 'hidden',
+              backgroundColor: theme.border,
+              height: 52,
+              justifyContent: 'center',
+            }}>
             <View style={{
               position: 'absolute',
               left: 0,
@@ -209,6 +251,7 @@ export default function LoginScreen() {
             }}>
               🔓 {t('auth.decrypting')} {Math.round(progress * 100)}%
             </Text>
+            </View>
           </View>
         ) : (
           <TouchableOpacity

@@ -8,6 +8,8 @@ import {
   Platform,
   Alert,
   Modal,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -167,7 +169,19 @@ export default function SetupScreen() {
     >
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
         <View style={{ alignItems: 'center', marginBottom: 48 }}>
-          <Text style={{ fontSize: 48, marginBottom: 16 }}>🔐</Text>
+          <Image 
+            source={require('../../assets/icon.png')} 
+            style={{ 
+              width: 72, 
+              height: 72, 
+              borderRadius: 16, 
+              marginBottom: 16,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+            }} 
+          />
           <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.text }}>
             SYBA
           </Text>
@@ -240,13 +254,29 @@ export default function SetupScreen() {
         </View>
 
         {isLoading ? (
-          <View style={{
-            borderRadius: 8,
-            overflow: 'hidden',
-            backgroundColor: theme.border,
-            height: 52,
-            justifyContent: 'center',
-          }}>
+          <View>
+            <View style={{
+              height: 36,
+              justifyContent: 'flex-end',
+              alignItems: 'flex-start',
+            }}>
+              <Image
+                source={require('../../assets/icon.png')}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  marginLeft: progress * (Dimensions.get('window').width - 48 - 32),
+                }}
+              />
+            </View>
+            <View style={{
+              borderRadius: 8,
+              overflow: 'hidden',
+              backgroundColor: theme.border,
+              height: 52,
+              justifyContent: 'center',
+            }}>
             <View style={{
               position: 'absolute',
               left: 0,
@@ -265,6 +295,7 @@ export default function SetupScreen() {
             }}>
               🔐 {t('auth.settingUp')} {Math.round(progress * 100)}%
             </Text>
+            </View>
           </View>
         ) : (
           <TouchableOpacity
