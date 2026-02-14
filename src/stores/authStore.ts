@@ -26,8 +26,8 @@ interface AuthState {
 interface AuthActions {
   initialize: () => Promise<void>;
   setupPassword: (password: string) => Promise<void>;
-  verifyPassword: (password: string) => Promise<boolean>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
+  verifyPassword: (password: string, onProgress?: (progress: number) => void) => Promise<boolean>;
+  changePassword: (currentPassword: string, newPassword: string, onProgress?: (progress: number) => void) => Promise<boolean>;
   authenticateWithBiometric: () => Promise<boolean>;
   enableBiometric: () => Promise<void>;
   disableBiometric: () => Promise<void>;
@@ -104,7 +104,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // 비밀번호 검증
-  verifyPassword: async (password: string) => {
+  verifyPassword: async (password: string, onProgress?: (progress: number) => void) => {
     console.log('[DEBUG] verifyPassword 시작');
     const { failedAttempts, lockedUntil } = get();
 
@@ -133,10 +133,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       let key = storedKey;
       if (!key) {
         console.log('[DEBUG] 저장된 키 없음, 새로 생성');
-        key = await deriveKey(password, salt);
+        key = await deriveKey(password, salt, onProgress);
         await saveSecure(SECURE_KEYS.ENCRYPTION_KEY, key);
       } else {
         console.log('[DEBUG] 저장된 키 사용 (빠른 로그인)');
+        onProgress?.(1);
       }
 
       set({
@@ -164,7 +165,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   // 비밀번호 변경
-  changePassword: async (currentPassword: string, newPassword: string) => {
+  changePassword: async (currentPassword: string, newPassword: string, onProgress?: (progress: number) => void) => {
     // 현재 비밀번호 확인
     const [salt, storedHash, oldKey] = await Promise.all([
       getSecure(SECURE_KEYS.ENCRYPTION_SALT),
@@ -184,7 +185,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     // 새 비밀번호로 키 생성
     const newSalt = await generateSalt();
     const newHash = hashPassword(newPassword, newSalt);
-    const newKey = await deriveKey(newPassword, newSalt);
+    const newKey = await deriveKey(newPassword, newSalt, onProgress);
 
     // 모든 데이터를 새 키로 재암호화
     try {

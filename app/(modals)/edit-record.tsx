@@ -723,26 +723,26 @@ export default function EditRecordScreen() {
               </Text>
             )}
           </View>
-        </ScrollView>
 
-        {/* 저장 버튼 */}
-        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: isExpenseRecord ? theme.error : theme.success,
-              padding: 16,
-              borderRadius: 8,
-              alignItems: 'center',
-              opacity: isLoading ? 0.7 : 1,
-            }}
-            onPress={handleSave}
-            disabled={isLoading}
-          >
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {isLoading ? t('common.saving') : t('common.done')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          {/* 저장 버튼 */}
+          <View style={{ padding: 20, paddingBottom: 40 }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: isExpenseRecord ? theme.error : theme.success,
+                padding: 16,
+                borderRadius: 8,
+                alignItems: 'center',
+                opacity: isLoading ? 0.7 : 1,
+              }}
+              onPress={handleSave}
+              disabled={isLoading}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+                {isLoading ? t('common.saving') : t('common.done')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
 
         {/* 할부 선택 모달 */}
         <Modal visible={showInstallmentPicker} transparent animationType="slide">

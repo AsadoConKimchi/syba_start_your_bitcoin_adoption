@@ -137,6 +137,7 @@
     "password": "Password",
     "login": "Login",
     "loggingIn": "Verifying...",
+    "decrypting": "Unlocking vault...",
     "passwordRequired": "Please enter your password.",
     "passwordWrong": "Incorrect password.",
     "failCount": "Failed attempts: {{count}}/5",
@@ -156,6 +157,11 @@
     "passwordMismatch": "Passwords do not match.",
     "setupFailed": "Failed to set up password.",
     "passwordWarning": "⚠️ Data cannot be recovered if you lose your password.\nPlease write it down somewhere safe.",
+    "restoreFromBackup": "Restore from backup",
+    "restoreEnterPassword": "Enter the password used when creating the backup",
+    "restoreSuccess": "Backup restored successfully.",
+    "restoreFailed": "Restore failed. Please check your password.",
+    "restoring": "Restoring...",
     "biometricTitle": "Use biometric authentication?",
     "biometricDescription": "Sign in faster with\nFace ID / Fingerprint.",
     "enableBiometric": "Enable biometrics",
@@ -167,7 +173,11 @@
     "forgotPasswordContinue": "Proceed with reset",
     "forgotPasswordFinalTitle": "⚠️ Final Confirmation",
     "forgotPasswordFinalWarning": "Are you sure you want to delete all data and reset the app?\n\nThis action cannot be undone.",
-    "forgotPasswordConfirmDelete": "Delete all data"
+    "forgotPasswordConfirmDelete": "Delete all data",
+    "passwordReqUppercase": "Contains uppercase letter",
+    "passwordReqLowercase": "Contains lowercase letter",
+    "passwordReqNumber": "Contains number",
+    "passwordReqLength": "Minimum 12 characters"
   },
   "errors": {
     "authRequired": "Authentication required",

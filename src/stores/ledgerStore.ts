@@ -35,7 +35,8 @@ interface LedgerActions {
   loadRecords: () => Promise<void>;
   saveRecords: () => Promise<void>;
   addExpense: (
-    expense: Omit<Expense, 'id' | 'type' | 'createdAt' | 'updatedAt' | 'btcKrwAtTime' | 'satsEquivalent' | 'needsPriceSync'> & { installmentMonths?: number | null }
+    expense: Omit<Expense, 'id' | 'type' | 'createdAt' | 'updatedAt' | 'btcKrwAtTime' | 'satsEquivalent' | 'needsPriceSync'> & { installmentMonths?: number | null },
+    overrideBtcKrw?: number | null
   ) => Promise<string>; // Returns expense ID
   addIncome: (
     income: Omit<Income, 'id' | 'type' | 'createdAt' | 'updatedAt' | 'btcKrwAtTime' | 'satsEquivalent' | 'needsPriceSync'>,
@@ -279,8 +280,17 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     return id; // Return income ID
   },
 
-  // 수정
+  // 수정 (자산 차액 반영 포함)
+  // 테스트 케이스:
+  // 1. 지출 10만원(bank, linkedAsset) → 5만원으로 수정 → 자산 +5만원 복원
+  // 2. 수입 10만원(linkedAsset) → 15만원으로 수정 → 자산 +5만원 추가
+  // 3. linkedAssetId A → B로 변경 → A 복원 + B 차감
+  // 4. SATS 지출 수정 → sats 단위로 차액 조정
+  // 5. paymentMethod card→bank 변경 → 자산 연동 시작 (새로 차감)
+  // 6. paymentMethod bank→card 변경 → 자산 연동 해제 (복원)
   updateRecord: async (id, updates) => {
+    const oldRecord = get().records.find(r => r.id === id);
+
     set(state => ({
       records: state.records.map(record => {
         if (record.id !== id) return record;
@@ -292,10 +302,135 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       }),
     }));
     await get().saveRecords();
+
+    // 자산 차액 반영
+    const encryptionKey = useAuthStore.getState().encryptionKey;
+    if (!oldRecord || !encryptionKey) return;
+
+    const newRecord = get().records.find(r => r.id === id);
+    if (!newRecord) return;
+
+    // 자산 연동 대상인지 판별하는 헬퍼
+    const isAssetLinked = (record: LedgerRecord): boolean => {
+      if (!record.linkedAssetId) return false;
+      if (record.type === 'income') return true;
+      // expense는 bank/lightning/onchain만 자산 연동
+      return (
+        record.type === 'expense' &&
+        (record.paymentMethod === 'bank' ||
+          record.paymentMethod === 'lightning' ||
+          record.paymentMethod === 'onchain')
+      );
+    };
+
+    // 자산에 적용된 금액을 계산하는 헬퍼 (부호 포함)
+    const getAssetDelta = (record: LedgerRecord): number => {
+      let amount: number;
+      if (record.type === 'expense') {
+        if (record.currency === 'SATS') {
+          amount = record.amount;
+        } else if (record.paymentMethod === 'lightning' || record.paymentMethod === 'onchain') {
+          amount = record.satsEquivalent ?? record.amount;
+        } else {
+          amount = record.amount; // KRW
+        }
+        return -amount; // 지출은 마이너스
+      } else {
+        // income
+        const asset = useAssetStore.getState().getAssetById(record.linkedAssetId!);
+        if (record.currency === 'SATS') {
+          amount = record.amount;
+        } else if (asset?.type === 'bitcoin') {
+          amount = record.satsEquivalent ?? record.amount;
+        } else {
+          amount = record.amount; // KRW
+        }
+        return amount; // 수입은 플러스
+      }
+    };
+
+    const oldLinked = isAssetLinked(oldRecord);
+    const newLinked = isAssetLinked(newRecord);
+
+    // Case 1: 이전에 자산 연동 → 이전 자산 역복원
+    if (oldLinked) {
+      const oldDelta = getAssetDelta(oldRecord);
+      await useAssetStore.getState().adjustAssetBalance(
+        oldRecord.linkedAssetId!,
+        -oldDelta, // 역복원
+        encryptionKey
+      );
+      console.log('[DEBUG] updateRecord - 이전 자산 역복원:', oldRecord.linkedAssetId, -oldDelta);
+    }
+
+    // Case 2: 새로운 자산 연동 → 새 자산 반영
+    if (newLinked) {
+      const newDelta = getAssetDelta(newRecord);
+      await useAssetStore.getState().adjustAssetBalance(
+        newRecord.linkedAssetId!,
+        newDelta,
+        encryptionKey
+      );
+      console.log('[DEBUG] updateRecord - 새 자산 반영:', newRecord.linkedAssetId, newDelta);
+    }
   },
 
-  // 삭제
+  // 삭제 (자산 역복원 포함)
+  // 테스트 케이스:
+  // 1. 지출 10만원(bank, linkedAsset) 삭제 → 자산 +10만원 복원
+  // 2. 수입 10만원(linkedAsset) 삭제 → 자산 -10만원 차감
+  // 3. SATS 지출(lightning) 삭제 → sats 단위로 복원
+  // 4. 카드 지출(linkedAsset 있지만 card) 삭제 → 자산 변동 없음
+  // 5. linkedAssetId 없는 기록 삭제 → 자산 변동 없음
   deleteRecord: async (id) => {
+    const record = get().records.find(r => r.id === id);
+
+    // 자산 역복원 (삭제 전에 처리)
+    const encryptionKey = useAuthStore.getState().encryptionKey;
+    if (record && encryptionKey && record.linkedAssetId) {
+      let shouldRestore = false;
+      let restoreAmount = 0;
+
+      if (record.type === 'expense') {
+        // expense는 bank/lightning/onchain만 자산 연동되었음
+        if (
+          record.paymentMethod === 'bank' ||
+          record.paymentMethod === 'lightning' ||
+          record.paymentMethod === 'onchain'
+        ) {
+          shouldRestore = true;
+          // 원래 차감된 금액 복원 (addExpense 로직 역순)
+          if (record.currency === 'SATS') {
+            restoreAmount = record.amount; // sats 그대로
+          } else if (record.paymentMethod === 'lightning' || record.paymentMethod === 'onchain') {
+            restoreAmount = record.satsEquivalent ?? record.amount;
+          } else {
+            restoreAmount = record.amount; // KRW
+          }
+        }
+      } else if (record.type === 'income') {
+        // income은 linkedAssetId가 있으면 항상 자산 연동되었음
+        shouldRestore = true;
+        const asset = useAssetStore.getState().getAssetById(record.linkedAssetId);
+        if (record.currency === 'SATS') {
+          restoreAmount = -record.amount; // 수입 삭제 → 차감
+        } else if (asset?.type === 'bitcoin') {
+          restoreAmount = -(record.satsEquivalent ?? record.amount);
+        } else {
+          restoreAmount = -record.amount; // KRW 차감
+        }
+      }
+
+      if (shouldRestore) {
+        await useAssetStore.getState().adjustAssetBalance(
+          record.linkedAssetId,
+          record.type === 'expense' ? restoreAmount : restoreAmount, // expense: +복원, income: -차감
+          encryptionKey
+        );
+        console.log('[DEBUG] deleteRecord - 자산 역복원:', record.linkedAssetId, restoreAmount);
+      }
+    }
+
     set(state => ({
       records: state.records.filter(record => record.id !== id),
     }));

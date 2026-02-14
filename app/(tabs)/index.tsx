@@ -12,7 +12,15 @@ import { useCardStore } from '../../src/stores/cardStore';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { formatKrw, formatSats, formatDateWithDay, getTodayString } from '../../src/utils/formatters';
-import { krwToSats } from '../../src/utils/calculations';
+import { krwToSats, satsToKrw } from '../../src/utils/calculations';
+
+// SATS 기록은 amount가 sats 값이므로 btcKrwAtTime으로 원화 환산 필요
+function getKrwAmount(record: any): number {
+  if (record.currency === 'SATS' && record.btcKrwAtTime) {
+    return satsToKrw(record.amount, record.btcKrwAtTime);
+  }
+  return record.amount;
+}
 import { calculateAllCardsPayment } from '../../src/utils/cardPaymentCalculator';
 import { NetWorthChart } from '../../src/components/charts';
 import { PremiumBanner } from '../../src/components/PremiumGate';
@@ -63,6 +71,7 @@ export default function HomeScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
         style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 8 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#F7931A" />
         }
@@ -346,7 +355,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Recent records */}
-        <View style={{ paddingHorizontal: 20, marginBottom: 32 }}>
+        <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('home.recentRecords')}</Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/records')}>
@@ -411,7 +420,7 @@ export default function HomeScreen() {
                         {formatSats(record.satsEquivalent || 0)}
                       </Text>
                       <Text style={{ fontSize: 11, color: theme.textMuted }}>
-                        {formatKrw(record.amount)}
+                        {formatKrw(getKrwAmount(record))}
                       </Text>
                     </>
                   ) : (
@@ -424,7 +433,7 @@ export default function HomeScreen() {
                         }}
                       >
                         {record.type === 'income' ? '+' : '-'}
-                        {formatKrw(record.amount)}
+                        {formatKrw(getKrwAmount(record))}
                       </Text>
                       {record.satsEquivalent && (
                         <Text style={{ fontSize: 11, color: theme.textMuted }}>
@@ -441,7 +450,7 @@ export default function HomeScreen() {
 
         {/* BTC price */}
         {btcKrw && (
-          <View style={{ paddingHorizontal: 20, marginBottom: 32 }}>
+          <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
             <View
               style={{
                 backgroundColor: isOffline ? theme.offlineBannerBg : theme.priceBannerBg,

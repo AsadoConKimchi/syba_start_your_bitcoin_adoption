@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -24,8 +24,18 @@ export default function ChangePasswordScreen() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const { changePassword } = useAuthStore();
+
+  const passwordChecks = useMemo(() => ({
+    hasUppercase: /[A-Z]/.test(newPassword),
+    hasLowercase: /[a-z]/.test(newPassword),
+    hasNumber: /[0-9]/.test(newPassword),
+    hasLength: newPassword.length >= 12,
+  }), [newPassword]);
+
+  const allChecksPassed = Object.values(passwordChecks).every(Boolean);
 
   const handleSubmit = async () => {
     if (!currentPassword) {
@@ -38,7 +48,7 @@ export default function ChangePasswordScreen() {
       return;
     }
 
-    if (newPassword.length < 12) {
+    if (!allChecksPassed) {
       Alert.alert(t('common.error'), t('changePassword.tooShort'));
       return;
     }
@@ -54,9 +64,10 @@ export default function ChangePasswordScreen() {
     }
 
     setIsLoading(true);
+    setProgress(0);
 
     try {
-      const success = await changePassword(currentPassword, newPassword);
+      const success = await changePassword(currentPassword, newPassword, (p) => setProgress(p));
       if (success) {
         Alert.alert(t('common.done'), t('changePassword.success'), [
           { text: t('common.confirm'), onPress: () => router.back() },
@@ -117,6 +128,8 @@ export default function ChangePasswordScreen() {
                 placeholder={t('changePassword.currentPasswordPlaceholder')}
                 placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showCurrentPassword}
+                textContentType="none"
+                autoComplete="off"
                 value={currentPassword}
                 onChangeText={setCurrentPassword}
               />
@@ -150,6 +163,8 @@ export default function ChangePasswordScreen() {
                 placeholder={t('changePassword.newPasswordPlaceholder')}
                 placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showNewPassword}
+                textContentType="none"
+                autoComplete="off"
                 value={newPassword}
                 onChangeText={setNewPassword}
               />
@@ -162,6 +177,28 @@ export default function ChangePasswordScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* 비밀번호 강도 체크 */}
+          <View style={{ marginBottom: 16, marginTop: -16 }}>
+              {([
+                ['hasUppercase', t('auth.passwordReqUppercase')],
+                ['hasLowercase', t('auth.passwordReqLowercase')],
+                ['hasNumber', t('auth.passwordReqNumber')],
+                ['hasLength', t('auth.passwordReqLength')],
+              ] as const).map(([key, label]) => (
+                <View key={key} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                  <Text style={{ fontSize: 14, marginRight: 6 }}>
+                    {passwordChecks[key as keyof typeof passwordChecks] ? '✅' : '❌'}
+                  </Text>
+                  <Text style={{
+                    fontSize: 13,
+                    color: passwordChecks[key as keyof typeof passwordChecks] ? '#22C55E' : '#EF4444',
+                  }}>
+                    {label}
+                  </Text>
+                </View>
+              ))}
+            </View>
 
           {/* 새 비밀번호 확인 */}
           <View style={{ marginBottom: 24 }}>
@@ -183,6 +220,8 @@ export default function ChangePasswordScreen() {
                 placeholder={t('changePassword.confirmPasswordPlaceholder')}
                 placeholderTextColor={theme.placeholder}
                 secureTextEntry={!showNewPassword}
+                textContentType="none"
+                autoComplete="off"
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
               />
@@ -197,21 +236,51 @@ export default function ChangePasswordScreen() {
 
         {/* 변경 버튼 */}
         <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.primary,
-              padding: 16,
+          {isLoading ? (
+            <View style={{
               borderRadius: 8,
-              alignItems: 'center',
-              opacity: isLoading ? 0.7 : 1,
-            }}
-            onPress={handleSubmit}
-            disabled={isLoading}
-          >
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {isLoading ? t('changePassword.changing') : t('changePassword.change')}
-            </Text>
-          </TouchableOpacity>
+              overflow: 'hidden',
+              backgroundColor: theme.border,
+              height: 52,
+              justifyContent: 'center',
+            }}>
+              <View style={{
+                position: 'absolute',
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: `${Math.round(progress * 100)}%`,
+                backgroundColor: '#F7931A',
+                borderRadius: 8,
+              }} />
+              <Text style={{
+                color: '#FFFFFF',
+                fontSize: 16,
+                fontWeight: '600',
+                textAlign: 'center',
+                zIndex: 1,
+              }}>
+                🔓 {t('auth.decrypting')} {Math.round(progress * 100)}%
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={{
+                backgroundColor: allChecksPassed && newPassword === confirmPassword && currentPassword
+                  ? theme.primary
+                  : theme.border,
+                padding: 16,
+                borderRadius: 8,
+                alignItems: 'center',
+              }}
+              onPress={handleSubmit}
+              disabled={!allChecksPassed || newPassword !== confirmPassword || !currentPassword}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+                {t('changePassword.change')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>

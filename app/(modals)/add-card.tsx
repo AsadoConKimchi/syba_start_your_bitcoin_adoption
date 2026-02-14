@@ -375,26 +375,26 @@ export default function AddCardScreen() {
               ))}
             </View>
           </View>
-        </ScrollView>
 
-        {/* 저장 버튼 */}
-        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.primary,
-              padding: 16,
-              borderRadius: 8,
-              alignItems: 'center',
-              opacity: isLoading ? 0.7 : 1,
-            }}
-            onPress={handleSave}
-            disabled={isLoading}
-          >
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {isLoading ? t('card.registering') : t('card.register')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          {/* 저장 버튼 */}
+          <View style={{ padding: 20, paddingBottom: 40 }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.primary,
+                padding: 16,
+                borderRadius: 8,
+                alignItems: 'center',
+                opacity: isLoading ? 0.7 : 1,
+              }}
+              onPress={handleSave}
+              disabled={isLoading}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+                {isLoading ? t('card.registering') : t('card.register')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
 
       {/* 결제일 선택 모달 */}

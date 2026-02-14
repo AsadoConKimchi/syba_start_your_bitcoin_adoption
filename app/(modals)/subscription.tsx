@@ -50,7 +50,7 @@ export default function SubscriptionScreen() {
   const [copied, setCopied] = useState(false);
   const [invoiceCopied, setInvoiceCopied] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [subscriptionPrice, setSubscriptionPrice] = useState(CONFIG.SUBSCRIPTION_PRICE_SATS);
+  const [subscriptionPrice, setSubscriptionPrice] = useState<number>(CONFIG.SUBSCRIPTION_PRICE_SATS);
 
   // 결제 모달 상태
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -359,7 +359,7 @@ export default function SubscriptionScreen() {
                 activeOpacity={0.8}
               >
                 <QRCode
-                  value={authLnurlEncoded}
+                  value={authLnurlEncoded ?? undefined}
                   size={200}
                   backgroundColor="#FFFFFF"
                   color="#000000"

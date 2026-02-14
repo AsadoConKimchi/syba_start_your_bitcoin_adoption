@@ -137,6 +137,7 @@
     "password": "パスワード",
     "login": "ログイン",
     "loggingIn": "確認中...",
+    "decrypting": "金庫を開けています...",
     "passwordRequired": "パスワードを入力してください。",
     "passwordWrong": "パスワードが一致しません。",
     "failCount": "失敗回数：{{count}}/5",
@@ -156,6 +157,11 @@
     "passwordMismatch": "パスワードが一致しません。",
     "setupFailed": "パスワードの設定に失敗しました。",
     "passwordWarning": "⚠️ パスワードを紛失するとデータを復元できません。\n安全な場所に記録してください。",
+    "restoreFromBackup": "バックアップから復元",
+    "restoreEnterPassword": "バックアップ作成時のパスワードを入力してください",
+    "restoreSuccess": "バックアップが正常に復元されました。",
+    "restoreFailed": "復元に失敗しました。パスワードを確認してください。",
+    "restoring": "復元中...",
     "biometricTitle": "生体認証を使用しますか？",
     "biometricDescription": "Face ID / 指紋で\nより速くログインできます。",
     "enableBiometric": "生体認証を有効にする",
@@ -167,7 +173,11 @@
     "forgotPasswordContinue": "初期化を続行",
     "forgotPasswordFinalTitle": "⚠️ 最終確認",
     "forgotPasswordFinalWarning": "本当にすべてのデータを削除してアプリを初期化しますか？\n\nこの操作は元に戻せません。",
-    "forgotPasswordConfirmDelete": "すべてのデータを削除"
+    "forgotPasswordConfirmDelete": "すべてのデータを削除",
+    "passwordReqUppercase": "大文字を含む",
+    "passwordReqLowercase": "小文字を含む",
+    "passwordReqNumber": "数字を含む",
+    "passwordReqLength": "12文字以上"
   },
   "errors": {
     "authRequired": "認証が必要です",

@@ -9,7 +9,7 @@ import { CONFIG } from '../constants/config';
 import { useTheme } from '../hooks/useTheme';
 
 interface PremiumGateProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   feature?: string;
 }
 
@@ -17,7 +17,7 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
   const { isSubscribed } = useSubscriptionStore();
   const { t } = useTranslation();
   const { theme, isDark } = useTheme();
-  const [subscriptionPrice, setSubscriptionPrice] = useState(CONFIG.SUBSCRIPTION_PRICE_SATS);
+  const [subscriptionPrice, setSubscriptionPrice] = useState<number>(CONFIG.SUBSCRIPTION_PRICE_SATS);
 
   const displayFeature = feature || t('premium.feature');
 

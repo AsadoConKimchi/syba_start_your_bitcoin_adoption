@@ -1,4 +1,4 @@
-import { RepaymentType } from '../types/loan';
+import { RepaymentType } from '../types/debt';
 
 // 경과 개월 수 계산
 export function calculateElapsedMonths(startDate: string): number {
@@ -36,13 +36,13 @@ export function calculateMonthlyPayment(
       // 만기일시상환: 매월 이자만
       return Math.round(principal * monthlyRate);
 
-    case 'equal_principal_interest':
+    case 'equalPrincipalAndInterest':
       // 원리금균등상환
       if (monthlyRate === 0) return Math.round(principal / totalMonths);
       const factor = Math.pow(1 + monthlyRate, totalMonths);
       return Math.round((principal * (monthlyRate * factor)) / (factor - 1));
 
-    case 'equal_principal':
+    case 'equalPrincipal':
       // 원금균등상환: 첫 달 기준
       const principalPayment = principal / totalMonths;
       const firstInterest = principal * monthlyRate;
@@ -68,7 +68,7 @@ export function calculateRemainingBalance(
     case 'bullet':
       return principal;
 
-    case 'equal_principal_interest':
+    case 'equalPrincipalAndInterest':
       let balance = principal;
       for (let i = 0; i < paidMonths; i++) {
         const interest = balance * monthlyRate;
@@ -77,7 +77,7 @@ export function calculateRemainingBalance(
       }
       return Math.max(0, Math.round(balance));
 
-    case 'equal_principal':
+    case 'equalPrincipal':
       const monthlyPrincipal = principal / totalMonths;
       return Math.max(0, Math.round(principal - monthlyPrincipal * paidMonths));
 

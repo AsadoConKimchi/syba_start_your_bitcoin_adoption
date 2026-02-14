@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { encrypt, decrypt } from './encryption';
+import { encrypt, decrypt, getSecure, SECURE_KEYS } from './encryption';
 
 console.log('[DEBUG] FileSystem.documentDirectory:', FileSystem.documentDirectory);
 const DATA_DIR = FileSystem.documentDirectory + 'data/';
@@ -182,6 +182,12 @@ export async function createBackup(
   const filename = `syba_backup_${timestamp}.enc`;
   const backupPath = FileSystem.cacheDirectory + filename;
 
+  // 솔트 가져오기 (복원 시 키 파생에 필요)
+  const salt = await getSecure(SECURE_KEYS.ENCRYPTION_SALT);
+  if (!salt) {
+    throw new Error('Encryption salt not found');
+  }
+
   // 모든 데이터 수집
   const backupData = {
     ledger: await loadEncrypted(FILE_PATHS.LEDGER, encryptionKey, []),
@@ -196,11 +202,13 @@ export async function createBackup(
     snapshots: await loadEncrypted(FILE_PATHS.SNAPSHOTS, encryptionKey, []),
     exportedAt: new Date().toISOString(),
     version: '1.0.0',
+    salt,
   };
 
-  // 암호화 후 저장
+  // 암호화 후 저장 (솔트를 평문 헤더로 포함)
   const encrypted = await encrypt(backupData, encryptionKey);
-  await FileSystem.writeAsStringAsync(backupPath, encrypted);
+  const fileContent = `SYBA_BACKUP:${salt}\n${encrypted}`;
+  await FileSystem.writeAsStringAsync(backupPath, fileContent);
 
   return { path: backupPath, filename };
 }
@@ -216,18 +224,33 @@ interface BackupData {
   snapshots?: unknown[]; // 선택적 (기존 백업 호환)
   exportedAt: string;
   version: string;
+  salt?: string; // v1.0.0+ 백업에 포함된 솔트
 }
 
 // 백업 파일 복원
 export async function restoreBackup(
   backupFilePath: string,
   encryptionKey: string
-): Promise<void> {
+): Promise<{ salt?: string }> {
   console.log('[DEBUG] restoreBackup 시작, path:', backupFilePath);
 
   // 백업 파일 읽기
-  const encrypted = await FileSystem.readAsStringAsync(backupFilePath);
+  const fileContent = await FileSystem.readAsStringAsync(backupFilePath);
   console.log('[DEBUG] 백업 파일 읽기 완료');
+
+  // 헤더에서 솔트 추출 (새 포맷: SYBA_BACKUP:<salt>\n<encrypted>)
+  let encrypted: string;
+  let embeddedSalt: string | undefined;
+
+  if (fileContent.startsWith('SYBA_BACKUP:')) {
+    const newlineIdx = fileContent.indexOf('\n');
+    embeddedSalt = fileContent.substring('SYBA_BACKUP:'.length, newlineIdx);
+    encrypted = fileContent.substring(newlineIdx + 1);
+    console.log('[DEBUG] 백업 헤더에서 솔트 추출됨');
+  } else {
+    // 기존 포맷 (헤더 없음)
+    encrypted = fileContent;
+  }
 
   // 복호화
   const backupData = decrypt<BackupData>(encrypted, encryptionKey);
@@ -248,6 +271,8 @@ export async function restoreBackup(
   ]);
 
   console.log('[DEBUG] 모든 데이터 복원 완료');
+
+  return { salt: embeddedSalt ?? backupData.salt };
 }
 
 // 모든 데이터를 새 키로 재암호화 (비밀번호 변경 시 사용)

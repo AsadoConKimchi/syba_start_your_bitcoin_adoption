@@ -30,7 +30,7 @@ export default function PaymentScreen() {
   const [status, setStatus] = useState<'waiting' | 'checking' | 'success' | 'expired' | 'error'>('waiting');
   const [copied, setCopied] = useState(false);
   const isCancelledRef = useRef(false);
-  const [subscriptionPrice, setSubscriptionPrice] = useState(CONFIG.SUBSCRIPTION_PRICE_SATS);
+  const [subscriptionPrice, setSubscriptionPrice] = useState<number>(CONFIG.SUBSCRIPTION_PRICE_SATS);
 
   // 구독 가격 조회
   useEffect(() => {

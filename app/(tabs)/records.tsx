@@ -9,6 +9,14 @@ import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { formatKrw, formatSats } from '../../src/utils/formatters';
+import { satsToKrw } from '../../src/utils/calculations';
+
+function getKrwAmount(record: any): number {
+  if (record.currency === 'SATS' && record.btcKrwAtTime) {
+    return satsToKrw(record.amount, record.btcKrwAtTime);
+  }
+  return record.amount;
+}
 import { CategoryPieChart, SpendingTrendChart } from '../../src/components/charts';
 import { PremiumBanner } from '../../src/components/PremiumGate';
 
@@ -127,7 +135,7 @@ export default function RecordsScreen() {
         {sortedDates.length === 0 ? (
           <View style={{ alignItems: 'center', paddingVertical: 48 }}>
             <Text style={{ fontSize: 48, marginBottom: 16 }}>📝</Text>
-            <Text style={{ fontSize: 16, color: theme.textMuted, textAlign: 'center' }}>
+            <Text style={{ fontSize: 16, color: theme.textMuted, textAlign: 'center', paddingHorizontal: 20 }} adjustsFontSizeToFit numberOfLines={3}>
               {t('records.noRecords')}
             </Text>
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
@@ -137,6 +145,8 @@ export default function RecordsScreen() {
                   paddingHorizontal: 24,
                   paddingVertical: 12,
                   borderRadius: 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
                 onPress={() => router.push('/(modals)/add-income')}
               >
@@ -148,6 +158,8 @@ export default function RecordsScreen() {
                   paddingHorizontal: 24,
                   paddingVertical: 12,
                   borderRadius: 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
                 onPress={() => router.push('/(modals)/add-expense')}
               >
@@ -203,7 +215,7 @@ export default function RecordsScreen() {
                           {record.satsEquivalent ? formatSats(record.satsEquivalent) : '-'}
                         </Text>
                         <Text style={{ fontSize: 11, color: theme.textMuted }}>
-                          {formatKrw(record.amount)}
+                          {formatKrw(getKrwAmount(record))}
                         </Text>
                       </>
                     ) : (
@@ -216,7 +228,7 @@ export default function RecordsScreen() {
                           }}
                         >
                           {record.type === 'income' ? '+' : '-'}
-                          {formatKrw(record.amount)}
+                          {formatKrw(getKrwAmount(record))}
                         </Text>
                         {record.satsEquivalent && (
                           <Text style={{ fontSize: 11, color: theme.textMuted }}>

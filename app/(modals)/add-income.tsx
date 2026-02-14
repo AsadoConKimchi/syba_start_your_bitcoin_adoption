@@ -404,26 +404,26 @@ export default function AddIncomeScreen() {
               onChangeText={setMemo}
             />
           </View>
-        </ScrollView>
 
-        {/* 저장 버튼 */}
-        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#22C55E',
-              padding: 16,
-              borderRadius: 8,
-              alignItems: 'center',
-              opacity: isLoading ? 0.7 : 1,
-            }}
-            onPress={handleSave}
-            disabled={isLoading}
-          >
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {isLoading ? t('common.saving') : t('common.save')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          {/* 저장 버튼 */}
+          <View style={{ padding: 20, paddingBottom: 40 }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#22C55E',
+                padding: 16,
+                borderRadius: 8,
+                alignItems: 'center',
+                opacity: isLoading ? 0.7 : 1,
+              }}
+              onPress={handleSave}
+              disabled={isLoading}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+                {isLoading ? t('common.saving') : t('common.save')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
 
         {/* 입금 계좌/지갑 선택 모달 */}
         <Modal visible={showAssetPicker} transparent animationType="slide">

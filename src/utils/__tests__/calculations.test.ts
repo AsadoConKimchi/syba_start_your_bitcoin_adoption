@@ -80,20 +80,20 @@ describe('calculateMonthlyPayment', () => {
 
   it('should calculate equal principal+interest', () => {
     // 1000만원, 연 12%, 12개월
-    const payment = calculateMonthlyPayment(10000000, 0.12, 12, 'equal_principal_interest');
+    const payment = calculateMonthlyPayment(10000000, 0.12, 12, 'equalPrincipalAndInterest');
     expect(payment).toBeGreaterThan(0);
     // 원리금균등: 약 888,488원
     expect(payment).toBeCloseTo(888488, -2);
   });
 
   it('should handle 0% interest for equal principal+interest', () => {
-    const payment = calculateMonthlyPayment(1200000, 0, 12, 'equal_principal_interest');
+    const payment = calculateMonthlyPayment(1200000, 0, 12, 'equalPrincipalAndInterest');
     expect(payment).toBe(100000);
   });
 
   it('should calculate equal principal (first month)', () => {
     // 1200만원, 연 12%, 12개월 → 원금 100만 + 이자 12만 = 112만
-    const payment = calculateMonthlyPayment(12000000, 0.12, 12, 'equal_principal');
+    const payment = calculateMonthlyPayment(12000000, 0.12, 12, 'equalPrincipal');
     expect(payment).toBe(1120000);
   });
 });
@@ -106,12 +106,12 @@ describe('calculateRemainingBalance', () => {
 
   it('should decrease for equal principal', () => {
     // 1200만원, 12개월, 6개월 납부 → 남은 원금 = 600만원
-    const balance = calculateRemainingBalance(12000000, 0.12, 12, 'equal_principal', 1120000, 6);
+    const balance = calculateRemainingBalance(12000000, 0.12, 12, 'equalPrincipal', 1120000, 6);
     expect(balance).toBe(6000000);
   });
 
   it('should be 0 after all payments for equal principal', () => {
-    const balance = calculateRemainingBalance(12000000, 0.12, 12, 'equal_principal', 1120000, 12);
+    const balance = calculateRemainingBalance(12000000, 0.12, 12, 'equalPrincipal', 1120000, 12);
     expect(balance).toBe(0);
   });
 });

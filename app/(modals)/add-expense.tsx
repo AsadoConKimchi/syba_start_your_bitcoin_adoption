@@ -678,26 +678,26 @@ export default function AddExpenseScreen() {
               onChangeText={setMemo}
             />
           </View>
-        </ScrollView>
 
-        {/* 저장 버튼 */}
-        <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
-          <TouchableOpacity
-            style={{
-              backgroundColor: '#EF4444',
-              padding: 16,
-              borderRadius: 8,
-              alignItems: 'center',
-              opacity: isLoading ? 0.7 : 1,
-            }}
-            onPress={handleSave}
-            disabled={isLoading}
-          >
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {isLoading ? t('common.saving') : t('common.save')}
-            </Text>
-          </TouchableOpacity>
-        </View>
+          {/* 저장 버튼 */}
+          <View style={{ padding: 20, paddingBottom: 40 }}>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#EF4444',
+                padding: 16,
+                borderRadius: 8,
+                alignItems: 'center',
+                opacity: isLoading ? 0.7 : 1,
+              }}
+              onPress={handleSave}
+              disabled={isLoading}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+                {isLoading ? t('common.saving') : t('common.save')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
 
         {/* 할부 선택 모달 */}
         <Modal

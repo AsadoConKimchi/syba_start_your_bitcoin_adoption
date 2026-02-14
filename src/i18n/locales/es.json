@@ -137,6 +137,7 @@
     "password": "Contraseña",
     "login": "Iniciar sesión",
     "loggingIn": "Verificando...",
+    "decrypting": "Abriendo la bóveda...",
     "passwordRequired": "Por favor ingresa tu contraseña.",
     "passwordWrong": "Contraseña incorrecta.",
     "failCount": "Intentos fallidos: {{count}}/5",
@@ -156,6 +157,11 @@
     "passwordMismatch": "Las contraseñas no coinciden.",
     "setupFailed": "Error al configurar la contraseña.",
     "passwordWarning": "⚠️ Los datos no se pueden recuperar si pierdes tu contraseña.\nAnótala en un lugar seguro.",
+    "restoreFromBackup": "Restaurar desde respaldo",
+    "restoreEnterPassword": "Ingresa la contraseña usada al crear el respaldo",
+    "restoreSuccess": "Respaldo restaurado exitosamente.",
+    "restoreFailed": "Error al restaurar. Verifica tu contraseña.",
+    "restoring": "Restaurando...",
     "biometricTitle": "¿Usar autenticación biométrica?",
     "biometricDescription": "Inicia sesión más rápido con\nFace ID / Huella digital.",
     "enableBiometric": "Activar biometría",
@@ -167,7 +173,11 @@
     "forgotPasswordContinue": "Proceder con el restablecimiento",
     "forgotPasswordFinalTitle": "⚠️ Confirmación final",
     "forgotPasswordFinalWarning": "¿Estás seguro de que deseas eliminar todos los datos y restablecer la app?\n\nEsta acción no se puede deshacer.",
-    "forgotPasswordConfirmDelete": "Eliminar todos los datos"
+    "forgotPasswordConfirmDelete": "Eliminar todos los datos",
+    "passwordReqUppercase": "Contiene mayúscula",
+    "passwordReqLowercase": "Contiene minúscula",
+    "passwordReqNumber": "Contiene número",
+    "passwordReqLength": "Mínimo 12 caracteres"
   },
   "errors": {
     "authRequired": "Autenticación requerida",

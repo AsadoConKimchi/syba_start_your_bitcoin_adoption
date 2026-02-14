@@ -19,6 +19,7 @@ import { clearAllData } from '../../src/utils/storage';
 export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const { t } = useTranslation();
   const { theme } = useTheme();
 
@@ -61,8 +62,10 @@ export default function LoginScreen() {
     }
 
     setIsLoading(true);
-    const success = await verifyPassword(password);
+    setProgress(0);
+    const success = await verifyPassword(password, (p) => setProgress(p));
     setIsLoading(false);
+    setProgress(0);
 
     if (success) {
       router.replace('/(tabs)');
@@ -134,12 +137,12 @@ export default function LoginScreen() {
       style={{ flex: 1, backgroundColor: theme.background }}
     >
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-        <View style={{ alignItems: 'center', marginBottom: 48 }}>
+        <View style={{ alignItems: 'center', marginBottom: 48, paddingHorizontal: 20 }}>
           <Text style={{ fontSize: 48, marginBottom: 16 }}>🔐</Text>
           <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.text }}>
             SYBA
           </Text>
-          <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
+          <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4, textAlign: 'center', flexShrink: 1 }} adjustsFontSizeToFit numberOfLines={2}>
             Start Your Bitcoin Adoption
           </Text>
         </View>
@@ -162,6 +165,8 @@ export default function LoginScreen() {
             placeholder={t('auth.password')}
             placeholderTextColor={theme.placeholder}
             secureTextEntry
+                textContentType="none"
+                autoComplete="off"
             value={password}
             onChangeText={setPassword}
             autoCapitalize="none"
@@ -175,21 +180,48 @@ export default function LoginScreen() {
           )}
         </View>
 
-        <TouchableOpacity
-          style={{
-            backgroundColor: theme.primary,
-            padding: 16,
+        {isLoading ? (
+          <View style={{
             borderRadius: 8,
-            alignItems: 'center',
-            opacity: isLoading ? 0.7 : 1,
-          }}
-          onPress={handleLogin}
-          disabled={isLoading}
-        >
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-            {isLoading ? t('auth.loggingIn') : t('auth.login')}
-          </Text>
-        </TouchableOpacity>
+            overflow: 'hidden',
+            backgroundColor: theme.border,
+            height: 52,
+            justifyContent: 'center',
+          }}>
+            <View style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: `${Math.round(progress * 100)}%`,
+              backgroundColor: '#F7931A',
+              borderRadius: 8,
+            }} />
+            <Text style={{
+              color: '#FFFFFF',
+              fontSize: 16,
+              fontWeight: '600',
+              textAlign: 'center',
+              zIndex: 1,
+            }}>
+              🔓 {t('auth.decrypting')} {Math.round(progress * 100)}%
+            </Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.primary,
+              padding: 16,
+              borderRadius: 8,
+              alignItems: 'center',
+            }}
+            onPress={handleLogin}
+          >
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+              {t('auth.login')}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {biometricEnabled && biometricAvailable && (
           <>
