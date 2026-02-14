@@ -308,9 +308,10 @@ export async function processLoanRepayments(): Promise<{
 }
 
 /**
- * 할부 결제일 자동 지출 기록 생성
- * - 카드 결제일에 해당 카드의 활성 할부 월납입금을 지출 기록으로 생성
- * - 그날의 시세로 sats 환산 (addExpense에서 자동 처리)
+ * 할부 결제일 상태 업데이트
+ * - 카드 결제일에 해당 카드의 활성 할부 paidMonths/remainingAmount 업데이트
+ * - 은행 차감은 processCardPayments()에서 처리 (installmentPayments 포함)
+ * - 지출 기록은 구매 시점에 이미 전액 기록됨 (이중 계상 방지)
  */
 export async function processInstallmentPayments(): Promise<{
   processed: number;
@@ -327,7 +328,6 @@ export async function processInstallmentPayments(): Promise<{
 
   const { cards } = useCardStore.getState();
   const { installments, updateInstallment } = useDebtStore.getState();
-  const { addExpense } = useLedgerStore.getState();
 
   // 마지막 처리 기록 로드
   const lastDeductionStr = await AsyncStorage.getItem(STORAGE_KEYS.LAST_INSTALLMENT_DEDUCTION);
@@ -367,20 +367,10 @@ export async function processInstallmentPayments(): Promise<{
           continue;
         }
 
-        // 지출 기록 생성 - 실제 결제일 날짜 사용
-        await addExpense({
-          date: dateStr,
-          amount: installment.monthlyPayment,
-          currency: 'KRW',
-          category: 'installment',
-          paymentMethod: 'card',
-          cardId: installment.cardId,
-          installmentMonths: null,
-          isInterestFree: null,
-          installmentId: installment.id,
-          memo: i18n.t('notifications.installmentMemo', { name: installment.storeName, current: installment.paidMonths + 1, total: installment.months }),
-          linkedAssetId: null,
-        });
+        // NOTE: 지출 기록은 생성하지 않음!
+        // 소비 기록은 구매 시점에 이미 전액 기록됨 (addExpense in add-expense.tsx)
+        // 은행 계좌 차감은 processCardPayments()에서 카드 결제일에 일괄 처리됨
+        // 여기서는 할부 상태(paidMonths, remainingAmount)만 업데이트
 
         // 할부 상태 업데이트
         const newPaidMonths = installment.paidMonths + 1;
