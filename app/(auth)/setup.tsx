@@ -126,7 +126,12 @@ export default function SetupScreen() {
         salt = fileContent.substring('SYBA_BACKUP:'.length, newlineIdx);
       } else {
         // Old format without salt header - can't restore cross-device
-        Alert.alert(t('common.error'), t('auth.restoreFailed'));
+        // Old backups used deriveKeySync(password, salt) where salt was device-specific
+        // from SecureStore. Without the original salt, decryption is impossible.
+        Alert.alert(
+          t('common.error'),
+          '이 백업 파일은 이전 버전 형식입니다. 원래 기기에서 새 백업을 생성해주세요.'
+        );
         return;
       }
 

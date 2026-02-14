@@ -13,7 +13,6 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
-import * as DocumentPicker from 'expo-document-picker';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +22,7 @@ import { useCardStore } from '../../src/stores/cardStore';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
-import { createBackup, restoreBackup } from '../../src/utils/storage';
+import { createBackup } from '../../src/utils/storage';
 import { CONFIG, AutoLockTime } from '../../src/constants/config';
 import { SUPABASE_CONFIG } from '../../src/constants/supabase';
 import {
@@ -184,59 +183,6 @@ export default function SettingsScreen() {
         { text: t('common.cancel'), style: 'cancel' },
         { text: t('settings.saveToDevice'), onPress: () => doBackup('local') },
         { text: t('settings.shareExternal'), onPress: () => doBackup('share') },
-      ]
-    );
-  };
-
-  const handleRestore = async () => {
-    if (!encryptionKey) {
-      Alert.alert(t('common.error'), t('common.authRequired'));
-      return;
-    }
-
-    Alert.alert(
-      t('settings.restoreTitle'),
-      t('settings.restoreWarning'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.restore'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const result = await DocumentPicker.getDocumentAsync({
-                type: '*/*',
-                copyToCacheDirectory: true,
-              });
-
-              if (result.canceled) {
-                return;
-              }
-
-              const file = result.assets[0];
-              if (!file.name.endsWith('.enc')) {
-                Alert.alert(t('common.error'), t('settings.invalidBackupFile'));
-                return;
-              }
-
-              await restoreBackup(file.uri, encryptionKey);
-
-              await Promise.all([
-                loadRecords(),
-                loadCards(),
-                loadDebts(encryptionKey),
-              ]);
-
-              Alert.alert(t('common.done'), t('settings.restoreDone'));
-            } catch (error) {
-              console.error('Restore failed:', error);
-              Alert.alert(
-                t('settings.restoreTitle'),
-                t('settings.restoreFailed')
-              );
-            }
-          },
-        },
       ]
     );
   };
@@ -747,19 +693,6 @@ export default function SettingsScreen() {
               <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>
                 {isBackingUp ? t('settings.backingUp') : t('settings.backup')}
               </Text>
-              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 16,
-              }}
-              onPress={handleRestore}
-            >
-              <Ionicons name="cloud-download" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
-              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.restore')}</Text>
               <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>

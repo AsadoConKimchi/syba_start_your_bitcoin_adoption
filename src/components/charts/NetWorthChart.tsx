@@ -2,6 +2,7 @@ import { View, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSnapshotStore } from '../../stores/snapshotStore';
 import { usePriceStore } from '../../stores/priceStore';
 import { useSettingsStore } from '../../stores/settingsStore';
@@ -58,13 +59,31 @@ export function NetWorthChart() {
   }, [snapshots, getTotalAssetKrw, getTotalDebt, btcKrw]);
 
   const hasData = recentSnapshots.length > 0;
+  const hasEnoughData = recentSnapshots.length >= 2;
 
-  if (!hasData) {
+  // Collapsed state: 0-1 data points — show header only
+  if (!hasEnoughData) {
     return (
-      <ChartEmptyState
-        message={`${t('charts.noAssetHistory')}\n${t('charts.autoRecord')}`}
-        icon="📊"
-      />
+      <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 12 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: 16,
+          }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '600', color: theme.text }}>
+            {t('charts.assetFlow')}
+          </Text>
+          <Ionicons name="chevron-down" size={20} color={theme.textSecondary} />
+        </View>
+        <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+          <Text style={{ fontSize: 13, color: theme.textMuted, textAlign: 'center' }}>
+            다음 달부터 자산 흐름을 보여드릴게요 📈
+          </Text>
+        </View>
+      </View>
     );
   }
 
