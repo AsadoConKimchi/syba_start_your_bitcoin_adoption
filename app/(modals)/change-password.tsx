@@ -7,6 +7,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -232,6 +234,22 @@ export default function ChangePasswordScreen() {
         {/* 변경 버튼 */}
         <View style={{ padding: 20, borderTopWidth: 1, borderTopColor: theme.border }}>
           {isLoading ? (
+            <View>
+            <View style={{
+              height: 36,
+              justifyContent: 'flex-end',
+              alignItems: 'flex-start',
+            }}>
+              <Image
+                source={require('../../assets/icon.png')}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  marginLeft: progress * (Dimensions.get('window').width - 48 - 32),
+                }}
+              />
+            </View>
             <View style={{
               borderRadius: 8,
               overflow: 'hidden',
@@ -257,6 +275,7 @@ export default function ChangePasswordScreen() {
               }}>
                 🔓 {t('auth.decrypting')} {Math.round(progress * 100)}%
               </Text>
+            </View>
             </View>
           ) : (
             <TouchableOpacity
