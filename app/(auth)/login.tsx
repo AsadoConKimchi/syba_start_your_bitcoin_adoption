@@ -31,6 +31,7 @@ export default function LoginScreen() {
     authenticateWithBiometric,
     biometricEnabled,
     biometricAvailable,
+    biometricType,
     failedAttempts,
     checkLockStatus,
     getRemainingLockTime,
@@ -287,9 +288,9 @@ export default function LoginScreen() {
               }}
               onPress={handleBiometric}
             >
-              <Ionicons name="finger-print" size={24} color={theme.primary} />
+              <Ionicons name={biometricType === 'faceid' ? 'scan' : 'finger-print'} size={24} color={theme.primary} />
               <Text style={{ marginLeft: 8, fontSize: 16, color: theme.text }}>
-                {t('auth.useBiometric')}
+                {biometricType === 'faceid' ? 'Face ID' : biometricType === 'fingerprint' ? t('auth.useFingerprint') : t('auth.useBiometric')}
               </Text>
             </TouchableOpacity>
           </>

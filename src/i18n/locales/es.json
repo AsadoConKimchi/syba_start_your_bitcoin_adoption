@@ -182,7 +182,8 @@
     "passwordReqUppercase": "Contiene mayúscula",
     "passwordReqLowercase": "Contiene minúscula",
     "passwordReqNumber": "Contiene número",
-    "passwordReqLength": "Mínimo 12 caracteres"
+    "passwordReqLength": "Mínimo 12 caracteres",
+    "useFingerprint": "Iniciar sesión con huella"
   },
   "errors": {
     "authRequired": "Autenticación requerida",

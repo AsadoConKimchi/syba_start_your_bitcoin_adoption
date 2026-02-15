@@ -182,7 +182,8 @@
     "passwordReqUppercase": "Contains uppercase letter",
     "passwordReqLowercase": "Contains lowercase letter",
     "passwordReqNumber": "Contains number",
-    "passwordReqLength": "Minimum 12 characters"
+    "passwordReqLength": "Minimum 12 characters",
+    "useFingerprint": "Login with Fingerprint"
   },
   "errors": {
     "authRequired": "Authentication required",

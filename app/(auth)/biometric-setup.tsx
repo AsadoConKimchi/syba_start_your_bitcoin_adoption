@@ -6,7 +6,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
 
 export default function BiometricSetupScreen() {
-  const { enableBiometric } = useAuthStore();
+  const { enableBiometric, biometricType } = useAuthStore();
   const { t } = useTranslation();
   const { theme } = useTheme();
 
@@ -32,7 +32,7 @@ export default function BiometricSetupScreen() {
             justifyContent: 'center',
           }}
         >
-          <Ionicons name="finger-print" size={48} color={theme.primary} />
+          <Ionicons name={biometricType === 'faceid' ? 'scan' : 'finger-print'} size={48} color={theme.primary} />
         </View>
       </View>
 

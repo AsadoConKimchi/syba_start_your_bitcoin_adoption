@@ -182,7 +182,8 @@
     "passwordReqUppercase": "大文字を含む",
     "passwordReqLowercase": "小文字を含む",
     "passwordReqNumber": "数字を含む",
-    "passwordReqLength": "12文字以上"
+    "passwordReqLength": "12文字以上",
+    "useFingerprint": "指紋認証でログイン"
   },
   "errors": {
     "authRequired": "認証が必要です",

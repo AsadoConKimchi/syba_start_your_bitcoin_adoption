@@ -19,6 +19,7 @@ interface AuthState {
   encryptionKey: string | null;
   biometricEnabled: boolean;
   biometricAvailable: boolean;
+  biometricType: 'faceid' | 'fingerprint' | 'iris' | null;
   failedAttempts: number;
   lockedUntil: number | null;
 }
@@ -44,6 +45,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   encryptionKey: null,
   biometricEnabled: false,
   biometricAvailable: false,
+  biometricType: null,
   failedAttempts: 0,
   lockedUntil: null,
 
@@ -57,6 +59,19 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       const enrolled = await LocalAuthentication.isEnrolledAsync();
       const biometricAvailable = compatible && enrolled;
 
+      // 생체인증 타입 확인
+      let biometricType: 'faceid' | 'fingerprint' | 'iris' | null = null;
+      if (biometricAvailable) {
+        const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+        if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+          biometricType = 'faceid';
+        } else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+          biometricType = 'fingerprint';
+        } else if (types.includes(LocalAuthentication.AuthenticationType.IRIS)) {
+          biometricType = 'iris';
+        }
+      }
+
       // 설정 확인
       const [passwordHash, biometricStr] = await Promise.all([
         getSecure(SECURE_KEYS.PASSWORD_HASH),
@@ -69,6 +84,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       set({
         isFirstLaunch,
         biometricAvailable,
+        biometricType,
         biometricEnabled,
         isLoading: false,
       });

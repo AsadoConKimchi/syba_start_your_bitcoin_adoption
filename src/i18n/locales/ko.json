@@ -182,7 +182,8 @@
     "passwordReqUppercase": "대문자 포함",
     "passwordReqLowercase": "소문자 포함",
     "passwordReqNumber": "숫자 포함",
-    "passwordReqLength": "12자리 이상"
+    "passwordReqLength": "12자리 이상",
+    "useFingerprint": "지문 인식으로 로그인"
   },
   "errors": {
     "authRequired": "인증 필요",
