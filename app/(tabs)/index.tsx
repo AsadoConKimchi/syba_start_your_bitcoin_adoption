@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { useState, useCallback, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -21,7 +21,11 @@ function getKrwAmount(record: any): number {
   }
   return record.amount;
 }
-import { calculateAllCardsPayment } from '../../src/utils/cardPaymentCalculator';
+import { calculateAllCardsPayment, CardPaymentWithNextCycle } from '../../src/utils/cardPaymentCalculator';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { NetWorthChart } from '../../src/components/charts';
 import { PremiumBanner } from '../../src/components/PremiumGate';
 
@@ -41,11 +45,18 @@ export default function HomeScreen() {
   const year = today.getFullYear();
   const month = today.getMonth() + 1;
 
+  const [expandedNextCards, setExpandedNextCards] = useState<Record<string, boolean>>({});
+
   const cardPayments = useMemo(() => {
     return calculateAllCardsPayment(cards, records, installments, new Date(), btcKrw || undefined)
-      .filter((p) => p.totalPayment > 0)
-      .sort((a, b) => (a.daysUntilPayment || 999) - (b.daysUntilPayment || 999));
+      .filter((p) => p.current.totalPayment > 0 || p.next.totalPayment > 0)
+      .sort((a, b) => (a.current.daysUntilPayment || 999) - (b.current.daysUntilPayment || 999));
   }, [cards, records, installments, btcKrw]);
+
+  const toggleNextCard = (cardId: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedNextCards(prev => ({ ...prev, [cardId]: !prev[cardId] }));
+  };
 
   const todayTotal = getTodayTotal();
   const monthlyTotal = getMonthlyTotal(year, month);
@@ -255,7 +266,15 @@ export default function HomeScreen() {
         {cardPayments.length > 0 && (
           <View style={{ paddingHorizontal: 20, marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 12 }}>{t('home.cardPaymentSchedule')}</Text>
-            {cardPayments.map((payment) => (
+            {cardPayments.map(({ current: payment, next: nextPayment }) => {
+              const isNextExpanded = expandedNextCards[payment.cardId] || false;
+              const billingStart = payment.billingPeriodStart;
+              const billingEnd = payment.billingPeriodEnd;
+              const billingRangeText = billingStart && billingEnd
+                ? `(${new Date(billingStart).getMonth() + 1}/${new Date(billingStart).getDate()}~${new Date(billingEnd).getMonth() + 1}/${new Date(billingEnd).getDate()})`
+                : '';
+
+              return (
               <View
                 key={payment.cardId}
                 style={{
@@ -278,6 +297,11 @@ export default function HomeScreen() {
                         <Text style={{ color: theme.primary }}> (D-{payment.daysUntilPayment})</Text>
                       )}
                     </Text>
+                    {billingRangeText ? (
+                      <Text style={{ fontSize: 10, color: theme.textMuted, marginTop: 2 }}>
+                        {t('home.billingPeriod')} {billingRangeText}
+                      </Text>
+                    ) : null}
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
                     {settings.displayUnit === 'BTC' ? (
@@ -315,8 +339,45 @@ export default function HomeScreen() {
                     </View>
                   )}
                 </View>
+
+                {/* 다음 결제 accordion */}
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12, paddingTop: 8, borderTopWidth: 1, borderTopColor: theme.border }}
+                  onPress={() => toggleNextCard(payment.cardId)}
+                >
+                  <Text style={{ fontSize: 12, color: theme.textSecondary, marginRight: 4 }}>{t('home.nextPayment')}</Text>
+                  <Ionicons name={isNextExpanded ? 'chevron-up' : 'chevron-down'} size={14} color={theme.textSecondary} />
+                </TouchableOpacity>
+
+                {isNextExpanded && (
+                  <View style={{ marginTop: 8 }}>
+                    {nextPayment.billingPeriodStart && nextPayment.billingPeriodEnd && (
+                      <Text style={{ fontSize: 10, color: theme.textMuted, marginBottom: 4 }}>
+                        {t('home.billingPeriod')} ({new Date(nextPayment.billingPeriodStart).getMonth() + 1}/{new Date(nextPayment.billingPeriodStart).getDate()}~{new Date(nextPayment.billingPeriodEnd).getMonth() + 1}/{new Date(nextPayment.billingPeriodEnd).getDate()})
+                      </Text>
+                    )}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <View>
+                        <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('home.lumpSum')}</Text>
+                        <Text style={{ fontSize: 13, color: theme.text }}>{formatKrw(nextPayment.periodExpenses)}</Text>
+                      </View>
+                      {nextPayment.installmentCount > 0 && (
+                        <View style={{ alignItems: 'flex-end' }}>
+                          <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('home.installment', { count: nextPayment.installmentCount })}</Text>
+                          <Text style={{ fontSize: 13, color: theme.text }}>{formatKrw(nextPayment.installmentPayments)}</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={{ alignItems: 'flex-end', marginTop: 4 }}>
+                      <Text style={{ fontSize: 15, fontWeight: 'bold', color: theme.error }}>
+                        {formatKrw(nextPayment.totalPayment)}
+                      </Text>
+                    </View>
+                  </View>
+                )}
               </View>
-            ))}
+              );
+            })}
           </View>
         )}
 

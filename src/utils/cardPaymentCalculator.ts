@@ -100,10 +100,15 @@ export function calculateCardPayment(
     0
   );
 
-  // 2. 해당 카드의 활성 할부 월 납부액 합계
-  const cardInstallments = installments.filter(
-    (i) => i.cardId === card.id && i.status === 'active'
-  );
+  // 2. 해당 카드의 활성 할부 월 납부액 합계 (산정기간 내 결제일에 해당하는 것만)
+  const cardInstallments = installments.filter((i) => {
+    if (i.cardId !== card.id || i.status !== 'active') return false;
+    // 할부 시작일~종료일 범위 내에 현재 결제일이 포함되는지 확인
+    const installStart = new Date(i.startDate);
+    const installEnd = new Date(i.endDate);
+    // 결제일 기준: endDate가 산정기간 종료일 이후 → 이번 결제에 포함
+    return installStart <= endDate && installEnd >= startDate;
+  });
 
   result.installmentPayments = cardInstallments.reduce(
     (sum, i) => sum + i.monthlyPayment,
@@ -124,8 +129,32 @@ export function calculateCardPayment(
   return result;
 }
 
+export interface CardPaymentWithNextCycle {
+  current: CardPaymentSummary;
+  next: CardPaymentSummary;
+}
+
 /**
- * 모든 카드의 결제 예정 금액 계산
+ * 다음 결제 주기의 결제 예정 금액 계산
+ */
+export function calculateNextCyclePayment(
+  card: Card,
+  expenses: LedgerRecord[],
+  installments: Installment[],
+  targetDate: Date = new Date(),
+  btcKrw?: number
+): CardPaymentSummary {
+  if (!card.paymentDay) {
+    return calculateCardPayment(card, expenses, installments, targetDate, btcKrw);
+  }
+
+  // 다음 결제 주기: 현재 기준에서 한 달 후
+  const nextDate = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, targetDate.getDate());
+  return calculateCardPayment(card, expenses, installments, nextDate, btcKrw);
+}
+
+/**
+ * 모든 카드의 결제 예정 금액 계산 (현재 + 다음 주기)
  * @param btcKrw 현재 BTC/KRW 시세 (할부 sats 환산용)
  */
 export function calculateAllCardsPayment(
@@ -134,10 +163,13 @@ export function calculateAllCardsPayment(
   installments: Installment[],
   targetDate: Date = new Date(),
   btcKrw?: number
-): CardPaymentSummary[] {
+): CardPaymentWithNextCycle[] {
   return cards
     .filter((c) => c.type === 'credit' && c.paymentDay)
-    .map((card) => calculateCardPayment(card, expenses, installments, targetDate, btcKrw));
+    .map((card) => ({
+      current: calculateCardPayment(card, expenses, installments, targetDate, btcKrw),
+      next: calculateNextCyclePayment(card, expenses, installments, targetDate, btcKrw),
+    }));
 }
 
 /**

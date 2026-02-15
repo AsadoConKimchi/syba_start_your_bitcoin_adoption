@@ -532,39 +532,36 @@ export default function AddInstallmentScreen() {
       </Modal>
 
       {/* 날짜 선택 (캘린더) */}
-      {showDatePicker && (
-        <Modal visible={showDatePicker} transparent animationType="fade">
-          <View style={{ flex: 1, justifyContent: 'center', backgroundColor: theme.modalOverlay }}>
-            <View
-              style={{
-                backgroundColor: theme.modalBackground,
-                margin: 20,
-                borderRadius: 16,
-                padding: 20,
-              }}
-            >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('common.selectDate')}</Text>
-                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                  <Ionicons name="close" size={24} color={theme.textSecondary} />
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={startDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                onChange={(event, date) => {
-                  if (Platform.OS === 'android') {
-                    setShowDatePicker(false);
-                  }
-                  if (date) {
-                    setStartDate(date);
-                    setPaidMonthsEdited(false); // 날짜 변경 시 자동 계산 다시 활성화
-                  }
+      {Platform.OS === 'ios' ? (
+        showDatePicker && (
+          <Modal visible={showDatePicker} transparent animationType="fade">
+            <View style={{ flex: 1, justifyContent: 'center', backgroundColor: theme.modalOverlay }}>
+              <View
+                style={{
+                  backgroundColor: theme.modalBackground,
+                  margin: 20,
+                  borderRadius: 16,
+                  padding: 20,
                 }}
-                locale="ko-KR"
-              />
-              {Platform.OS === 'ios' && (
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('common.selectDate')}</Text>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                    <Ionicons name="close" size={24} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={startDate}
+                  mode="date"
+                  display="inline"
+                  onChange={(event, date) => {
+                    if (date) {
+                      setStartDate(date);
+                      setPaidMonthsEdited(false);
+                    }
+                  }}
+                  locale="ko-KR"
+                />
                 <TouchableOpacity
                   style={{
                     backgroundColor: theme.primary,
@@ -577,10 +574,26 @@ export default function AddInstallmentScreen() {
                 >
                   <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('common.confirm')}</Text>
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
+        )
+      ) : (
+        showDatePicker && (
+          <DateTimePicker
+            value={startDate}
+            mode="date"
+            display="default"
+            onChange={(event, date) => {
+              setShowDatePicker(false);
+              if (date) {
+                setStartDate(date);
+                setPaidMonthsEdited(false);
+              }
+            }}
+            locale="ko-KR"
+          />
+        )
       )}
       </KeyboardAvoidingView>
     </SafeAreaView>

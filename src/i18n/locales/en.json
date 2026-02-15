@@ -78,7 +78,10 @@
     "installment": "Installment ({{count}})",
     "card": "Card",
     "cash": "Cash",
-    "chartFeature": "Income/Expense Flow Chart"
+    "chartFeature": "Income/Expense Flow Chart",
+    "nextPayment": "Next Payment",
+    "billingPeriod": "Billing Period",
+    "billingPeriodRange": "({{start}}~{{end}})"
   },
   "records": {
     "title": "Records",
@@ -174,6 +177,8 @@
     "forgotPasswordFinalTitle": "⚠️ Final Confirmation",
     "forgotPasswordFinalWarning": "Are you sure you want to delete all data and reset the app?\n\nThis action cannot be undone.",
     "forgotPasswordConfirmDelete": "Delete all data",
+    "forgotPasswordTitle": "Forgot your password?",
+    "forgotPasswordMessage": "SYBA does not store passwords on any server, so recovery is not possible.\n\nYou can start fresh by deleting and reinstalling the app. (All existing data will be deleted)",
     "passwordReqUppercase": "Contains uppercase letter",
     "passwordReqLowercase": "Contains lowercase letter",
     "passwordReqNumber": "Contains number",
@@ -371,7 +376,11 @@
     "prevMonth": "Prev. month",
     "currentMonth": "Current month",
     "twoMonthsAgo": "2 months ago",
-    "dayUnit": "th"
+    "dayUnit": "th",
+    "debitLinkedAccount": "Linked Account",
+    "selectDebitAccount": "Select Account",
+    "noAccountsForDebit": "No registered accounts",
+    "debitAccountHint": "Account for debit card payments"
   },
   "asset": {
     "addTitle": "Add Asset",
@@ -401,7 +410,7 @@
     "positive": "+ Positive",
     "availableLimit": "Available: {{amount}}",
     "note": "Note",
-    "manualUpdateNote": "Please update the balance manually. Auto-sync will be available in a future update.",
+    "manualUpdateNote": "Please update the balance manually. SYBA operates offline without connecting to financial institutions to protect your privacy.",
     "satsNote": "Enter Bitcoin balance in sats. 1 BTC = 100,000,000 sats",
     "nameRequired": "Please enter an asset name.",
     "creditLimitRequired": "Please enter the overdraft limit.",
@@ -478,7 +487,12 @@
     "scheduleNumber": "No.",
     "schedulePrincipal": "Principal",
     "scheduleInterest": "Interest",
-    "scheduleTotal": "Total"
+    "scheduleTotal": "Total",
+    "interestPaymentDay": "Interest Payment Day",
+    "interestPaymentDayFormat": "{{day}}th of each month",
+    "selectInterestPaymentDay": "Select Interest Payment Day",
+    "interestPaymentDayHint": "Interest payment day for bullet/overdraft loans",
+    "interestPaymentDayDefault": "Not set (based on repayment day)"
   },
   "installment": {
     "addTitle": "Add Installment",

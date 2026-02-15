@@ -295,6 +295,15 @@ export default function LoginScreen() {
           </>
         )}
 
+        <TouchableOpacity
+          style={{ marginTop: 24, alignItems: 'center' }}
+          onPress={() => Alert.alert(t('auth.forgotPasswordTitle'), t('auth.forgotPasswordMessage'))}
+        >
+          <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
+            {t('auth.forgotPassword')}
+          </Text>
+        </TouchableOpacity>
+
         {__DEV__ && (
           <TouchableOpacity
             style={{ marginTop: 32, alignItems: 'center' }}

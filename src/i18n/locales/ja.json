@@ -78,7 +78,10 @@
     "installment": "分割払い（{{count}}件）",
     "card": "カード",
     "cash": "現金",
-    "chartFeature": "収支フローチャート"
+    "chartFeature": "収支フローチャート",
+    "nextPayment": "次回決済",
+    "billingPeriod": "算定期間",
+    "billingPeriodRange": "({{start}}~{{end}})"
   },
   "records": {
     "title": "記録",
@@ -174,6 +177,8 @@
     "forgotPasswordFinalTitle": "⚠️ 最終確認",
     "forgotPasswordFinalWarning": "本当にすべてのデータを削除してアプリを初期化しますか？\n\nこの操作は元に戻せません。",
     "forgotPasswordConfirmDelete": "すべてのデータを削除",
+    "forgotPasswordTitle": "パスワードをお忘れですか？",
+    "forgotPasswordMessage": "SYBAはサーバーにパスワードを保存していないため、復旧はできません。\n\nアプリを削除して再インストールすると、最初からやり直すことができます。（既存データは削除されます）",
     "passwordReqUppercase": "大文字を含む",
     "passwordReqLowercase": "小文字を含む",
     "passwordReqNumber": "数字を含む",
@@ -371,7 +376,11 @@
     "prevMonth": "前月",
     "currentMonth": "当月",
     "twoMonthsAgo": "前々月",
-    "dayUnit": "日"
+    "dayUnit": "日",
+    "debitLinkedAccount": "連結口座",
+    "selectDebitAccount": "決済口座を選択",
+    "noAccountsForDebit": "登録された口座がありません",
+    "debitAccountHint": "デビットカード決済時の引落口座"
   },
   "asset": {
     "addTitle": "資産を追加",
@@ -401,7 +410,7 @@
     "positive": "+ プラス",
     "availableLimit": "利用可能額：{{amount}}",
     "note": "注意",
-    "manualUpdateNote": "残高は手動で更新してください。自動連携は今後対応予定です。",
+    "manualUpdateNote": "残高は手動で更新してください。SYBAはプライバシー保護のため、金融機関と連携せずオフラインで動作します。",
     "satsNote": "ビットコインの残高はsats単位で入力してください。1 BTC = 100,000,000 sats",
     "nameRequired": "資産名を入力してください。",
     "creditLimitRequired": "当座貸越限度額を入力してください。",
@@ -478,7 +487,12 @@
     "scheduleNumber": "回",
     "schedulePrincipal": "元金",
     "scheduleInterest": "利息",
-    "scheduleTotal": "合計"
+    "scheduleTotal": "合計",
+    "interestPaymentDay": "利息支払日",
+    "interestPaymentDayFormat": "毎月{{day}}日",
+    "selectInterestPaymentDay": "利息支払日を選択",
+    "interestPaymentDayHint": "一括返済/マイナス通帳の利息支払日",
+    "interestPaymentDayDefault": "未設定（返済日基準）"
   },
   "installment": {
     "addTitle": "分割払いを追加",

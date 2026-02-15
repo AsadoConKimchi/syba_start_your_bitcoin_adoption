@@ -70,6 +70,9 @@ export interface Loan {
   // 상태
   status: 'active' | 'completed' | 'cancelled';
 
+  // 이자 납부일 (만기일시상환/마이너스통장)
+  interestPaymentDay?: number; // 1~28
+
   // 자산 연동 (Phase 5)
   linkedAssetId?: string; // 상환금이 출금될 계좌
 

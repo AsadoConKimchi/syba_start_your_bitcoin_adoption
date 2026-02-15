@@ -190,7 +190,7 @@ export default function ChangePasswordScreen() {
               ] as const).map(([key, label]) => {
                 const met = passwordChecks[key as keyof typeof passwordChecks];
                 return (
-                  <Text key={key} style={{ fontSize: 11, color: met ? '#22C55E' : '#EF4444' }}>
+                  <Text key={key} style={{ fontSize: 13, color: met ? '#22C55E' : '#EF4444' }}>
                     {met ? '✅' : '❌'}{label}
                   </Text>
                 );

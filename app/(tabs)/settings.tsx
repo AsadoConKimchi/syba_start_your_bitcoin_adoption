@@ -763,10 +763,12 @@ export default function SettingsScreen() {
               style={{
                 flexDirection: 'row',
                 justifyContent: 'space-between',
+                alignItems: 'center',
               }}
             >
               <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('settings.contact')}</Text>
               <TouchableOpacity
+                style={{ flexShrink: 1, marginLeft: 8 }}
                 onPress={() => {
                   Clipboard.setStringAsync('AsadoConKimchi@proton.me');
                   Alert.alert(t('common.copied'), t('settings.emailCopied'));
@@ -774,9 +776,11 @@ export default function SettingsScreen() {
               >
                 <Text
                   style={{
-                    fontSize: 14,
+                    fontSize: 13,
                     color: theme.info,
                   }}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
                 >
                   AsadoConKimchi@proton.me
                 </Text>

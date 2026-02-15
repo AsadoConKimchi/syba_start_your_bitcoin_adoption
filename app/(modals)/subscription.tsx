@@ -256,7 +256,7 @@ export default function SubscriptionScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
         {/* 프리미엄 헤더 + 가격 (컴팩트) */}
         <View style={{ padding: 20 }}>
           <View

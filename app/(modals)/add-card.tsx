@@ -46,7 +46,9 @@ export default function AddCardScreen() {
   const [billingEndDay, setBillingEndDay] = useState<number | null>(null);
   const [showPaymentDayPicker, setShowPaymentDayPicker] = useState(false);
   const [linkedAssetId, setLinkedAssetId] = useState<string | null>(null);
+  const [linkedAccountId, setLinkedAccountId] = useState<string | null>(null);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
+  const [showDebitAccountPicker, setShowDebitAccountPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const { addCard, cards } = useCardStore();
@@ -145,6 +147,7 @@ export default function AddCardScreen() {
             }
           : {}),
         ...(cardType === 'credit' && linkedAssetId ? { linkedAssetId } : {}),
+        ...(cardType === 'debit' && linkedAccountId ? { linkedAccountId } : {}),
       });
 
       router.back();
@@ -349,6 +352,35 @@ export default function AddCardScreen() {
             </View>
           )}
 
+          {/* 연결 계좌 (체크카드만) */}
+          {cardType === 'debit' && (
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.debitLinkedAccount')}</Text>
+              <TouchableOpacity
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.inputBorder,
+                  borderRadius: 8,
+                  padding: 12,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+                onPress={() => setShowDebitAccountPicker(true)}
+              >
+                <Text style={{ fontSize: 16, color: linkedAccountId ? theme.text : theme.textMuted }}>
+                  {linkedAccountId
+                    ? fiatAssets.find(a => a.id === linkedAccountId)?.name ?? t('card.selectDebitAccount')
+                    : t('card.selectDebitAccount')}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
+                {t('card.debitAccountHint')}
+              </Text>
+            </View>
+          )}
+
           {/* 카드 색상 */}
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.cardColor')}</Text>
@@ -439,6 +471,7 @@ export default function AddCardScreen() {
                   }}
                 >
                   <Text
+                    maxFontSizeMultiplier={1.2}
                     style={{
                       fontSize: 16,
                       color: paymentDay === day ? '#FFFFFF' : theme.text,
@@ -555,6 +588,91 @@ export default function AddCardScreen() {
               onPress={() => {
                 setLinkedAssetId(null);
                 setShowAssetPicker(false);
+              }}
+            >
+              <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('card.noSettings')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {/* 체크카드 연결 계좌 선택 모달 */}
+      <Modal visible={showDebitAccountPicker} transparent animationType="slide">
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
+          <View
+            style={{
+              backgroundColor: theme.modalBackground,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 20,
+              maxHeight: '60%',
+            }}
+          >
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('card.debitLinkedAccount')}</Text>
+              <TouchableOpacity onPress={() => setShowDebitAccountPicker(false)}>
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {fiatAssets.length === 0 ? (
+              <View style={{ padding: 32, alignItems: 'center' }}>
+                <Ionicons name="wallet-outline" size={48} color={theme.textMuted} />
+                <Text style={{ fontSize: 14, color: theme.textMuted, marginTop: 12, textAlign: 'center' }}>
+                  {t('card.noAccountsForDebit')}
+                </Text>
+              </View>
+            ) : (
+              <ScrollView style={{ maxHeight: 300 }}>
+                {fiatAssets.map((asset) => (
+                  <TouchableOpacity
+                    key={asset.id}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      padding: 16,
+                      backgroundColor: linkedAccountId === asset.id ? theme.warningBanner : theme.backgroundSecondary,
+                      borderRadius: 8,
+                      marginBottom: 8,
+                    }}
+                    onPress={() => {
+                      setLinkedAccountId(asset.id);
+                      setShowDebitAccountPicker(false);
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor: '#D1FAE5',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: 12,
+                      }}
+                    >
+                      <Text style={{ fontSize: 18 }}>🏦</Text>
+                    </View>
+                    <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{asset.name}</Text>
+                    {linkedAccountId === asset.id && (
+                      <Ionicons name="checkmark-circle" size={24} color={theme.primary} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
+            {/* 설정 안함 */}
+            <TouchableOpacity
+              style={{
+                padding: 16,
+                backgroundColor: theme.backgroundTertiary,
+                borderRadius: 8,
+                alignItems: 'center',
+                marginTop: 8,
+              }}
+              onPress={() => {
+                setLinkedAccountId(null);
+                setShowDebitAccountPicker(false);
               }}
             >
               <Text style={{ fontSize: 16, color: theme.textSecondary }}>{t('card.noSettings')}</Text>

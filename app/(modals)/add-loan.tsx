@@ -60,6 +60,8 @@ export default function AddLoanScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showRepaymentDayPicker, setShowRepaymentDayPicker] = useState(false);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
+  const [interestPaymentDay, setInterestPaymentDay] = useState<number | null>(null);
+  const [showInterestPaymentDayPicker, setShowInterestPaymentDayPicker] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 법정화폐 자산만 필터링 (대출 상환용)
@@ -125,6 +127,7 @@ export default function AddLoanScreen() {
           memo: memo.trim() || undefined,
           repaymentDay: repaymentDay ?? undefined,
           linkedAssetId: linkedAssetId ?? undefined,
+          interestPaymentDay: interestPaymentDay ?? undefined,
         },
         encryptionKey
       );
@@ -393,6 +396,34 @@ export default function AddLoanScreen() {
               {t('loan.repaymentDayHint')}
             </Text>
           </View>
+
+          {/* 이자 납부일 (만기일시상환 시) */}
+          {repaymentType === 'bullet' && (
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>
+                {t('loan.interestPaymentDay')}
+              </Text>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: theme.backgroundSecondary,
+                  borderRadius: 8,
+                  padding: 16,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+                onPress={() => setShowInterestPaymentDayPicker(true)}
+              >
+                <Text style={{ fontSize: 16, color: interestPaymentDay ? theme.text : theme.textMuted }}>
+                  {interestPaymentDay ? t('loan.interestPaymentDayFormat', { day: interestPaymentDay }) : t('loan.interestPaymentDayDefault')}
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+              </TouchableOpacity>
+              <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 4 }}>
+                {t('loan.interestPaymentDayHint')}
+              </Text>
+            </View>
+          )}
 
           {/* 연결 계좌 (자동 차감용) */}
           <View style={{ marginBottom: 20 }}>
@@ -700,39 +731,36 @@ export default function AddLoanScreen() {
       </Modal>
 
       {/* 날짜 선택 (캘린더) */}
-      {showDatePicker && (
-        <Modal visible={showDatePicker} transparent animationType="fade">
-          <View style={{ flex: 1, justifyContent: 'center', backgroundColor: theme.modalOverlay }}>
-            <View
-              style={{
-                backgroundColor: theme.modalBackground,
-                margin: 20,
-                borderRadius: 16,
-                padding: 20,
-              }}
-            >
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('common.selectDate')}</Text>
-                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                  <Ionicons name="close" size={24} color={theme.textSecondary} />
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={startDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'inline' : 'default'}
-                onChange={(event, date) => {
-                  if (Platform.OS === 'android') {
-                    setShowDatePicker(false);
-                  }
-                  if (date) {
-                    setStartDate(date);
-                    setPaidMonthsEdited(false); // 날짜 변경 시 자동 계산 다시 활성화
-                  }
+      {Platform.OS === 'ios' ? (
+        showDatePicker && (
+          <Modal visible={showDatePicker} transparent animationType="fade">
+            <View style={{ flex: 1, justifyContent: 'center', backgroundColor: theme.modalOverlay }}>
+              <View
+                style={{
+                  backgroundColor: theme.modalBackground,
+                  margin: 20,
+                  borderRadius: 16,
+                  padding: 20,
                 }}
-                locale="ko-KR"
-              />
-              {Platform.OS === 'ios' && (
+              >
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('common.selectDate')}</Text>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                    <Ionicons name="close" size={24} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={startDate}
+                  mode="date"
+                  display="inline"
+                  onChange={(event, date) => {
+                    if (date) {
+                      setStartDate(date);
+                      setPaidMonthsEdited(false);
+                    }
+                  }}
+                  locale="ko-KR"
+                />
                 <TouchableOpacity
                   style={{
                     backgroundColor: '#3B82F6',
@@ -745,10 +773,26 @@ export default function AddLoanScreen() {
                 >
                   <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('common.confirm')}</Text>
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
+        )
+      ) : (
+        showDatePicker && (
+          <DateTimePicker
+            value={startDate}
+            mode="date"
+            display="default"
+            onChange={(event, date) => {
+              setShowDatePicker(false);
+              if (date) {
+                setStartDate(date);
+                setPaidMonthsEdited(false);
+              }
+            }}
+            locale="ko-KR"
+          />
+        )
       )}
 
       {/* 상환일 선택 모달 */}
@@ -814,10 +858,90 @@ export default function AddLoanScreen() {
                     }}
                   >
                     <Text
+                      maxFontSizeMultiplier={1.2}
                       style={{
                         fontSize: 14,
                         fontWeight: '500',
                         color: repaymentDay === day ? '#FFFFFF' : theme.text,
+                      }}
+                    >
+                      {day}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 이자 납부일 선택 모달 */}
+      <Modal visible={showInterestPaymentDayPicker} transparent animationType="slide">
+        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
+          <View
+            style={{
+              backgroundColor: theme.modalBackground,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 20,
+              maxHeight: '60%',
+            }}
+          >
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('loan.selectInterestPaymentDay')}</Text>
+              <TouchableOpacity onPress={() => setShowInterestPaymentDayPicker(false)}>
+                <Ionicons name="close" size={24} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* 기본값 */}
+            <TouchableOpacity
+              style={{
+                padding: 16,
+                backgroundColor: interestPaymentDay === null ? theme.infoBanner : theme.backgroundSecondary,
+                borderRadius: 8,
+                marginBottom: 12,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderWidth: interestPaymentDay === null ? 1 : 0,
+                borderColor: '#3B82F6',
+              }}
+              onPress={() => {
+                setInterestPaymentDay(null);
+                setShowInterestPaymentDayPicker(false);
+              }}
+            >
+              <Text style={{ fontSize: 16, color: theme.text }}>{t('loan.interestPaymentDayDefault')}</Text>
+              {interestPaymentDay === null && (
+                <Ionicons name="checkmark-circle" size={24} color="#3B82F6" />
+              )}
+            </TouchableOpacity>
+
+            <ScrollView style={{ maxHeight: 300 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                  <TouchableOpacity
+                    key={day}
+                    style={{
+                      width: '14%',
+                      aspectRatio: 1,
+                      margin: '0.5%',
+                      backgroundColor: interestPaymentDay === day ? '#3B82F6' : theme.backgroundTertiary,
+                      borderRadius: 8,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    onPress={() => {
+                      setInterestPaymentDay(day);
+                      setShowInterestPaymentDayPicker(false);
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '500',
+                        color: interestPaymentDay === day ? '#FFFFFF' : theme.text,
                       }}
                     >
                       {day}

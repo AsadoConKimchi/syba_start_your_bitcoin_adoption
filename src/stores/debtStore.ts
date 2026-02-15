@@ -58,6 +58,7 @@ interface DebtActions {
       memo?: string;
       repaymentDay?: number;
       linkedAssetId?: string;
+      interestPaymentDay?: number;
     },
     encryptionKey: string
   ) => Promise<Loan>;
@@ -223,6 +224,7 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
       remainingPrincipal: Math.ceil(remainingPrincipal),
       status: paidMonths >= data.termMonths ? 'completed' : 'active',
       linkedAssetId: data.linkedAssetId,
+      interestPaymentDay: data.interestPaymentDay,
       memo: data.memo || null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

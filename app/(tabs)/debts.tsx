@@ -113,7 +113,7 @@ export default function DebtsScreen() {
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
               {formatKrw(item.remainingAmount)}
             </Text>
             <Text style={{ fontSize: 12, color: theme.textMuted }}>
@@ -183,7 +183,7 @@ export default function DebtsScreen() {
             </Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
               {formatKrw(item.remainingPrincipal)}
             </Text>
             <Text style={{ fontSize: 12, color: theme.textMuted }}>
@@ -322,7 +322,7 @@ export default function DebtsScreen() {
             }}
           >
             <Text style={{ fontSize: 14, color: theme.offlineBannerText, marginBottom: 4 }}>{t('debts.totalDebt')}</Text>
-            <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.error }}>
+            <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
               {formatKrw(totalDebt)}
             </Text>
             {btcKrw && (
@@ -342,7 +342,7 @@ export default function DebtsScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 12, color: theme.offlineBannerText }}>{t('debts.installments')}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
                   {formatKrw(activeInstallments.reduce((s, i) => s + i.remainingAmount, 0))}
                 </Text>
                 <Text style={{ fontSize: 11, color: theme.textMuted }}>
@@ -352,7 +352,7 @@ export default function DebtsScreen() {
               <View style={{ width: 1, backgroundColor: theme.errorBannerBorder, marginHorizontal: 16 }} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 12, color: theme.offlineBannerText }}>{t('debts.loans')}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
                   {formatKrw(activeLoans.reduce((s, l) => s + l.remainingPrincipal, 0))}
                 </Text>
                 <Text style={{ fontSize: 11, color: theme.textMuted }}>
@@ -377,7 +377,7 @@ export default function DebtsScreen() {
                   {t('debts.thisMonthDue')}
                 </Text>
               </View>
-              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.warning }}>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.warning }} numberOfLines={1} adjustsFontSizeToFit>
                 {formatKrw(thisMonthTotal)}
               </Text>
               {btcKrw && (

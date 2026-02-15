@@ -78,7 +78,10 @@
     "installment": "Cuotas ({{count}})",
     "card": "Tarjeta",
     "cash": "Efectivo",
-    "chartFeature": "Gráfico de flujo de ingresos/gastos"
+    "chartFeature": "Gráfico de flujo de ingresos/gastos",
+    "nextPayment": "Próximo pago",
+    "billingPeriod": "Período de facturación",
+    "billingPeriodRange": "({{start}}~{{end}})"
   },
   "records": {
     "title": "Registros",
@@ -174,6 +177,8 @@
     "forgotPasswordFinalTitle": "⚠️ Confirmación final",
     "forgotPasswordFinalWarning": "¿Estás seguro de que deseas eliminar todos los datos y restablecer la app?\n\nEsta acción no se puede deshacer.",
     "forgotPasswordConfirmDelete": "Eliminar todos los datos",
+    "forgotPasswordTitle": "¿Olvidaste tu contraseña?",
+    "forgotPasswordMessage": "SYBA no almacena contraseñas en ningún servidor, por lo que la recuperación no es posible.\n\nPuedes comenzar de nuevo eliminando y reinstalando la app. (Todos los datos existentes serán eliminados)",
     "passwordReqUppercase": "Contiene mayúscula",
     "passwordReqLowercase": "Contiene minúscula",
     "passwordReqNumber": "Contiene número",
@@ -371,7 +376,11 @@
     "prevMonth": "Mes anterior",
     "currentMonth": "Mes actual",
     "twoMonthsAgo": "Hace 2 meses",
-    "dayUnit": ""
+    "dayUnit": "",
+    "debitLinkedAccount": "Cuenta vinculada",
+    "selectDebitAccount": "Seleccionar cuenta",
+    "noAccountsForDebit": "No hay cuentas registradas",
+    "debitAccountHint": "Cuenta para pagos con tarjeta de débito"
   },
   "asset": {
     "addTitle": "Agregar Activo",
@@ -401,7 +410,7 @@
     "positive": "+ Positivo",
     "availableLimit": "Disponible: {{amount}}",
     "note": "Nota",
-    "manualUpdateNote": "Actualiza el saldo manualmente. La sincronización automática estará disponible próximamente.",
+    "manualUpdateNote": "Actualiza el saldo manualmente. SYBA funciona sin conexión a instituciones financieras para proteger tu privacidad.",
     "satsNote": "Ingresa el saldo de Bitcoin en sats. 1 BTC = 100,000,000 sats",
     "nameRequired": "Por favor ingresa un nombre.",
     "creditLimitRequired": "Por favor ingresa el límite de sobregiro.",
@@ -478,7 +487,12 @@
     "scheduleNumber": "No.",
     "schedulePrincipal": "Capital",
     "scheduleInterest": "Interés",
-    "scheduleTotal": "Total"
+    "scheduleTotal": "Total",
+    "interestPaymentDay": "Día de pago de intereses",
+    "interestPaymentDayFormat": "Día {{day}} de cada mes",
+    "selectInterestPaymentDay": "Seleccionar día de pago de intereses",
+    "interestPaymentDayHint": "Día de pago de intereses para préstamos bullet/sobregiro",
+    "interestPaymentDayDefault": "Sin configurar (basado en día de pago)"
   },
   "installment": {
     "addTitle": "Agregar Cuotas",

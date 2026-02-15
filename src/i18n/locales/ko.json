@@ -78,7 +78,10 @@
     "installment": "할부 ({{count}}건)",
     "card": "카드",
     "cash": "현금",
-    "chartFeature": "수입/지출 흐름 차트"
+    "chartFeature": "수입/지출 흐름 차트",
+    "nextPayment": "다음 결제",
+    "billingPeriod": "산정기간",
+    "billingPeriodRange": "({{start}}~{{end}})"
   },
   "records": {
     "title": "기록",
@@ -174,6 +177,8 @@
     "forgotPasswordFinalTitle": "⚠️ 최종 확인",
     "forgotPasswordFinalWarning": "정말로 모든 데이터를 삭제하고 앱을 초기화하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.",
     "forgotPasswordConfirmDelete": "모든 데이터 삭제",
+    "forgotPasswordTitle": "비밀번호를 잊으셨나요?",
+    "forgotPasswordMessage": "SYBA는 서버에 비밀번호를 저장하지 않아 복구가 불가능합니다.\n\n앱을 삭제 후 재설치하면 새로 시작할 수 있습니다. (기존 데이터는 삭제됩니다)",
     "passwordReqUppercase": "대문자 포함",
     "passwordReqLowercase": "소문자 포함",
     "passwordReqNumber": "숫자 포함",
@@ -371,7 +376,11 @@
     "prevMonth": "전월",
     "currentMonth": "당월",
     "twoMonthsAgo": "전전월",
-    "dayUnit": "일"
+    "dayUnit": "일",
+    "debitLinkedAccount": "연결 계좌",
+    "selectDebitAccount": "결제 계좌 선택",
+    "noAccountsForDebit": "등록된 계좌가 없습니다",
+    "debitAccountHint": "체크카드 결제 시 출금될 계좌"
   },
   "asset": {
     "addTitle": "자산 추가",
@@ -401,7 +410,7 @@
     "positive": "+ 플러스",
     "availableLimit": "가용 한도: {{amount}}",
     "note": "참고",
-    "manualUpdateNote": "잔액은 수동으로 업데이트해주세요. 자동 연동 기능은 추후 지원 예정입니다.",
+    "manualUpdateNote": "잔액은 수동으로 업데이트해주세요. SYBA는 개인정보 보호를 위해 금융기관 연동 없이 오프라인으로 동작합니다.",
     "satsNote": "비트코인 잔액은 sats 단위로 입력해주세요. 1 BTC = 100,000,000 sats",
     "nameRequired": "자산명을 입력해주세요.",
     "creditLimitRequired": "마이너스통장 한도를 입력해주세요.",
@@ -490,7 +499,12 @@
     "scheduleNumber": "회차",
     "schedulePrincipal": "원금",
     "scheduleInterest": "이자",
-    "scheduleTotal": "합계"
+    "scheduleTotal": "합계",
+    "interestPaymentDay": "이자 납부일",
+    "interestPaymentDayFormat": "매월 {{day}}일",
+    "selectInterestPaymentDay": "이자 납부일 선택",
+    "interestPaymentDayHint": "만기일시상환/마이너스통장의 이자 납부일",
+    "interestPaymentDayDefault": "설정 안 함 (상환일 기준)"
   },
   "installment": {
     "addTitle": "할부 추가",

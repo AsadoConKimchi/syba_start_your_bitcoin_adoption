@@ -1174,6 +1174,7 @@ export default function LoanDetailScreen() {
                     }}
                   >
                     <Text
+                      maxFontSizeMultiplier={1.2}
                       style={{
                         fontSize: 14,
                         fontWeight: '500',

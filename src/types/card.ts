@@ -15,7 +15,8 @@ export interface Card {
   billingStartDay?: number; // 산정기간 시작일
   billingEndDay?: number; // 산정기간 종료일
   // 자산 연동 (Phase 5)
-  linkedAssetId?: string; // 결제일에 출금될 계좌 (자산 ID)
+  linkedAssetId?: string; // 결제일에 출금될 계좌 (자산 ID) — 신용카드
+  linkedAccountId?: string; // 체크카드 연결 계좌 (자산 ID)
   createdAt: string;
   updatedAt: string;
 }

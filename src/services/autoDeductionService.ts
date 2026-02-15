@@ -133,7 +133,8 @@ export async function processCardPayments(): Promise<{
         }
 
         // 결제 예정액 찾기
-        const payment = cardPayments.find((p) => p.cardId === card.id);
+        const paymentEntry = cardPayments.find((p) => p.current.cardId === card.id);
+        const payment = paymentEntry?.current;
         if (!payment || payment.totalPayment <= 0) {
           console.log(`[AutoDeduction] 카드 ${card.name}: 결제 예정액 없음`);
           lastDeduction[card.id] = yearMonth;
