@@ -46,7 +46,7 @@ import { SUPPORTED_REGIONS, getCurrentRegionId, setRegion, RegionId } from '../.
 import { useTheme } from '../../src/hooks/useTheme';
 
 export default function SettingsScreen() {
-  const { lock, biometricEnabled, biometricAvailable, enableBiometric, disableBiometric, encryptionKey } =
+  const { lock, biometricEnabled, biometricAvailable, biometricType, enableBiometric, disableBiometric, encryptionKey } =
     useAuthStore();
   const { settings, updateSettings } = useSettingsStore();
   const { cards, loadCards } = useCardStore();
@@ -471,14 +471,16 @@ export default function SettingsScreen() {
                 }}
               >
                 <Ionicons
-                  name="finger-print"
+                  name={biometricType === 'faceid' ? 'scan' : 'finger-print'}
                   size={24}
                   color={theme.textSecondary}
                   style={{ marginRight: 12 }}
                 />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 16, color: theme.text }}>{t('settings.biometric')}</Text>
-                  <Text style={{ fontSize: 12, color: theme.textMuted }}>{t('settings.biometricSub')}</Text>
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
+                    {biometricType === 'faceid' ? 'Face ID' : biometricType === 'fingerprint' ? t('auth.useFingerprint') : t('settings.biometricSub')}
+                  </Text>
                 </View>
                 <Switch
                   value={biometricEnabled}
