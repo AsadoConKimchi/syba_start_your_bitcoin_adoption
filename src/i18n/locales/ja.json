@@ -81,7 +81,7 @@
     "cash": "現金",
     "chartFeature": "収支フローチャート",
     "nextPayment": "次回決済",
-    "billingPeriod": "算定期間",
+    "billingPeriod": "ご利用期間",
     "billingPeriodRange": "({{start}}~{{end}})"
   },
   "records": {
@@ -385,7 +385,7 @@
     "debitAccountHint": "デビットカード決済時の引落口座",
     "initialBalance": "初期残高",
     "initialBalancePlaceholder": "50,000",
-    "initialBalanceHint": "プリペイドカードの残高を入力してください（ウォン）",
+    "initialBalanceHint": "プリペイドカードの残高を入力してください（現地通貨）",
     "insufficientBalance": "残高不足",
     "currentBalance": "現在の残高: {{balance}}",
     "currentBalanceLabel": "残高"
@@ -499,7 +499,7 @@
     "interestPaymentDay": "利息支払日",
     "interestPaymentDayFormat": "毎月{{day}}日",
     "selectInterestPaymentDay": "利息支払日を選択",
-    "interestPaymentDayHint": "一括返済/マイナス通帳の利息支払日",
+    "interestPaymentDayHint": "一括返済/当座貸越の利息支払日",
     "interestPaymentDayDefault": "未設定（返済日基準）"
   },
   "installment": {
@@ -543,7 +543,7 @@
     "benefits": "プレミアム特典",
     "unlimitedCards": "カード無制限登録",
     "detailedStats": "詳細統計＆レポート",
-    "premiumAlert": "プレミアムアラート",
+    "premiumAlert": "取引所プレミアム通知",
     "cloudBackup": "クラウドバックアップ",
     "customTheme": "カスタムテーマ",
     "scanQR": "LightningウォレットでQRコードをスキャン",
@@ -832,7 +832,7 @@
     "expense": "支出",
     "monthlyAvgIncome": "月平均収入",
     "monthlyAvgExpense": "月平均支出",
-    "tenThousandWon": "₩（万ウォン）",
+    "tenThousandWon": "（万）",
     "kSats": "K sats"
   }
 }
