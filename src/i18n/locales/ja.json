@@ -11,6 +11,7 @@
     "back": "戻る",
     "next": "次へ",
     "error": "エラー",
+    "warning": "注意",
     "loading": "読み込み中...",
     "retry": "再試行",
     "ignore": "無視",
@@ -381,7 +382,13 @@
     "debitLinkedAccount": "連結口座",
     "selectDebitAccount": "決済口座を選択",
     "noAccountsForDebit": "登録された口座がありません",
-    "debitAccountHint": "デビットカード決済時の引落口座"
+    "debitAccountHint": "デビットカード決済時の引落口座",
+    "initialBalance": "初期残高",
+    "initialBalancePlaceholder": "50,000",
+    "initialBalanceHint": "プリペイドカードの残高を入力してください（ウォン）",
+    "insufficientBalance": "残高不足",
+    "currentBalance": "現在の残高: {{balance}}",
+    "currentBalanceLabel": "残高"
   },
   "asset": {
     "addTitle": "資産を追加",

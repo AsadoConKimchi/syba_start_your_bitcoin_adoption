@@ -11,6 +11,7 @@
     "back": "돌아가기",
     "next": "다음",
     "error": "오류",
+    "warning": "주의",
     "loading": "로딩 중...",
     "retry": "다시 시도",
     "ignore": "무시",
@@ -381,7 +382,13 @@
     "debitLinkedAccount": "연결 계좌",
     "selectDebitAccount": "결제 계좌 선택",
     "noAccountsForDebit": "등록된 계좌가 없습니다",
-    "debitAccountHint": "체크카드 결제 시 출금될 계좌"
+    "debitAccountHint": "체크카드 결제 시 출금될 계좌",
+    "initialBalance": "초기 잔액",
+    "initialBalancePlaceholder": "50,000",
+    "initialBalanceHint": "선불카드에 충전된 금액을 입력하세요 (원)",
+    "insufficientBalance": "잔액 부족",
+    "currentBalance": "현재 잔액: {{balance}}",
+    "currentBalanceLabel": "잔액"
   },
   "asset": {
     "addTitle": "자산 추가",

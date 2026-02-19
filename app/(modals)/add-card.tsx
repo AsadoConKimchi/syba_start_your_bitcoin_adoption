@@ -49,6 +49,7 @@ export default function AddCardScreen() {
   const [linkedAccountId, setLinkedAccountId] = useState<string | null>(null);
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [showDebitAccountPicker, setShowDebitAccountPicker] = useState(false);
+  const [initialBalance, setInitialBalance] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const { addCard, cards } = useCardStore();
@@ -148,6 +149,7 @@ export default function AddCardScreen() {
           : {}),
         ...(cardType === 'credit' && linkedAssetId ? { linkedAssetId } : {}),
         ...(cardType === 'debit' && linkedAccountId ? { linkedAccountId } : {}),
+        ...(cardType === 'prepaid' ? { balance: parseInt(initialBalance.replace(/[^0-9]/g, '')) || 0 } : {}),
       });
 
       router.back();
@@ -377,6 +379,31 @@ export default function AddCardScreen() {
               </TouchableOpacity>
               <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
                 {t('card.debitAccountHint')}
+              </Text>
+            </View>
+          )}
+
+          {/* 초기 잔액 (선불카드만) */}
+          {cardType === 'prepaid' && (
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.initialBalance')}</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.inputBorder,
+                  borderRadius: 8,
+                  padding: 12,
+                  fontSize: 16,
+                  color: theme.inputText,
+                }}
+                placeholder={t('card.initialBalancePlaceholder')}
+                placeholderTextColor={theme.placeholder}
+                value={initialBalance}
+                onChangeText={setInitialBalance}
+                keyboardType="numeric"
+              />
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>
+                {t('card.initialBalanceHint')}
               </Text>
             </View>
           )}

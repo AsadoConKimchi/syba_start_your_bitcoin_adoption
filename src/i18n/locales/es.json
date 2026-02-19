@@ -11,6 +11,7 @@
     "back": "Volver",
     "next": "Siguiente",
     "error": "Error",
+    "warning": "Advertencia",
     "loading": "Cargando...",
     "retry": "Reintentar",
     "ignore": "Ignorar",
@@ -381,7 +382,13 @@
     "debitLinkedAccount": "Cuenta vinculada",
     "selectDebitAccount": "Seleccionar cuenta",
     "noAccountsForDebit": "No hay cuentas registradas",
-    "debitAccountHint": "Cuenta para pagos con tarjeta de débito"
+    "debitAccountHint": "Cuenta para pagos con tarjeta de débito",
+    "initialBalance": "Saldo inicial",
+    "initialBalancePlaceholder": "50,000",
+    "initialBalanceHint": "Ingrese el saldo de la tarjeta prepago (KRW)",
+    "insufficientBalance": "Saldo insuficiente",
+    "currentBalance": "Saldo actual: {{balance}}",
+    "currentBalanceLabel": "Saldo"
   },
   "asset": {
     "addTitle": "Agregar Activo",

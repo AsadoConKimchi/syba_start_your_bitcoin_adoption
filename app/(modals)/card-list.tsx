@@ -14,6 +14,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { Card } from '../../src/types/card';
+import { formatKrw } from '../../src/utils/formatters';
 
 const FREE_CARD_LIMIT = 3;
 
@@ -134,6 +135,13 @@ export default function CardListScreen() {
                       </View>
                     )}
                   </View>
+
+                  {/* 선불카드 잔액 표시 */}
+                  {card.type === 'prepaid' && card.balance !== undefined && (
+                    <Text style={{ fontSize: 14, fontWeight: '600', color: '#FFFFFF', marginTop: 8 }}>
+                      {t('card.currentBalanceLabel')}: {formatKrw(card.balance)}
+                    </Text>
+                  )}
 
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                     <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>

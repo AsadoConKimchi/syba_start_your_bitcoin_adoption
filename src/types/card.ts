@@ -17,6 +17,7 @@ export interface Card {
   // 자산 연동 (Phase 5)
   linkedAssetId?: string; // 결제일에 출금될 계좌 (자산 ID) — 신용카드
   linkedAccountId?: string; // 체크카드 연결 계좌 (자산 ID)
+  balance?: number; // 선불카드 잔액 (원 단위)
   createdAt: string;
   updatedAt: string;
 }

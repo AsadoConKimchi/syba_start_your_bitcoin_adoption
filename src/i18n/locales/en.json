@@ -11,6 +11,7 @@
     "back": "Back",
     "next": "Next",
     "error": "Error",
+    "warning": "Warning",
     "loading": "Loading...",
     "retry": "Retry",
     "ignore": "Ignore",
@@ -381,7 +382,13 @@
     "debitLinkedAccount": "Linked Account",
     "selectDebitAccount": "Select Account",
     "noAccountsForDebit": "No registered accounts",
-    "debitAccountHint": "Account for debit card payments"
+    "debitAccountHint": "Account for debit card payments",
+    "initialBalance": "Initial Balance",
+    "initialBalancePlaceholder": "50,000",
+    "initialBalanceHint": "Enter the prepaid card balance (KRW)",
+    "insufficientBalance": "Insufficient Balance",
+    "currentBalance": "Current balance: {{balance}}",
+    "currentBalanceLabel": "Balance"
   },
   "asset": {
     "addTitle": "Add Asset",

@@ -58,6 +58,7 @@ export default function AddExpenseScreen() {
   const [isInterestFree, setIsInterestFree] = useState(true); // 무이자 여부
   const [showInstallmentPicker, setShowInstallmentPicker] = useState(false);
   const [showCustomInstallmentInput, setShowCustomInstallmentInput] = useState(false);
+  const [showInsufficientBalanceModal, setShowInsufficientBalanceModal] = useState(false);
   const [memo, setMemo] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -66,7 +67,7 @@ export default function AddExpenseScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { addExpense } = useLedgerStore();
-  const { cards } = useCardStore();
+  const { cards, updateCard } = useCardStore();
   const { btcKrw } = usePriceStore();
   const { addInstallment } = useDebtStore();
   const { encryptionKey } = useAuthStore();
@@ -170,13 +171,32 @@ export default function AddExpenseScreen() {
       return;
     }
 
+    // 선불카드 잔액 초과 체크
+    const selectedCard = paymentMethod === 'card' && selectedCardId
+      ? cards.find(c => c.id === selectedCardId)
+      : null;
+
+    if (selectedCard?.type === 'prepaid') {
+      const cardBalance = selectedCard.balance ?? 0;
+      if (krwAmount > cardBalance) {
+        setShowInsufficientBalanceModal(true);
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
       const dateString = formatDateString(selectedDate);
       const isInstallment = paymentMethod === 'card' && installmentMonths > 1;
 
-      // 1. 지출 기록 추가
+      // 1. 선불카드인 경우 잔액 차감 먼저 (atomicity: 차감 성공 후에만 지출 기록)
+      if (selectedCard?.type === 'prepaid') {
+        const newBalance = (selectedCard.balance ?? 0) - krwAmount;
+        await updateCard(selectedCardId!, { balance: Math.max(0, newBalance) });
+      }
+
+      // 2. 지출 기록 추가
       // - KRW 모드: amount는 원화, currency는 'KRW'
       // - SATS 모드: amount는 sats, currency는 'SATS'
       // Pass current btcKrw so saved btcKrwAtTime matches the preview value
@@ -194,7 +214,7 @@ export default function AddExpenseScreen() {
         linkedAssetId: linkedAssetId || null,
       }, btcKrw);
 
-      // 2. 할부인 경우, 부채 탭에 할부 기록 자동 생성
+      // 3. 할부인 경우, 부채 탭에 할부 기록 자동 생성
       if (isInstallment && selectedCardId) {
         await addInstallment(
           {
@@ -832,6 +852,44 @@ export default function AddExpenseScreen() {
           </View>
         </Modal>
       </KeyboardAvoidingView>
+
+      {/* 잔액 부족 모달 (선불카드) */}
+      <Modal visible={showInsufficientBalanceModal} transparent animationType="fade">
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.modalOverlay }}>
+          <View
+            style={{
+              backgroundColor: theme.modalBackground,
+              borderRadius: 16,
+              padding: 24,
+              width: '80%',
+              alignItems: 'center',
+            }}
+          >
+            <Ionicons name="warning" size={48} color="#F59E0B" style={{ marginBottom: 16 }} />
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text, marginBottom: 8 }}>
+              {t('card.insufficientBalance')}
+            </Text>
+            <Text style={{ fontSize: 14, color: theme.textSecondary, textAlign: 'center', marginBottom: 16 }}>
+              {t('card.currentBalance', {
+                balance: formatKrw(
+                  cards.find(c => c.id === selectedCardId)?.balance ?? 0
+                ),
+              })}
+            </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.primary,
+                paddingHorizontal: 32,
+                paddingVertical: 12,
+                borderRadius: 8,
+              }}
+              onPress={() => setShowInsufficientBalanceModal(false)}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>{t('common.confirm')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
