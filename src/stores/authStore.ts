@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as FileSystem from 'expo-file-system/legacy';
 import i18n from '../i18n';
 import {
   generateSalt,
@@ -7,6 +8,7 @@ import {
   hashPassword,
   getSecure,
   saveSecure,
+  deleteSecure,
   SECURE_KEYS,
 } from '../utils/encryption';
 import { initializeStorage, reEncryptAllData } from '../utils/storage';
@@ -52,6 +54,38 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   // 초기화
   initialize: async () => {
     try {
+      // ── 재설치 감지 (initializeStorage 호출 전에 체크해야 함) ──────────
+      // initializeStorage()가 data 디렉토리를 생성하므로 그 전에 존재 여부를 확인.
+      // iOS Keychain은 앱 삭제 후에도 유지됨.
+      // 데이터 디렉토리가 없는데 PASSWORD_HASH가 Keychain에 남아있으면 재설치 상태.
+      // → 모든 SecureStore 키를 지우고 첫 실행으로 처리.
+      const dataDir = FileSystem.documentDirectory + 'data/';
+      const [dirInfo, existingHash] = await Promise.all([
+        FileSystem.getInfoAsync(dataDir),
+        getSecure(SECURE_KEYS.PASSWORD_HASH),
+      ]);
+
+      if (!dirInfo.exists && existingHash !== null) {
+        if (__DEV__) { console.log('[DEBUG] 재설치 감지 → Keychain 초기화'); }
+        await Promise.all([
+          deleteSecure(SECURE_KEYS.PASSWORD_HASH),
+          deleteSecure(SECURE_KEYS.ENCRYPTION_SALT),
+          deleteSecure(SECURE_KEYS.ENCRYPTION_KEY),
+          deleteSecure(SECURE_KEYS.BIOMETRIC_ENABLED),
+          deleteSecure(SECURE_KEYS.USER_ID),
+        ]);
+        await initializeStorage(); // 디렉토리 생성은 정상 진행
+        set({
+          isFirstLaunch: true,
+          biometricAvailable: false,
+          biometricType: null,
+          biometricEnabled: false,
+          isLoading: false,
+        });
+        return;
+      }
+      // ─────────────────────────────────────────────────────────────────
+
       await initializeStorage();
 
       // 생체인증 가능 여부

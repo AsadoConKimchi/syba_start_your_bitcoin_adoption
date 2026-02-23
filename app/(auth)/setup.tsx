@@ -26,6 +26,7 @@ import {
 } from '../../src/utils/encryption';
 
 export default function SetupScreen() {
+  const [view, setView] = useState<'select' | 'setup'>('select');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -162,174 +163,220 @@ export default function SetupScreen() {
     }
   };
 
+  // ── 공통 로고 헤더 ──────────────────────────────────────────────────
+  const LogoHeader = () => (
+    <View style={{ alignItems: 'center', marginBottom: 48 }}>
+      <Image
+        source={require('../../assets/icon.png')}
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: 16,
+          marginBottom: 16,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }}
+      />
+      <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.text }}>
+        SYBA
+      </Text>
+      <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
+        Start Your Bitcoin Adoption
+      </Text>
+    </View>
+  );
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1, backgroundColor: theme.background }}
     >
       <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
-        <View style={{ alignItems: 'center', marginBottom: 48 }}>
-          <Image 
-            source={require('../../assets/icon.png')} 
-            style={{ 
-              width: 72, 
-              height: 72, 
-              borderRadius: 16, 
-              marginBottom: 16,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 4,
-            }} 
-          />
-          <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.text }}>
-            SYBA
-          </Text>
-          <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
-            Start Your Bitcoin Adoption
-          </Text>
-        </View>
 
-        <View style={{ marginBottom: 24 }}>
-          <Text style={{ fontSize: 16, color: theme.text, marginBottom: 8 }}>
-            {t('auth.setupPassword')}
-          </Text>
+        {/* ── 선택 화면: 새로 시작 vs 백업 복구 ── */}
+        {view === 'select' && (
+          <>
+            <LogoHeader />
 
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: theme.inputBorder,
-              borderRadius: 8,
-              padding: 16,
-              fontSize: 16,
-              marginBottom: 12,
-              color: theme.inputText,
-              backgroundColor: theme.inputBackground,
-            }}
-            placeholder={t('auth.passwordMin12')}
-            placeholderTextColor={theme.placeholder}
-            secureTextEntry
-                textContentType="none"
-                autoComplete="off"
-            value={password}
-            onChangeText={setPassword}
-            autoCapitalize="none"
-          />
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.primary,
+                padding: 18,
+                borderRadius: 12,
+                alignItems: 'center',
+                marginBottom: 16,
+              }}
+              onPress={() => setView('setup')}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '700' }}>
+                🚀 {t('auth.newStart')}
+              </Text>
+            </TouchableOpacity>
 
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            {([
-              ['uppercase', t('auth.passwordReqUppercase')],
-              ['lowercase', t('auth.passwordReqLowercase')],
-              ['number', t('auth.passwordReqNumber')],
-              ['length', t('auth.passwordReqLength')],
-            ] as const).map(([key, label]) => {
-              const met = passwordChecks[key as keyof typeof passwordChecks];
-              return (
-                <Text key={key} style={{ fontSize: 13, color: met ? '#22C55E' : '#EF4444' }}>
-                  {met ? '✅' : '❌'}{label}
-                </Text>
-              );
-            })}
-          </View>
-
-          <TextInput
-            style={{
-              borderWidth: 1,
-              borderColor: theme.inputBorder,
-              borderRadius: 8,
-              padding: 16,
-              fontSize: 16,
-              color: theme.inputText,
-              backgroundColor: theme.inputBackground,
-            }}
-            placeholder={t('auth.passwordConfirm')}
-            placeholderTextColor={theme.placeholder}
-            secureTextEntry
-                textContentType="none"
-                autoComplete="off"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            autoCapitalize="none"
-          />
-        </View>
-
-        {isLoading ? (
-          <View>
-            <View style={{
-              height: 36,
-              justifyContent: 'flex-end',
-              alignItems: 'flex-start',
-            }}>
-              <Image
-                source={require('../../assets/icon.png')}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  marginLeft: progress * (Dimensions.get('window').width - 48 - 32),
-                }}
-              />
-            </View>
-            <View style={{
-              borderRadius: 8,
-              overflow: 'hidden',
-              backgroundColor: theme.border,
-              height: 52,
-              justifyContent: 'center',
-            }}>
-            <View style={{
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: `${Math.round(progress * 100)}%`,
-              backgroundColor: '#F7931A',
-              borderRadius: 8,
-            }} />
-            <Text style={{
-              color: '#FFFFFF',
-              fontSize: 16,
-              fontWeight: '600',
-              textAlign: 'center',
-              zIndex: 1,
-            }}>
-              🔐 {t('auth.settingUp')} {Math.round(progress * 100)}%
-            </Text>
-            </View>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.primary,
-              padding: 16,
-              borderRadius: 8,
-              alignItems: 'center',
-              opacity: !allRequirementsMet ? 0.5 : 1,
-            }}
-            onPress={handleSetup}
-            disabled={!allRequirementsMet}
-          >
-            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
-              {t('common.next')}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={{
+                backgroundColor: theme.backgroundSecondary,
+                padding: 18,
+                borderRadius: 12,
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: theme.inputBorder,
+                opacity: isRestoring ? 0.5 : 1,
+              }}
+              onPress={handlePickBackup}
+              disabled={isRestoring}
+            >
+              <Text style={{ color: theme.text, fontSize: 17, fontWeight: '600' }}>
+                📂 {isRestoring ? t('auth.restoring') : t('auth.restoreFromBackup')}
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
 
-        <View style={{ marginTop: 24, padding: 16, backgroundColor: theme.warningBanner, borderRadius: 8 }}>
-          <Text style={{ fontSize: 14, color: theme.warningBannerText, textAlign: 'center' }}>
-            {t('auth.passwordWarning')}
-          </Text>
-        </View>
+        {/* ── 비밀번호 설정 화면 ── */}
+        {view === 'setup' && (
+          <>
+            <LogoHeader />
 
-        <TouchableOpacity
-          style={{ marginTop: 16, alignItems: 'center' }}
-          onPress={handlePickBackup}
-          disabled={isRestoring}
-        >
-          <Text style={{ fontSize: 14, color: theme.primary, textDecorationLine: 'underline' }}>
-            {isRestoring ? t('auth.restoring') : t('auth.restoreFromBackup')}
-          </Text>
-        </TouchableOpacity>
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ fontSize: 16, color: theme.text, marginBottom: 8 }}>
+                {t('auth.setupPassword')}
+              </Text>
+
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.inputBorder,
+                  borderRadius: 8,
+                  padding: 16,
+                  fontSize: 16,
+                  marginBottom: 12,
+                  color: theme.inputText,
+                  backgroundColor: theme.inputBackground,
+                }}
+                placeholder={t('auth.passwordMin12')}
+                placeholderTextColor={theme.placeholder}
+                secureTextEntry
+                textContentType="none"
+                autoComplete="off"
+                value={password}
+                onChangeText={setPassword}
+                autoCapitalize="none"
+              />
+
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                {([
+                  ['uppercase', t('auth.passwordReqUppercase')],
+                  ['lowercase', t('auth.passwordReqLowercase')],
+                  ['number', t('auth.passwordReqNumber')],
+                  ['length', t('auth.passwordReqLength')],
+                ] as const).map(([key, label]) => {
+                  const met = passwordChecks[key as keyof typeof passwordChecks];
+                  return (
+                    <Text key={key} style={{ fontSize: 13, color: met ? '#22C55E' : '#EF4444' }}>
+                      {met ? '✅' : '❌'}{label}
+                    </Text>
+                  );
+                })}
+              </View>
+
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: theme.inputBorder,
+                  borderRadius: 8,
+                  padding: 16,
+                  fontSize: 16,
+                  color: theme.inputText,
+                  backgroundColor: theme.inputBackground,
+                }}
+                placeholder={t('auth.passwordConfirm')}
+                placeholderTextColor={theme.placeholder}
+                secureTextEntry
+                textContentType="none"
+                autoComplete="off"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                autoCapitalize="none"
+              />
+            </View>
+
+            {isLoading ? (
+              <View>
+                <View style={{ height: 36, justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+                  <Image
+                    source={require('../../assets/icon.png')}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 8,
+                      marginLeft: progress * (Dimensions.get('window').width - 48 - 32),
+                    }}
+                  />
+                </View>
+                <View style={{
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  backgroundColor: theme.border,
+                  height: 52,
+                  justifyContent: 'center',
+                }}>
+                  <View style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: `${Math.round(progress * 100)}%`,
+                    backgroundColor: '#F7931A',
+                    borderRadius: 8,
+                  }} />
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 16,
+                    fontWeight: '600',
+                    textAlign: 'center',
+                    zIndex: 1,
+                  }}>
+                    🔐 {t('auth.settingUp')} {Math.round(progress * 100)}%
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={{
+                  backgroundColor: theme.primary,
+                  padding: 16,
+                  borderRadius: 8,
+                  alignItems: 'center',
+                  opacity: !allRequirementsMet ? 0.5 : 1,
+                }}
+                onPress={handleSetup}
+                disabled={!allRequirementsMet}
+              >
+                <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+                  {t('common.next')}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            <View style={{ marginTop: 24, padding: 16, backgroundColor: theme.warningBanner, borderRadius: 8 }}>
+              <Text style={{ fontSize: 14, color: theme.warningBannerText, textAlign: 'center' }}>
+                {t('auth.passwordWarning')}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={{ marginTop: 16, alignItems: 'center' }}
+              onPress={() => setView('select')}
+            >
+              <Text style={{ fontSize: 14, color: theme.textMuted }}>
+                ← {t('common.back')}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
 
         {/* Android password modal for restore */}
         {Platform.OS !== 'ios' && (

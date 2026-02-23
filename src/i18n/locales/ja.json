@@ -161,6 +161,7 @@
     "passwordMismatch": "パスワードが一致しません。",
     "setupFailed": "パスワードの設定に失敗しました。",
     "passwordWarning": "⚠️ パスワードを紛失するとデータを復元できません。\n安全な場所に記録してください。",
+    "newStart": "新規スタート",
     "restoreFromBackup": "バックアップから復元",
     "restoreEnterPassword": "バックアップ作成時のパスワードを入力してください",
     "restoreSuccess": "バックアップが正常に復元されました。",

@@ -161,6 +161,7 @@
     "passwordMismatch": "비밀번호가 일치하지 않습니다.",
     "setupFailed": "비밀번호 설정에 실패했습니다.",
     "passwordWarning": "⚠️ 비밀번호 분실 시 데이터 복구가 불가합니다.\n안전한 곳에 기록해두세요.",
+    "newStart": "새로 시작",
     "restoreFromBackup": "백업 파일에서 복원",
     "restoreEnterPassword": "백업 생성 시 사용한 비밀번호를 입력하세요",
     "restoreSuccess": "백업이 성공적으로 복원되었습니다.",
