@@ -20,7 +20,7 @@ import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useAssetStore } from '../../src/stores/assetStore';
 import { useCategoryStore } from '../../src/stores/categoryStore';
-import { formatKrw, formatSats } from '../../src/utils/formatters';
+import { formatKrw, formatSats, getTodayString } from '../../src/utils/formatters';
 import { krwToSats, satsToKrw } from '../../src/utils/calculations';
 import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
 
@@ -123,16 +123,18 @@ export default function AddIncomeScreen() {
     try {
       // - KRW 모드: amount는 원화, currency는 'KRW'
       // - SATS 모드: amount는 sats, currency는 'SATS'
-      // Pass current btcKrw so saved btcKrwAtTime matches the preview value
+      // 오늘 날짜면 현재 시세 사용, 과거 날짜면 해당 날짜 종가 자동 fetch
+      const incomeDate = formatDateString(selectedDate);
+      const overrideBtcKrw = incomeDate === getTodayString() ? btcKrw : undefined;
       await addIncome({
-        date: formatDateString(selectedDate),
+        date: incomeDate,
         amount: amountNumber,
         currency: currencyMode,
         category: finalCategory,
         source: source || null,
         memo: memo || null,
         linkedAssetId: linkedAssetId || null,
-      }, btcKrw);
+      }, overrideBtcKrw);
 
       router.back();
     } catch (error) {
