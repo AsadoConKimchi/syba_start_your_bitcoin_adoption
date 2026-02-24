@@ -24,7 +24,7 @@ import { DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../../src
 import { formatKrw, formatSats } from '../../src/utils/formatters';
 import { krwToSats, satsToKrw } from '../../src/utils/calculations';
 import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
-import { LedgerRecord, isExpense } from '../../src/types/ledger';
+import { LedgerRecord, isExpense, isTransfer } from '../../src/types/ledger';
 
 type PaymentMethod = 'cash' | 'card' | 'lightning' | 'onchain' | 'bank';
 type CurrencyMode = 'KRW' | 'SATS';
@@ -93,7 +93,7 @@ export default function EditRecordScreen() {
 
   // 초기값 설정
   useEffect(() => {
-    if (record) {
+    if (record && !isTransfer(record)) {
       setAmount(record.amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','));
       setCategory(record.category);
       setMemo(record.memo || '');
@@ -127,7 +127,7 @@ export default function EditRecordScreen() {
     }
   }, [record]);
 
-  if (!record) {
+  if (!record || isTransfer(record)) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ color: theme.text }}>{t('editRecord.notFound')}</Text>

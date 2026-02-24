@@ -92,9 +92,14 @@ export default function AssetsScreen() {
         }}
       >
         <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.text }}>{t('assets.title')}</Text>
-        <TouchableOpacity onPress={() => router.push('/(modals)/add-asset')}>
-          <Ionicons name="add-circle" size={28} color={theme.success} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity onPress={() => router.push('/(modals)/add-transfer')}>
+            <Ionicons name="swap-horizontal" size={26} color={theme.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/(modals)/add-asset')}>
+            <Ionicons name="add-circle" size={28} color={theme.success} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView

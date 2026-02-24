@@ -18,9 +18,15 @@ export default function ModalsLayout() {
       <Stack.Screen name="loan-detail" />
       <Stack.Screen name="installment-detail" />
 
+      {/* 이체 관련 */}
+      <Stack.Screen name="add-transfer" />
+
       {/* 자산 관련 */}
       <Stack.Screen name="add-asset" />
       <Stack.Screen name="asset-detail" />
+
+      {/* 카테고리 관련 */}
+      <Stack.Screen name="category-management" />
 
       {/* 설정 관련 */}
       <Stack.Screen name="change-password" />

@@ -22,7 +22,7 @@ import { usePriceStore } from '../../src/stores/priceStore';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useAssetStore } from '../../src/stores/assetStore';
-import { DEFAULT_EXPENSE_CATEGORIES } from '../../src/constants/categories';
+import { useCategoryStore } from '../../src/stores/categoryStore';
 import { formatKrw, formatSats, getTodayString } from '../../src/utils/formatters';
 import { krwToSats, satsToKrw } from '../../src/utils/calculations';
 import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
@@ -67,6 +67,7 @@ export default function AddExpenseScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { addExpense } = useLedgerStore();
+  const activeExpenseCategories = useCategoryStore(s => s.getActiveExpenseCategories)();
   const { cards, updateCard } = useCardStore();
   const { btcKrw } = usePriceStore();
   const { addInstallment } = useDebtStore();
@@ -369,7 +370,7 @@ export default function AddExpenseScreen() {
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('expense.category')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {DEFAULT_EXPENSE_CATEGORIES.map(cat => (
+              {activeExpenseCategories.map(cat => (
                 <TouchableOpacity
                   key={cat.id}
                   style={{

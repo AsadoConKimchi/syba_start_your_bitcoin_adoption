@@ -23,6 +23,9 @@ import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { createBackup } from '../../src/utils/storage';
+import * as DocumentPicker from 'expo-document-picker';
+import { generateCSVTemplate } from '../../src/utils/csvTemplate';
+import { parseCSV, executeImport } from '../../src/utils/csvImport';
 import { CONFIG, AutoLockTime } from '../../src/constants/config';
 import { SUPABASE_CONFIG } from '../../src/constants/supabase';
 import {
@@ -50,8 +53,8 @@ export default function SettingsScreen() {
     useAuthStore();
   const { settings, updateSettings } = useSettingsStore();
   const { cards, loadCards } = useCardStore();
-  const { loadRecords } = useLedgerStore();
-  const { loadDebts } = useDebtStore();
+  const { loadRecords, addExpense, addIncome } = useLedgerStore();
+  const { loadDebts, loans, installments } = useDebtStore();
   const { user, isSubscribed, subscription, initialize } = useSubscriptionStore();
   const { t, i18n } = useTranslation();
   const { theme } = useTheme();
@@ -66,7 +69,7 @@ export default function SettingsScreen() {
   const [hasDummy, setHasDummy] = useState(false);
 
   const { loadSnapshots } = useSnapshotStore();
-  const { loadAssets } = useAssetStore();
+  const { loadAssets, assets } = useAssetStore();
 
   useEffect(() => {
     initialize();
@@ -185,6 +188,90 @@ export default function SettingsScreen() {
         { text: t('settings.shareExternal'), onPress: () => doBackup('share') },
       ]
     );
+  };
+
+  const [isImporting, setIsImporting] = useState(false);
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const csv = generateCSVTemplate(assets, cards, loans, installments);
+      const path = FileSystem.cacheDirectory + 'SYBA_import_template.csv';
+      await FileSystem.writeAsStringAsync(path, csv, { encoding: FileSystem.EncodingType.UTF8 });
+      await Sharing.shareAsync(path, { mimeType: 'text/csv' });
+    } catch (error) {
+      if (__DEV__) console.log('[CSV Template] Error:', error);
+    }
+  };
+
+  const handleCSVImport = async () => {
+    if (!encryptionKey) {
+      Alert.alert(t('common.error'), t('common.authRequired'));
+      return;
+    }
+
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['text/csv', 'text/comma-separated-values', 'application/csv', '*/*'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets?.[0]) return;
+
+      const fileUri = result.assets[0].uri;
+      const csvText = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      const parsed = parseCSV(csvText);
+
+      if (parsed.rows.length === 0) {
+        Alert.alert(t('csvImport.importPreview'), t('csvImport.noRows'));
+        return;
+      }
+
+      Alert.alert(
+        t('csvImport.importPreview'),
+        t('csvImport.importConfirm', {
+          count: parsed.rows.length,
+          errors: parsed.errors.length,
+        }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.confirm'),
+            onPress: async () => {
+              setIsImporting(true);
+              try {
+                const importResult = await executeImport(
+                  parsed.rows,
+                  assets,
+                  cards,
+                  loans,
+                  installments,
+                  encryptionKey,
+                  undefined, // btcKrw - store가 historical price 자동 fetch
+                  addExpense,
+                  addIncome
+                );
+                Alert.alert(
+                  t('common.complete'),
+                  `${t('csvImport.importSuccess', { imported: importResult.imported })} ${t('csvImport.importSkipped', { skipped: importResult.skipped })}`
+                );
+                // Reload data
+                await Promise.all([loadRecords(), loadAssets(encryptionKey), loadDebts(encryptionKey)]);
+              } catch (error) {
+                if (__DEV__) console.log('[CSV Import] Error:', error);
+                Alert.alert(t('common.error'), t('csvImport.invalidFile'));
+              } finally {
+                setIsImporting(false);
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      if (__DEV__) console.log('[CSV Import] Picker error:', error);
+    }
   };
 
   const AUTO_LOCK_KEYS: Record<AutoLockTime, string> = {
@@ -673,10 +760,10 @@ export default function SettingsScreen() {
                 borderBottomWidth: 1,
                 borderBottomColor: theme.border,
               }}
+              onPress={() => router.push('/(modals)/category-management')}
             >
               <Ionicons name="pricetag" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
               <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.categoryManagement')}</Text>
-              <Text style={{ fontSize: 12, color: theme.textMuted, marginRight: 8 }}>{t('common.comingSoon')}</Text>
               <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
 
@@ -695,6 +782,43 @@ export default function SettingsScreen() {
               <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>
                 {isBackingUp ? t('settings.backingUp') : t('settings.backup')}
               </Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: theme.border,
+              }}
+              onPress={handleDownloadTemplate}
+            >
+              <Ionicons name="download" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, color: theme.text }}>{t('csvImport.downloadTemplate')}</Text>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>{t('csvImport.downloadTemplateSub')}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 16,
+              }}
+              onPress={handleCSVImport}
+              disabled={isImporting}
+            >
+              <Ionicons name="push" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, color: theme.text }}>
+                  {isImporting ? t('csvImport.importing') : t('csvImport.importCSV')}
+                </Text>
+                <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>{t('csvImport.importCSVSub')}</Text>
+              </View>
               <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
             </TouchableOpacity>
           </View>

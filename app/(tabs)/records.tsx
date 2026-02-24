@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
+import { Expense, Income } from '../../src/types/ledger';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { formatKrw, formatSats } from '../../src/utils/formatters';
@@ -34,7 +35,9 @@ export default function RecordsScreen() {
   const now = new Date();
   const isCurrentMonth = year === now.getFullYear() && month === now.getMonth() + 1;
 
-  const monthRecords = getRecordsByMonth(year, month);
+  const monthRecords = getRecordsByMonth(year, month).filter(
+    (r): r is Expense | Income => r.type !== 'transfer'
+  );
 
   const recordsByDate = monthRecords.reduce((acc, record) => {
     if (!acc[record.date]) {

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
+import { Expense, Income } from '../../src/types/ledger';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useSettingsStore } from '../../src/stores/settingsStore';
 import { useCardStore } from '../../src/stores/cardStore';
@@ -74,7 +75,7 @@ export default function HomeScreen() {
   }, []);
 
   const todayRecords = records
-    .filter(r => r.date === getTodayString())
+    .filter((r): r is Expense | Income => r.date === getTodayString() && r.type !== 'transfer')
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 5);
 

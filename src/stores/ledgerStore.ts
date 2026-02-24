@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import i18n from '../i18n';
 import { v4 as uuidv4 } from 'uuid';
-import { LedgerRecord, Expense, Income } from '../types/ledger';
+import { LedgerRecord, Expense, Income, Transfer } from '../types/ledger';
 import { saveEncrypted, loadEncrypted, FILE_PATHS } from '../utils/storage';
 import { useAuthStore } from './authStore';
 import { useAssetStore } from './assetStore';
+import { useCardStore } from './cardStore';
 import { fetchHistoricalBtcPrice } from '../services/api/upbit';
 import { krwToSats, satsToKrw } from '../utils/calculations';
 import { getTodayString } from '../utils/formatters';
@@ -43,6 +44,9 @@ interface LedgerActions {
     income: Omit<Income, 'id' | 'type' | 'createdAt' | 'updatedAt' | 'btcKrwAtTime' | 'satsEquivalent' | 'needsPriceSync'>,
     overrideBtcKrw?: number | null
   ) => Promise<string>; // Returns income ID
+  addTransfer: (
+    transfer: Omit<Transfer, 'id' | 'type' | 'createdAt' | 'updatedAt'>
+  ) => Promise<void>;
   updateRecord: (id: string, updates: Partial<LedgerRecord>) => Promise<void>;
   deleteRecord: (id: string) => Promise<void>;
   syncPendingPrices: () => Promise<void>;
@@ -281,6 +285,77 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     return id; // Return income ID
   },
 
+  // 이체 추가 (계좌→계좌 또는 계좌→선불카드)
+  addTransfer: async (transferData) => {
+    const encryptionKey = useAuthStore.getState().encryptionKey;
+    if (!encryptionKey) throw new Error('No encryption key');
+
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    const newRecord: Transfer = {
+      id,
+      type: 'transfer',
+      ...transferData,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    if (__DEV__) { console.log('[DEBUG] addTransfer 시작:', newRecord); }
+
+    // 1. 기록 저장
+    set(state => ({ records: [...state.records, newRecord] }));
+    await get().saveRecords();
+
+    try {
+      // 2. 출금 자산 잔액 차감
+      await useAssetStore.getState().adjustAssetBalance(
+        transferData.fromAssetId,
+        -transferData.amount,
+        encryptionKey
+      );
+      if (__DEV__) { console.log('[DEBUG] addTransfer - 출금 완료'); }
+
+      try {
+        // 3a. 계좌→계좌
+        if (transferData.toAssetId) {
+          await useAssetStore.getState().adjustAssetBalance(
+            transferData.toAssetId,
+            transferData.amount,
+            encryptionKey
+          );
+          if (__DEV__) { console.log('[DEBUG] addTransfer - 입금(계좌) 완료'); }
+        }
+        // 3b. 계좌→선불카드
+        else if (transferData.toCardId) {
+          await useCardStore.getState().updateCardBalance(
+            transferData.toCardId,
+            transferData.amount
+          );
+          if (__DEV__) { console.log('[DEBUG] addTransfer - 충전(카드) 완료'); }
+        }
+      } catch (error) {
+        // 3 실패 시 2번 롤백 (출금 복원)
+        if (__DEV__) { console.log('[DEBUG] addTransfer - 입금 실패, 출금 롤백:', error); }
+        await useAssetStore.getState().adjustAssetBalance(
+          transferData.fromAssetId,
+          transferData.amount,
+          encryptionKey
+        );
+        // 기록도 삭제
+        set(state => ({ records: state.records.filter(r => r.id !== id) }));
+        await get().saveRecords();
+        throw error;
+      }
+    } catch (error) {
+      // 2 실패 시 기록 삭제
+      if (get().records.find(r => r.id === id)) {
+        set(state => ({ records: state.records.filter(r => r.id !== id) }));
+        await get().saveRecords();
+      }
+      throw error;
+    }
+  },
+
   // 수정 (자산 차액 반영 포함)
   // 테스트 케이스:
   // 1. 지출 10만원(bank, linkedAsset) → 5만원으로 수정 → 자산 +5만원 복원
@@ -313,6 +388,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
 
     // 자산 연동 대상인지 판별하는 헬퍼
     const isAssetLinked = (record: LedgerRecord): boolean => {
+      if (record.type === 'transfer') return false;
       if (!record.linkedAssetId) return false;
       if (record.type === 'income') return true;
       // expense는 bank/lightning/onchain만 자산 연동
@@ -325,7 +401,8 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     };
 
     // 자산에 적용된 금액을 계산하는 헬퍼 (부호 포함)
-    const getAssetDelta = (record: LedgerRecord): number => {
+    // Transfer는 isAssetLinked에서 이미 제외됨
+    const getAssetDelta = (record: Expense | Income): number => {
       let amount: number;
       if (record.type === 'expense') {
         if (record.currency === 'SATS') {
@@ -354,7 +431,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     const newLinked = isAssetLinked(newRecord);
 
     // Case 1: 이전에 자산 연동 → 이전 자산 역복원
-    if (oldLinked) {
+    if (oldLinked && oldRecord.type !== 'transfer') {
       const oldDelta = getAssetDelta(oldRecord);
       await useAssetStore.getState().adjustAssetBalance(
         oldRecord.linkedAssetId!,
@@ -365,7 +442,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     }
 
     // Case 2: 새로운 자산 연동 → 새 자산 반영
-    if (newLinked) {
+    if (newLinked && newRecord.type !== 'transfer') {
       const newDelta = getAssetDelta(newRecord);
       await useAssetStore.getState().adjustAssetBalance(
         newRecord.linkedAssetId!,
@@ -388,7 +465,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
 
     // 자산 역복원 (삭제 전에 처리)
     const encryptionKey = useAuthStore.getState().encryptionKey;
-    if (record && encryptionKey && record.linkedAssetId) {
+    if (record && encryptionKey && record.type !== 'transfer' && record.linkedAssetId) {
       let shouldRestore = false;
       let restoreAmount = 0;
 
@@ -441,7 +518,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
   // 오프라인 기록 시세 동기화
   syncPendingPrices: async () => {
     const { records, updateRecord } = get();
-    const pendingRecords = records.filter(r => r.needsPriceSync);
+    const pendingRecords = records.filter(r => r.type !== 'transfer' && r.needsPriceSync);
 
     for (const record of pendingRecords) {
       try {
@@ -480,6 +557,9 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     let expenseSats = 0;
 
     for (const record of monthRecords) {
+      // Transfer 기록은 수입/지출 합계에서 제외
+      if (record.type === 'transfer') continue;
+
       // KRW 기록: amount가 원화, satsEquivalent가 sats
       // SATS 기록: amount가 sats, btcKrwAtTime으로 원화 환산
       let krwAmount: number;
@@ -518,6 +598,9 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     let expense = 0;
 
     for (const record of todayRecords) {
+      // Transfer 기록은 수입/지출 합계에서 제외
+      if (record.type === 'transfer') continue;
+
       // KRW 기록: amount가 원화
       // SATS 기록: btcKrwAtTime으로 원화 환산
       let krwAmount: number;

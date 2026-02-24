@@ -5,3 +5,4 @@ export * from './loan';
 export * from './asset';
 export * from './subscription';
 export * from './settings';
+export * from './category';

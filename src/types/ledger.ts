@@ -41,7 +41,21 @@ export interface Income {
   linkedAssetId?: string | null; // 입금될 자산
 }
 
-export type LedgerRecord = Expense | Income;
+export interface Transfer {
+  id: string;
+  type: 'transfer';
+  date: string; // YYYY-MM-DD
+  amount: number;
+  currency: 'KRW' | 'SATS';
+  fromAssetId: string;
+  toAssetId: string | null;
+  toCardId: string | null;
+  memo: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type LedgerRecord = Expense | Income | Transfer;
 
 export function isExpense(record: LedgerRecord): record is Expense {
   return record.type === 'expense';
@@ -49,4 +63,8 @@ export function isExpense(record: LedgerRecord): record is Expense {
 
 export function isIncome(record: LedgerRecord): record is Income {
   return record.type === 'income';
+}
+
+export function isTransfer(record: LedgerRecord): record is Transfer {
+  return record.type === 'transfer';
 }

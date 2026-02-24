@@ -19,7 +19,7 @@ import { useTheme } from '../../src/hooks/useTheme';
 import { useLedgerStore } from '../../src/stores/ledgerStore';
 import { usePriceStore } from '../../src/stores/priceStore';
 import { useAssetStore } from '../../src/stores/assetStore';
-import { DEFAULT_INCOME_CATEGORIES } from '../../src/constants/categories';
+import { useCategoryStore } from '../../src/stores/categoryStore';
 import { formatKrw, formatSats } from '../../src/utils/formatters';
 import { krwToSats, satsToKrw } from '../../src/utils/calculations';
 import { isFiatAsset, isBitcoinAsset } from '../../src/types/asset';
@@ -43,6 +43,7 @@ export default function AddIncomeScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { addIncome } = useLedgerStore();
+  const activeIncomeCategories = useCategoryStore(s => s.getActiveIncomeCategories)();
   const { btcKrw } = usePriceStore();
   const { assets } = useAssetStore();
 
@@ -262,7 +263,7 @@ export default function AddIncomeScreen() {
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('income.category')}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {DEFAULT_INCOME_CATEGORIES.map(cat => (
+              {activeIncomeCategories.map(cat => (
                 <TouchableOpacity
                   key={cat.id}
                   style={{

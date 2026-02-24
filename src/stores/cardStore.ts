@@ -18,6 +18,7 @@ interface CardActions {
   getDefaultCard: () => Card | undefined;
   getCardById: (id: string) => Card | undefined;
   setDefaultCard: (id: string) => Promise<void>;
+  updateCardBalance: (cardId: string, delta: number) => Promise<void>;
 }
 
 export const useCardStore = create<CardState & CardActions>((set, get) => ({
@@ -112,6 +113,28 @@ export const useCardStore = create<CardState & CardActions>((set, get) => ({
 
   getCardById: (id: string) => {
     return get().cards.find(c => c.id === id);
+  },
+
+  updateCardBalance: async (cardId, delta) => {
+    const card = get().cards.find(c => c.id === cardId);
+    if (!card) {
+      throw new Error(`Card not found: ${cardId}`);
+    }
+    if (card.type !== 'prepaid') {
+      throw new Error(`Card is not prepaid: ${cardId}`);
+    }
+    const currentBalance = card.balance ?? 0;
+    const newBalance = currentBalance + delta;
+    if (__DEV__) { console.log(`[updateCardBalance] ${card.name}: ${currentBalance} → ${newBalance} (${delta >= 0 ? '+' : ''}${delta})`); }
+
+    set(state => ({
+      cards: state.cards.map(c =>
+        c.id === cardId
+          ? { ...c, balance: newBalance, updatedAt: new Date().toISOString() }
+          : c
+      ),
+    }));
+    await get().saveCards();
   },
 
   setDefaultCard: async (id) => {
