@@ -8,7 +8,7 @@
 ---
 
 ## [1.0.0] - 2026-02-25
-versionCode: 4
+versionCode: 1
 
 ### 코드 품질 & 보안
 - C-1: installment.ts/loan.ts 중복 타입 제거 → debt.ts 단일 소스로 통일
