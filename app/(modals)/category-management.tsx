@@ -29,7 +29,8 @@ type TabType = 'expense' | 'income';
 export default function CategoryManagementScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
-  const { encryptionKey } = useAuthStore();
+  const { getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const {
     groups, activeGroupId, isLoaded,
     loadCategories, addGroup, updateGroup, deleteGroup, setActiveGroup,

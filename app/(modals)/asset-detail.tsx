@@ -27,7 +27,8 @@ export default function AssetDetailScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { encryptionKey } = useAuthStore();
+  const { getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { assets, updateAsset, deleteAsset } = useAssetStore();
   const { btcKrw } = usePriceStore();
 

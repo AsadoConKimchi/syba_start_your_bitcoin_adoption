@@ -35,7 +35,8 @@ export default function LoanDetailScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { encryptionKey } = useAuthStore();
+  const { getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { loans, updateLoan, deleteLoan } = useDebtStore();
   const { assets } = useAssetStore();
   const region = getCurrentRegion();

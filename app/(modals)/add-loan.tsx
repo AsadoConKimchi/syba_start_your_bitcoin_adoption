@@ -34,7 +34,8 @@ const LOAN_TERMS = [12, 24, 36, 48, 60, 120, 240, 360]; // 개월
 export default function AddLoanScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
-  const { encryptionKey } = useAuthStore();
+  const { getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { addLoan } = useDebtStore();
   const { assets } = useAssetStore();
   const region = getCurrentRegion();

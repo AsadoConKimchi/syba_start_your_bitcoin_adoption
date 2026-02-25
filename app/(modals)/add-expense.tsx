@@ -73,7 +73,8 @@ export default function AddExpenseScreen() {
   const { cards, updateCard } = useCardStore();
   const { btcKrw } = usePriceStore();
   const { addInstallment } = useDebtStore();
-  const { encryptionKey } = useAuthStore();
+  const { getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { assets } = useAssetStore();
 
   // 결제수단별 자산 필터링

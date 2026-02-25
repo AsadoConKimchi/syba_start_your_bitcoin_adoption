@@ -49,8 +49,9 @@ import { SUPPORTED_REGIONS, getCurrentRegionId, setRegion, RegionId } from '../.
 import { useTheme } from '../../src/hooks/useTheme';
 
 export default function SettingsScreen() {
-  const { lock, biometricEnabled, biometricAvailable, biometricType, enableBiometric, disableBiometric, encryptionKey } =
+  const { lock, biometricEnabled, biometricAvailable, biometricType, enableBiometric, disableBiometric, getEncryptionKey } =
     useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { settings, updateSettings } = useSettingsStore();
   const { cards, loadCards } = useCardStore();
   const { loadRecords, addExpense, addIncome } = useLedgerStore();

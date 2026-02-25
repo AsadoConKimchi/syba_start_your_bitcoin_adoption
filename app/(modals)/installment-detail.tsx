@@ -29,7 +29,8 @@ export default function InstallmentDetailScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { encryptionKey } = useAuthStore();
+  const { getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { installments, updateInstallment, deleteInstallment } = useDebtStore();
   const { cards, getCardById } = useCardStore();
 

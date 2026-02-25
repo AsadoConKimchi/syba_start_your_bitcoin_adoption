@@ -25,7 +25,8 @@ import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
 
 export default function TabsLayout() {
-  const { isAuthenticated, encryptionKey } = useAuthStore();
+  const { isAuthenticated, getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { loadRecords } = useLedgerStore();
   const { loadCards } = useCardStore();
   const { loadDebts, loans, installments } = useDebtStore();

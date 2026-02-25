@@ -23,7 +23,8 @@ import { Installment, Loan, REPAYMENT_TYPE_LABELS } from '../../src/types/debt';
 import { PremiumGate } from '../../src/components/PremiumGate';
 
 export default function DebtsScreen() {
-  const { encryptionKey } = useAuthStore();
+  const { isAuthenticated, getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { isSubscribed } = useSubscriptionStore();
   const { t } = useTranslation();
   const { theme } = useTheme();

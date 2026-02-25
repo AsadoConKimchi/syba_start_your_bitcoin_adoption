@@ -1,7 +1,7 @@
 # 다음 빌드 대기 중인 변경사항
 
-**현재 배포 버전:** v0.1.6
-**다음 예정 버전:** v0.1.7
+**현재 배포 버전:** v0.1.13
+**다음 예정 버전:** v1.0.0 (Play Store)
 
 ---
 
@@ -16,7 +16,11 @@
 
 ## 코드 변경 완료 (빌드 대기)
 
-(현재 없음)
+- [x] C-1: installment.ts 중복 타입 → debt.ts로 통일 (types/index.ts 수정)
+- [x] C-3: encryptionKey를 Zustand state에서 클로저 변수로 이동 (authStore + 4개 참조 파일)
+- [x] C-4: addExpense/addIncome에 자산 차감 실패 시 롤백 로직 추가
+- [ ] C-5: blink.ts 레거시 파일 삭제 (Jin 로컬에서 직접)
+- [ ] flutter 폴더 삭제 (Jin 로컬에서 직접)
 
 ---
 

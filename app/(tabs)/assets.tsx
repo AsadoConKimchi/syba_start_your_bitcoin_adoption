@@ -20,7 +20,8 @@ export default function AssetsScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
 
-  const { encryptionKey } = useAuthStore();
+  const { isAuthenticated, getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { isSubscribed } = useSubscriptionStore();
   const {
     assets,

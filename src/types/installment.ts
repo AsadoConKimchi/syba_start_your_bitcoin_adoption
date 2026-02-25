@@ -1,3 +1,7 @@
+/**
+ * @deprecated 이 파일의 Installment는 레거시입니다.
+ * types/debt.ts의 Installment를 사용하세요.
+ */
 export interface Installment {
   id: string;
   cardId: string;

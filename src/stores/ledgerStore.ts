@@ -65,7 +65,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
 
   // 파일에서 로드
   loadRecords: async () => {
-    const encryptionKey = useAuthStore.getState().encryptionKey;
+    const encryptionKey = useAuthStore.getState().getEncryptionKey();
     if (!encryptionKey) {
       set({ error: i18n.t('errors.authRequired') });
       return;
@@ -88,7 +88,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
   // 파일에 저장
   saveRecords: async () => {
     if (__DEV__) { console.log('[DEBUG] saveRecords 시작'); }
-    const encryptionKey = useAuthStore.getState().encryptionKey;
+    const encryptionKey = useAuthStore.getState().getEncryptionKey();
     if (__DEV__) { console.log('[DEBUG] encryptionKey:', encryptionKey ? '있음' : '없음 (null)'); }
 
     if (!encryptionKey) {
@@ -171,7 +171,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       if (__DEV__) { console.log('[DEBUG] addExpense 완료'); }
 
       // 자산 연동: 즉시 차감 (계좌이체/Lightning/Onchain)
-      const encryptionKey = useAuthStore.getState().encryptionKey;
+      const encryptionKey = useAuthStore.getState().getEncryptionKey();
       if (
         expenseData.linkedAssetId &&
         encryptionKey &&
@@ -191,12 +191,20 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           deductAmount = expenseData.amount; // KRW
         }
 
-        await useAssetStore.getState().adjustAssetBalance(
-          expenseData.linkedAssetId,
-          -deductAmount, // 지출이므로 마이너스
-          encryptionKey
-        );
-        if (__DEV__) { console.log('[DEBUG] 자산 잔액 차감 완료'); }
+        try {
+          await useAssetStore.getState().adjustAssetBalance(
+            expenseData.linkedAssetId,
+            -deductAmount, // 지출이므로 마이너스
+            encryptionKey
+          );
+          if (__DEV__) { console.log('[DEBUG] 자산 잔액 차감 완료'); }
+        } catch (assetError) {
+          // 자산 차감 실패 시 기록 롤백
+          if (__DEV__) { console.log('[DEBUG] 자산 차감 실패, 기록 롤백:', assetError); }
+          set(state => ({ records: state.records.filter(r => r.id !== id) }));
+          await get().saveRecords();
+          throw assetError;
+        }
       }
 
       return id; // Return expense ID for linking
@@ -257,7 +265,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     await get().saveRecords();
 
     // 자산 연동: 수입 시 자산 증가
-    const encryptionKey = useAuthStore.getState().encryptionKey;
+    const encryptionKey = useAuthStore.getState().getEncryptionKey();
     if (incomeData.linkedAssetId && encryptionKey) {
       if (__DEV__) { console.log('[DEBUG] 수입 - 자산 잔액 증가 시작:', incomeData.linkedAssetId); }
 
@@ -274,12 +282,20 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
         addAmount = incomeData.amount; // KRW
       }
 
-      await useAssetStore.getState().adjustAssetBalance(
-        incomeData.linkedAssetId,
-        addAmount, // 수입이므로 플러스
-        encryptionKey
-      );
-      if (__DEV__) { console.log('[DEBUG] 수입 - 자산 잔액 증가 완료'); }
+      try {
+        await useAssetStore.getState().adjustAssetBalance(
+          incomeData.linkedAssetId,
+          addAmount, // 수입이므로 플러스
+          encryptionKey
+        );
+        if (__DEV__) { console.log('[DEBUG] 수입 - 자산 잔액 증가 완료'); }
+      } catch (assetError) {
+        // 자산 증가 실패 시 기록 롤백
+        if (__DEV__) { console.log('[DEBUG] 수입 - 자산 증가 실패, 기록 롤백:', assetError); }
+        set(state => ({ records: state.records.filter(r => r.id !== id) }));
+        await get().saveRecords();
+        throw assetError;
+      }
     }
 
     return id; // Return income ID
@@ -287,7 +303,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
 
   // 이체 추가 (계좌→계좌 또는 계좌→선불카드)
   addTransfer: async (transferData) => {
-    const encryptionKey = useAuthStore.getState().encryptionKey;
+    const encryptionKey = useAuthStore.getState().getEncryptionKey();
     if (!encryptionKey) throw new Error('No encryption key');
 
     const id = uuidv4();
@@ -380,7 +396,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     await get().saveRecords();
 
     // 자산 차액 반영
-    const encryptionKey = useAuthStore.getState().encryptionKey;
+    const encryptionKey = useAuthStore.getState().getEncryptionKey();
     if (!oldRecord || !encryptionKey) return;
 
     const newRecord = get().records.find(r => r.id === id);
@@ -464,7 +480,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     const record = get().records.find(r => r.id === id);
 
     // 자산 역복원 (삭제 전에 처리)
-    const encryptionKey = useAuthStore.getState().encryptionKey;
+    const encryptionKey = useAuthStore.getState().getEncryptionKey();
     if (record && encryptionKey && record.type !== 'transfer' && record.linkedAssetId) {
       let shouldRestore = false;
       let restoreAmount = 0;

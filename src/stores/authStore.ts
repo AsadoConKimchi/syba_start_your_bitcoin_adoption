@@ -14,11 +14,13 @@ import {
 import { initializeStorage, reEncryptAllData } from '../utils/storage';
 import { CONFIG } from '../constants/config';
 
+// 암호화 키를 Zustand state 외부에 저장 (React DevTools/메모리 덤프 노출 방지)
+let _encryptionKey: string | null = null;
+
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isFirstLaunch: boolean;
-  encryptionKey: string | null;
   biometricEnabled: boolean;
   biometricAvailable: boolean;
   biometricType: 'faceid' | 'fingerprint' | 'iris' | null;
@@ -28,6 +30,7 @@ interface AuthState {
 
 interface AuthActions {
   initialize: () => Promise<void>;
+  getEncryptionKey: () => string | null;
   setupPassword: (password: string, onProgress?: (progress: number) => void) => Promise<void>;
   verifyPassword: (password: string, onProgress?: (progress: number) => void) => Promise<boolean>;
   changePassword: (currentPassword: string, newPassword: string, onProgress?: (progress: number) => void) => Promise<boolean>;
@@ -44,12 +47,14 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   isAuthenticated: false,
   isLoading: true,
   isFirstLaunch: true,
-  encryptionKey: null,
   biometricEnabled: false,
   biometricAvailable: false,
   biometricType: null,
   failedAttempts: 0,
   lockedUntil: null,
+
+  // 암호화 키 getter (클로저 변수에서 읽기)
+  getEncryptionKey: () => _encryptionKey,
 
   // 초기화
   initialize: async () => {
@@ -145,12 +150,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
     ]);
     if (__DEV__) { console.log('[DEBUG] SecureStore 저장 완료 (키 포함)'); }
 
+    _encryptionKey = key;
     set({
       isAuthenticated: true,
       isFirstLaunch: false,
-      encryptionKey: key,
     });
-    if (__DEV__) { console.log('[DEBUG] setupPassword 완료, encryptionKey 설정됨'); }
+    if (__DEV__) { console.log('[DEBUG] setupPassword 완료'); }
   },
 
   // 비밀번호 검증
@@ -190,9 +195,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         onProgress?.(1);
       }
 
+      _encryptionKey = key;
       set({
         isAuthenticated: true,
-        encryptionKey: key,
         failedAttempts: 0,
         lockedUntil: null,
       });
@@ -252,7 +257,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       saveSecure(SECURE_KEYS.ENCRYPTION_KEY, newKey),
     ]);
 
-    set({ encryptionKey: newKey });
+    _encryptionKey = newKey;
     return true;
   },
 
@@ -274,9 +279,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         const storedKey = await getSecure(SECURE_KEYS.ENCRYPTION_KEY);
         if (storedKey) {
           if (__DEV__) { console.log('[DEBUG] 저장된 암호화 키 로드 성공'); }
+          _encryptionKey = storedKey;
           set({
             isAuthenticated: true,
-            encryptionKey: storedKey,
           });
           return true;
         } else {
@@ -306,9 +311,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
   // 잠금
   lock: () => {
+    _encryptionKey = null;
     set({
       isAuthenticated: false,
-      encryptionKey: null,
     });
   },
 

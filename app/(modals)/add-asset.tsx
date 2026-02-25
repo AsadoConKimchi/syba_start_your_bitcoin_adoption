@@ -37,7 +37,8 @@ export default function AddAssetScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { addFiatAsset, addBitcoinAsset } = useAssetStore();
-  const { encryptionKey } = useAuthStore();
+  const { getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { btcKrw } = usePriceStore();
 
   const balanceNumber = parseInt(balance.replace(/[^0-9]/g, '')) || 0;

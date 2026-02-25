@@ -26,7 +26,7 @@ interface CategoryActions {
 }
 
 const saveState = async (state: { groups: CategoryGroup[]; activeGroupId: string }) => {
-  const encryptionKey = useAuthStore.getState().encryptionKey;
+  const encryptionKey = useAuthStore.getState().getEncryptionKey();
   if (!encryptionKey) {
     if (__DEV__) console.log('[categoryStore] No encryption key, skip save');
     return;

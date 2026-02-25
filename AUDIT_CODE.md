@@ -18,7 +18,7 @@
 
 ## 🔴 Critical
 
-### C-1. 중복 타입 정의로 인한 타입 불일치 — `types/debt.ts` vs `types/loan.ts` vs `types/installment.ts`
+### C-1. 중복 타입 정의로 인한 타입 불일치 — `types/debt.ts` vs `types/loan.ts` vs `types/installment.ts` ✅ 수정완료 (2026-02-25)
 
 **파일:** `src/types/debt.ts`, `src/types/loan.ts`, `src/types/installment.ts`
 
@@ -35,7 +35,7 @@
 
 ---
 
-### C-2. Race Condition — `processAllAutoDeductions`에서 병렬 실행
+### C-2. Race Condition — `processAllAutoDeductions`에서 병렬 실행 ✅ 이전 버전에서 수정완료
 
 **파일:** `src/services/autoDeductionService.ts:269-273`
 
@@ -58,7 +58,7 @@ const [cardResult, loanResult, installmentResult] = await Promise.all([
 
 ---
 
-### C-3. 암호화 키가 메모리에 평문으로 저장
+### C-3. 암호화 키가 메모리에 평문으로 저장 ✅ 수정완료 (2026-02-25)
 
 **파일:** `src/stores/authStore.ts:15`, `src/stores/authStore.ts:115`
 
@@ -76,7 +76,7 @@ set({ encryptionKey: key });
 
 ---
 
-### C-4. `addExpense`에서 state 저장 후 자산 차감 — 비원자적 연산
+### C-4. `addExpense`에서 state 저장 후 자산 차감 — 비원자적 연산 ✅ 수정완료 (2026-02-25)
 
 **파일:** `src/stores/ledgerStore.ts:109-145`
 
@@ -95,7 +95,7 @@ await useAssetStore.getState().adjustAssetBalance(...); // 2. 자산 차감
 
 ---
 
-### C-5. `blink.ts` — 레거시 파일에 API 키 빈 문자열로 남아있음
+### C-5. `blink.ts` — 레거시 파일에 API 키 빈 문자열로 남아있음 ⏳ Jin 로컬에서 파일 삭제 예정
 
 **파일:** `src/services/blink.ts:11`
 

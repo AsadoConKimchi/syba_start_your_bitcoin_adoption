@@ -90,7 +90,7 @@ export async function processCardPayments(): Promise<{
 }> {
   const result = { processed: 0, skipped: 0, errors: [] as string[] };
 
-  const encryptionKey = useAuthStore.getState().encryptionKey;
+  const encryptionKey = useAuthStore.getState().getEncryptionKey();
   if (!encryptionKey) {
     result.errors.push(i18n.t('errors.authRequired'));
     return result;
@@ -182,7 +182,7 @@ export async function processLoanRepayments(): Promise<{
 }> {
   const result = { processed: 0, skipped: 0, errors: [] as string[] };
 
-  const encryptionKey = useAuthStore.getState().encryptionKey;
+  const encryptionKey = useAuthStore.getState().getEncryptionKey();
   if (!encryptionKey) {
     result.errors.push(i18n.t('errors.authRequired'));
     return result;
@@ -321,7 +321,7 @@ export async function processInstallmentPayments(): Promise<{
 }> {
   const result = { processed: 0, skipped: 0, errors: [] as string[] };
 
-  const encryptionKey = useAuthStore.getState().encryptionKey;
+  const encryptionKey = useAuthStore.getState().getEncryptionKey();
   if (!encryptionKey) {
     result.errors.push(i18n.t('errors.authRequired'));
     return result;

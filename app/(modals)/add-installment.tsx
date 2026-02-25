@@ -28,7 +28,8 @@ const INSTALLMENT_MONTHS = [2, 3, 6, 12, 18, 24, 36];
 export default function AddInstallmentScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
-  const { encryptionKey } = useAuthStore();
+  const { getEncryptionKey } = useAuthStore();
+  const encryptionKey = getEncryptionKey();
   const { addInstallment } = useDebtStore();
   const { cards } = useCardStore();
 

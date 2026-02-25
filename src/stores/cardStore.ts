@@ -26,7 +26,7 @@ export const useCardStore = create<CardState & CardActions>((set, get) => ({
   isLoading: false,
 
   loadCards: async () => {
-    const encryptionKey = useAuthStore.getState().encryptionKey;
+    const encryptionKey = useAuthStore.getState().getEncryptionKey();
     if (!encryptionKey) return;
 
     set({ isLoading: true });
@@ -40,7 +40,7 @@ export const useCardStore = create<CardState & CardActions>((set, get) => ({
 
   saveCards: async () => {
     console.log('[DEBUG] saveCards 시작');
-    const encryptionKey = useAuthStore.getState().encryptionKey;
+    const encryptionKey = useAuthStore.getState().getEncryptionKey();
     console.log('[DEBUG] encryptionKey:', encryptionKey ? '있음' : '없음 (null)');
 
     if (!encryptionKey) {
