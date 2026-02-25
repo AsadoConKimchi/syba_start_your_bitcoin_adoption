@@ -27,7 +27,7 @@ const INSTALLMENT_MONTHS = [2, 3, 6, 12, 18, 24, 36];
 
 export default function AddInstallmentScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { getEncryptionKey } = useAuthStore();
   const encryptionKey = getEncryptionKey();
   const { addInstallment } = useDebtStore();
@@ -562,6 +562,7 @@ export default function AddInstallmentScreen() {
                     }
                   }}
                   locale="ko-KR"
+                  themeVariant={isDark ? 'dark' : 'light'}
                 />
                 <TouchableOpacity
                   style={{
@@ -593,6 +594,7 @@ export default function AddInstallmentScreen() {
               }
             }}
             locale="ko-KR"
+            themeVariant={isDark ? 'dark' : 'light'}
           />
         )
       )}

@@ -8,8 +8,9 @@ const BLINK_API_KEY = Deno.env.get('BLINK_API_KEY') || '';
 
 // --- CORS 설정: 허용된 오리진만 통과 ---
 const ALLOWED_ORIGINS = [
-  'http://localhost:8081',    // Expo 개발 서버
-  'http://localhost:19006',   // Expo 웹
+  'http://localhost:8081',              // Expo 개발 서버
+  'http://localhost:19006',             // Expo 웹
+  'https://syba-sats.vercel.app',       // 프로덕션 웹 결제 페이지
 ];
 
 function getCorsHeaders(origin: string | null): Record<string, string> {

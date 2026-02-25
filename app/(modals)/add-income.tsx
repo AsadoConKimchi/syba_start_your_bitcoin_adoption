@@ -29,7 +29,7 @@ type CurrencyMode = 'KRW' | 'SATS';
 
 export default function AddIncomeScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const [amount, setAmount] = useState('');
   const [currencyMode, setCurrencyMode] = useState<CurrencyMode>('KRW');
   const [category, setCategory] = useState('');
@@ -219,6 +219,7 @@ export default function AddIncomeScreen() {
                 onChange={handleDateChange}
                 maximumDate={new Date()}
                 locale="ko-KR"
+                themeVariant={isDark ? 'dark' : 'light'}
               />
             )}
           </View>

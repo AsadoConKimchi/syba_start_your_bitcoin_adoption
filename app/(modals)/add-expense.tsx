@@ -46,7 +46,7 @@ const INSTALLMENT_OPTIONS = [
 
 export default function AddExpenseScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const [amount, setAmount] = useState('');
   const [currencyMode, setCurrencyMode] = useState<CurrencyMode>('KRW');
   const [category, setCategory] = useState('');
@@ -327,6 +327,7 @@ export default function AddExpenseScreen() {
                 onChange={handleDateChange}
                 maximumDate={new Date()}
                 locale="ko-KR"
+                themeVariant={isDark ? 'dark' : 'light'}
               />
             )}
           </View>

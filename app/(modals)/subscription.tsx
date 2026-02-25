@@ -6,9 +6,11 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
-  Clipboard,
   Modal,
+  TextInput,
+  Linking,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,11 +19,12 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
-import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
+// getSubscriptionPriceSats는 더 이상 사용하지 않음 — subscription_prices 단일 소스 사용
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { waitForPaymentWs, PaymentStatus } from '../../src/services/blinkProxy';
 import { lastLnurlError } from '../../src/services/lnurlAuth';
+import type { SubscriptionTier } from '../../src/types/subscription';
 
 export default function SubscriptionScreen() {
   const { t } = useTranslation();
@@ -43,6 +46,16 @@ export default function SubscriptionScreen() {
     startPayment,
     confirmPayment,
     refreshSubscription,
+    // v2: tier & discount
+    availableTiers,
+    selectedTier,
+    discountCode,
+    priceCalculation,
+    isCalculatingPrice,
+    loadTierPrices,
+    selectTier,
+    setDiscountCode,
+    applyDiscountCode,
   } = useSubscriptionStore();
 
   const [isStartingAuth, setIsStartingAuth] = useState(false);
@@ -50,7 +63,9 @@ export default function SubscriptionScreen() {
   const [copied, setCopied] = useState(false);
   const [invoiceCopied, setInvoiceCopied] = useState(false);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [subscriptionPrice, setSubscriptionPrice] = useState<number>(CONFIG.SUBSCRIPTION_PRICE_SATS);
+  // subscriptionPrice state 제거 — availableTiers에서 직접 읽음
+  const [discountMessage, setDiscountMessage] = useState<string>('');
+  const [discountApplied, setDiscountApplied] = useState(false);
 
   // 결제 모달 상태
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -58,17 +73,17 @@ export default function SubscriptionScreen() {
   const paymentCancelledRef = useRef(false);
   const isProcessingRef = useRef(false);
 
-  const handleCopyLnurl = () => {
+  const handleCopyLnurl = async () => {
     if (authLnurlEncoded) {
-      Clipboard.setString(authLnurlEncoded);
+      await Clipboard.setStringAsync(authLnurlEncoded);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const handleCopyInvoice = () => {
+  const handleCopyInvoice = async () => {
     if (lightningInvoice) {
-      Clipboard.setString(lightningInvoice);
+      await Clipboard.setStringAsync(lightningInvoice);
       setInvoiceCopied(true);
       setTimeout(() => setInvoiceCopied(false), 2000);
     }
@@ -76,8 +91,7 @@ export default function SubscriptionScreen() {
 
   useEffect(() => {
     initialize();
-    // 구독 가격 조회
-    getSubscriptionPriceSats().then(setSubscriptionPrice);
+    loadTierPrices();
   }, []);
 
   // LNURL-auth 폴링
@@ -138,6 +152,25 @@ export default function SubscriptionScreen() {
         onPress: logout,
       },
     ]);
+  };
+
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim()) return;
+    const result = await applyDiscountCode();
+    if (result.valid) {
+      setDiscountApplied(true);
+      setDiscountMessage(t('subscription.discountApplied'));
+    } else {
+      setDiscountApplied(false);
+      setDiscountMessage(result.reason || t('subscription.discountInvalid'));
+    }
+    setTimeout(() => setDiscountMessage(''), 3000);
+  };
+
+  const handleWebPayment = () => {
+    if (!user) return;
+    const url = `${CONFIG.WEB_PAYMENT_URL}?uid=${user.id}&tier=${selectedTier}`;
+    Linking.openURL(url);
   };
 
   const handleSubscribe = async () => {
@@ -292,9 +325,17 @@ export default function SubscriptionScreen() {
             </View>
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.primary }}>
-                {subscriptionPrice.toLocaleString()}
+                {(() => {
+                  const tierInfo = availableTiers.find(p => p.tier === selectedTier);
+                  const price = tierInfo?.price_sats ?? CONFIG.SUBSCRIPTION_TIERS[selectedTier].price;
+                  return price.toLocaleString();
+                })()}
               </Text>
-              <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('subscription.pricePerMonth')}</Text>
+              <Text style={{ fontSize: 11, color: theme.textSecondary }}>
+                {selectedTier === 'monthly' ? t('subscription.pricePerMonth')
+                  : selectedTier === 'annual' ? t('subscription.pricePerYear')
+                  : t('subscription.priceLifetime')}
+              </Text>
             </View>
           </View>
 
@@ -335,6 +376,172 @@ export default function SubscriptionScreen() {
               </View>
             ))}
           </View>
+
+          {/* v2: 구독 티어 선택 */}
+          {user && !isSubscribed && (
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text, marginBottom: 12 }}>
+                {t('subscription.selectPlan')}
+              </Text>
+
+              {/* 티어 카드 3개 */}
+              {(['monthly', 'annual', 'lifetime'] as SubscriptionTier[]).map((tier) => {
+                const tierInfo = availableTiers.find(p => p.tier === tier);
+                const price = tierInfo?.price_sats ?? CONFIG.SUBSCRIPTION_TIERS[tier].price;
+                const isSelected = selectedTier === tier;
+                const isSoldOut = tierInfo ? tierInfo.max_quantity !== -1 && tierInfo.current_sold >= tierInfo.max_quantity : false;
+                const remaining = tierInfo && tierInfo.max_quantity !== -1 ? tierInfo.max_quantity - tierInfo.current_sold : null;
+
+                const labels: Record<SubscriptionTier, { name: string; desc: string; badge?: string }> = {
+                  monthly:  { name: t('subscription.tierMonthly'), desc: `${price.toLocaleString()} ${t('subscription.pricePerMonth')}` },
+                  annual:   { name: t('subscription.tierAnnual'), desc: `${price.toLocaleString()} ${t('subscription.pricePerYear')}`, badge: t('subscription.badgeFreeMonths') },
+                  lifetime: { name: t('subscription.tierLifetime'), desc: `${price.toLocaleString()} sats`, badge: remaining !== null ? t('subscription.badgeRemaining', { count: remaining }) : undefined },
+                };
+                const label = labels[tier];
+
+                return (
+                  <TouchableOpacity
+                    key={tier}
+                    style={{
+                      borderWidth: 2,
+                      borderColor: isSelected ? theme.primary : theme.border,
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 8,
+                      backgroundColor: isSoldOut ? theme.backgroundTertiary : isSelected ? theme.primaryLight || `${theme.primary}15` : theme.background,
+                      opacity: isSoldOut ? 0.5 : 1,
+                    }}
+                    onPress={() => !isSoldOut && selectTier(tier)}
+                    disabled={isSoldOut}
+                  >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <View
+                          style={{
+                            width: 20, height: 20, borderRadius: 10,
+                            borderWidth: 2,
+                            borderColor: isSelected ? theme.primary : theme.border,
+                            backgroundColor: isSelected ? theme.primary : 'transparent',
+                            alignItems: 'center', justifyContent: 'center', marginRight: 12,
+                          }}
+                        >
+                          {isSelected && <Ionicons name="checkmark" size={12} color="#FFFFFF" />}
+                        </View>
+                        <View>
+                          <Text style={{ fontSize: 16, fontWeight: '600', color: isSoldOut ? theme.textMuted : theme.text }}>
+                            {label.name} {isSoldOut ? t('subscription.soldOut') : ''}
+                          </Text>
+                          <Text style={{ fontSize: 13, color: theme.textSecondary }}>{label.desc}</Text>
+                        </View>
+                      </View>
+                      {label.badge && (
+                        <View style={{ backgroundColor: tier === 'lifetime' ? theme.warning : theme.success, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#FFFFFF' }}>{label.badge}</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+
+              {/* 할인코드 입력 */}
+              <View style={{ marginTop: 12 }}>
+                <Text style={{ fontSize: 13, color: theme.textSecondary, marginBottom: 6 }}>{t('subscription.discountCode')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TextInput
+                    style={{
+                      flex: 1,
+                      borderWidth: 1,
+                      borderColor: discountApplied ? theme.success : theme.border,
+                      borderRadius: 8,
+                      padding: 12,
+                      fontSize: 14,
+                      color: theme.text,
+                      backgroundColor: theme.backgroundSecondary,
+                      marginRight: 8,
+                    }}
+                    placeholder={t('subscription.discountCodePlaceholder')}
+                    placeholderTextColor={theme.textMuted}
+                    value={discountCode}
+                    onChangeText={setDiscountCode}
+                    autoCapitalize="characters"
+                  />
+                  <TouchableOpacity
+                    style={{
+                      backgroundColor: theme.primary,
+                      borderRadius: 8,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                    }}
+                    onPress={handleApplyDiscount}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>{t('subscription.discountApply')}</Text>
+                  </TouchableOpacity>
+                </View>
+                {discountMessage !== '' && (
+                  <Text style={{ fontSize: 12, color: discountApplied ? theme.success : theme.error, marginTop: 4 }}>
+                    {discountMessage}
+                  </Text>
+                )}
+              </View>
+
+              {/* 가격 요약 */}
+              {priceCalculation && (
+                <View style={{ marginTop: 12, backgroundColor: theme.backgroundSecondary, borderRadius: 8, padding: 12 }}>
+                  {priceCalculation.discountAmount > 0 && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={{ fontSize: 13, color: theme.textSecondary }}>{t('subscription.originalPrice')}</Text>
+                      <Text style={{ fontSize: 13, color: theme.textSecondary, textDecorationLine: 'line-through' }}>
+                        {priceCalculation.originalPrice.toLocaleString()} sats
+                      </Text>
+                    </View>
+                  )}
+                  {priceCalculation.discountAmount > 0 && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={{ fontSize: 13, color: theme.success }}>{t('subscription.discountLabel')}</Text>
+                      <Text style={{ fontSize: 13, color: theme.success }}>
+                        -{priceCalculation.discountAmount.toLocaleString()} sats
+                      </Text>
+                    </View>
+                  )}
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: theme.text }}>{t('subscription.paymentTotal')}</Text>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: theme.primary }}>
+                      {isCalculatingPrice ? '...' : `${priceCalculation.finalPrice.toLocaleString()} sats`}
+                    </Text>
+                  </View>
+                </View>
+              )}
+
+              {/* 웹 결제 옵션 */}
+              <TouchableOpacity
+                style={{
+                  marginTop: 12,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 12,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: theme.border,
+                }}
+                onPress={handleWebPayment}
+              >
+                <Ionicons name="globe-outline" size={18} color={theme.textSecondary} style={{ marginRight: 8 }} />
+                <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('subscription.payOnWeb')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* 구독 상태 — lifetime 표시 */}
+          {isSubscribed && subscription?.is_lifetime && (
+            <View style={{ marginBottom: 16, backgroundColor: theme.incomeButtonBg, borderRadius: 12, padding: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="infinite" size={22} color={theme.success} style={{ marginRight: 8 }} />
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.success }}>{t('subscription.lifetimeActive')}</Text>
+              </View>
+            </View>
+          )}
 
           {/* LNURL-auth QR 코드 */}
           {authStatus === 'waiting' && authLnurl ? (
@@ -462,12 +669,12 @@ export default function SubscriptionScreen() {
                   }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                    <Ionicons name="checkmark-circle" size={20} color={theme.success} style={{ marginRight: 8 }} />
+                    <Ionicons name={subscription.is_lifetime ? 'infinite' : 'checkmark-circle'} size={20} color={theme.success} style={{ marginRight: 8 }} />
                     <Text style={{ fontSize: 16, fontWeight: '600', color: theme.success }}>
-                      {t('subscription.premiumActive')}
+                      {subscription.is_lifetime ? t('subscription.lifetimeActive') : t('subscription.premiumActive')}
                     </Text>
                   </View>
-                  {subscription.expires_at && (
+                  {subscription.expires_at && !subscription.is_lifetime && (
                     <Text style={{ fontSize: 14, color: theme.textSecondary }}>
                       {t('subscription.expiresAt', { date: format(new Date(subscription.expires_at), 'PPP', { locale: ko }) })}
                     </Text>
@@ -550,8 +757,16 @@ export default function SubscriptionScreen() {
             <View style={{ marginBottom: 20, alignItems: 'center' }}>
               <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 4 }}>{t('subscription.paymentAmount')}</Text>
               <Text style={{ fontSize: 28, fontWeight: 'bold', color: theme.primary }}>
-                {subscriptionPrice.toLocaleString()} sats
+                {(priceCalculation?.finalPrice ?? (() => {
+                  const tierInfo = availableTiers.find(p => p.tier === selectedTier);
+                  return tierInfo?.price_sats ?? CONFIG.SUBSCRIPTION_TIERS[selectedTier].price;
+                })()).toLocaleString()} sats
               </Text>
+              {priceCalculation && priceCalculation.discountAmount > 0 && (
+                <Text style={{ fontSize: 12, color: theme.success, marginTop: 2 }}>
+                  {t('subscription.discountAppliedAmount', { amount: priceCalculation.discountAmount.toLocaleString() })}
+                </Text>
+              )}
             </View>
 
             {/* QR 코드 */}

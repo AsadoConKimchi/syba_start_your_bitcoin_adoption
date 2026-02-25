@@ -25,7 +25,7 @@ type TabMode = 'transfer' | 'topup';
 
 export default function AddTransferScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
 
   const [tab, setTab] = useState<TabMode>('transfer');
   const [amount, setAmount] = useState('');
@@ -230,6 +230,7 @@ export default function AddTransferScreen() {
                 onChange={handleDateChange}
                 maximumDate={new Date()}
                 locale="ko-KR"
+                themeVariant={isDark ? 'dark' : 'light'}
               />
             )}
           </View>

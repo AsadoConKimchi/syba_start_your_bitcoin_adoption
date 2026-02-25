@@ -27,7 +27,7 @@ const INSTALLMENT_MONTHS = [2, 3, 6, 12, 18, 24, 36];
 
 export default function InstallmentDetailScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getEncryptionKey } = useAuthStore();
   const encryptionKey = getEncryptionKey();
@@ -770,6 +770,7 @@ export default function InstallmentDetailScreen() {
                   if (date) setStartDate(date);
                 }}
                 locale="ko-KR"
+                themeVariant={isDark ? 'dark' : 'light'}
               />
               {Platform.OS === 'ios' && (
                 <TouchableOpacity

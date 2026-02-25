@@ -7,6 +7,7 @@ import {
   Switch,
   Alert,
   Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -345,9 +346,25 @@ export default function SettingsScreen() {
                 <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>
                   {user ? (settings.userName || t('settings.lightningUser')) : t('settings.loginRequired')}
                 </Text>
-                <Text style={{ fontSize: 12, color: user ? theme.success : theme.textMuted }}>
-                  {user ? t('settings.loggedIn') : t('settings.loginForPremium')}
-                </Text>
+                {user?.linking_key ? (
+                  <TouchableOpacity
+                    onPress={async () => {
+                      const displayId = 'SYBA-' + user.linking_key.substring(2, 10);
+                      await Clipboard.setStringAsync(displayId);
+                      Alert.alert(t('common.copied'), displayId);
+                    }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}
+                  >
+                    <Text style={{ fontSize: 13, color: theme.primary, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>
+                      {'SYBA-' + user.linking_key.substring(2, 10)}
+                    </Text>
+                    <Ionicons name="copy-outline" size={12} color={theme.primary} />
+                  </TouchableOpacity>
+                ) : (
+                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
+                    {t('settings.loginForPremium')}
+                  </Text>
+                )}
               </View>
               {isSubscribed && (
                 <View

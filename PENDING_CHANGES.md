@@ -19,8 +19,13 @@
 - [x] C-1: installment.ts 중복 타입 → debt.ts로 통일 (types/index.ts 수정)
 - [x] C-3: encryptionKey를 Zustand state에서 클로저 변수로 이동 (authStore + 4개 참조 파일)
 - [x] C-4: addExpense/addIncome에 자산 차감 실패 시 롤백 로직 추가
-- [ ] C-5: blink.ts 레거시 파일 삭제 (Jin 로컬에서 직접)
-- [ ] flutter 폴더 삭제 (Jin 로컬에서 직접)
+- [x] C-5: blink.ts 레거시 파일 삭제 ✅
+- [x] flutter 폴더 삭제 ✅
+- [x] v1 잔재 정리: payment.tsx 삭제, installment.ts/loan.ts 삭제, PremiumGate v2 전환
+- [x] display_id UI 구현 (Settings → SYBA-xxxxxxxx 표시 + 복사)
+- [x] 다크모드 DateTimePicker themeVariant 수정 (10개 인스턴스)
+- [x] 구독 가격 시스템 v2 전환 (subscription_prices 테이블 단일 소스)
+- [x] Supabase CS 인프라 구축 (003_cs_improvements.sql)
 
 ---
 

@@ -33,7 +33,7 @@ const LOAN_TERMS = [12, 24, 36, 48, 60, 120, 240, 360]; // 개월
 
 export default function AddLoanScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { getEncryptionKey } = useAuthStore();
   const encryptionKey = getEncryptionKey();
   const { addLoan } = useDebtStore();
@@ -761,6 +761,7 @@ export default function AddLoanScreen() {
                     }
                   }}
                   locale="ko-KR"
+                  themeVariant={isDark ? 'dark' : 'light'}
                 />
                 <TouchableOpacity
                   style={{
@@ -792,6 +793,7 @@ export default function AddLoanScreen() {
               }
             }}
             locale="ko-KR"
+            themeVariant={isDark ? 'dark' : 'light'}
           />
         )
       )}

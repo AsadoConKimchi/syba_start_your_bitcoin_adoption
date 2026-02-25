@@ -33,7 +33,7 @@ const LOAN_TERMS = [12, 24, 36, 48, 60, 120, 240, 360];
 
 export default function LoanDetailScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { getEncryptionKey } = useAuthStore();
   const encryptionKey = getEncryptionKey();
@@ -1092,6 +1092,7 @@ export default function LoanDetailScreen() {
                   if (date) setStartDate(date);
                 }}
                 locale="ko-KR"
+                themeVariant={isDark ? 'dark' : 'light'}
               />
               {Platform.OS === 'ios' && (
                 <TouchableOpacity

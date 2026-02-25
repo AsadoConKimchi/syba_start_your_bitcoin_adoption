@@ -1,6 +1,7 @@
 /**
  * 앱 설정 서비스
- * Supabase에서 동적 설정값을 가져옴
+ * Supabase subscription_prices 테이블에서 가격을 가져옴
+ * (구 app_config 테이블 대신 subscription_prices 단일 소스 사용)
  */
 
 import { supabase } from './supabase';
@@ -12,7 +13,8 @@ let cacheTimestamp: number = 0;
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5분
 
 /**
- * 구독 가격 조회 (Supabase에서 가져오고, 실패 시 기본값 사용)
+ * 구독 가격 조회 — subscription_prices 테이블의 monthly 티어 가격 반환
+ * 모든 가격의 단일 소스: subscription_prices 테이블
  */
 export async function getSubscriptionPriceSats(): Promise<number> {
   // 캐시 확인
@@ -22,31 +24,32 @@ export async function getSubscriptionPriceSats(): Promise<number> {
 
   try {
     const { data, error } = await supabase
-      .from('app_config')
-      .select('value')
-      .eq('key', 'subscription_price_sats')
+      .from('subscription_prices')
+      .select('price_sats')
+      .eq('tier', 'monthly')
+      .eq('is_active', true)
       .single();
 
     if (error || !data) {
-      console.log('[AppConfig] Supabase 조회 실패, 기본값 사용:', error?.message);
-      return CONFIG.SUBSCRIPTION_PRICE_SATS; // 폴백
+      console.log('[AppConfig] subscription_prices 조회 실패, 기본값 사용:', error?.message);
+      return CONFIG.FALLBACK_MONTHLY_PRICE_SATS; // 폴백
     }
 
-    const price = parseInt(data.value, 10);
-    if (isNaN(price) || price <= 0) {
+    const price = data.price_sats;
+    if (!price || price <= 0) {
       console.log('[AppConfig] 잘못된 가격 값, 기본값 사용');
-      return CONFIG.SUBSCRIPTION_PRICE_SATS; // 폴백
+      return CONFIG.FALLBACK_MONTHLY_PRICE_SATS; // 폴백
     }
 
     // 캐시 업데이트
     cachedSubscriptionPrice = price;
     cacheTimestamp = Date.now();
 
-    console.log('[AppConfig] 구독 가격:', price, 'sats');
+    console.log('[AppConfig] 구독 가격 (monthly):', price, 'sats');
     return price;
   } catch (error) {
     console.error('[AppConfig] 에러:', error);
-    return CONFIG.SUBSCRIPTION_PRICE_SATS; // 폴백
+    return CONFIG.FALLBACK_MONTHLY_PRICE_SATS; // 폴백
   }
 }
 

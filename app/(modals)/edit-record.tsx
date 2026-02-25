@@ -44,7 +44,7 @@ const INSTALLMENT_OPTIONS = [
 
 export default function EditRecordScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { records, updateRecord, deleteRecord } = useLedgerStore();
   const { cards } = useCardStore();
@@ -322,6 +322,7 @@ export default function EditRecordScreen() {
                 onChange={handleDateChange}
                 maximumDate={new Date()}
                 locale="ko-KR"
+                themeVariant={isDark ? 'dark' : 'light'}
               />
             )}
           </View>

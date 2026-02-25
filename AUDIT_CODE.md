@@ -95,7 +95,7 @@ await useAssetStore.getState().adjustAssetBalance(...); // 2. 자산 차감
 
 ---
 
-### C-5. `blink.ts` — 레거시 파일에 API 키 빈 문자열로 남아있음 ⏳ Jin 로컬에서 파일 삭제 예정
+### C-5. `blink.ts` — 레거시 파일에 API 키 빈 문자열로 남아있음 ✅ 삭제완료 (2026-02-25)
 
 **파일:** `src/services/blink.ts:11`
 

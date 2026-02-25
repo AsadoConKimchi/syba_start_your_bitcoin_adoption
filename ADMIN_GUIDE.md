@@ -1,125 +1,104 @@
-# SYBA 관리자 가이드
+# SYBA Admin Guide (Quick Reference)
 
-## 프리미엄 구독 관리
+> Full version: `SYBA_Admin_Guide_v2.docx` (same folder)
 
-### 사전 설정 (최초 1회)
+## Supabase Dashboard
 
-Supabase SQL Editor에서 실행:
+```
+https://supabase.com/dashboard/project/tbjfzenhrjcygvqfpqwl
+```
+
+All commands: **Dashboard > SQL Editor**
+
+---
+
+## User Identification
+
+Users have an 8-character Display ID (shown in app Settings as `SYBA-xxxxxxxx`).
+
 ```sql
--- user_id unique 제약 추가 (이미 추가했으면 스킵)
-ALTER TABLE subscriptions ADD CONSTRAINT subscriptions_user_id_unique UNIQUE (user_id);
+-- Find user
+SELECT * FROM users WHERE display_id = 'a1b2c3d4';
+
+-- Add memo
+UPDATE users SET memo = 'Jin test' WHERE display_id = 'a1b2c3d4';
 ```
 
 ---
 
-### 사용자 식별 방법
+## CS Operations (Display ID required)
 
-1. 앱 → 설정 탭 → 프리미엄 구독 → "Lightning 연결됨" 아래 표시된 코드
-2. 해당 코드의 **앞 8자리**를 사용
-3. Supabase `users` 테이블의 `memo` 필드에 사용자 이름 메모 가능
-
-**메모 추가:**
 ```sql
-UPDATE users SET memo = '홍길동' WHERE linking_key LIKE '앞8자리%';
+-- Activate subscription (monthly/annual/lifetime)
+SELECT admin_activate_subscription('a1b2c3d4', 'monthly', 'Payment verified');
+
+-- Extend subscription (add days)
+SELECT admin_extend_subscription('a1b2c3d4', 30, 'Compensation');
+
+-- Revoke subscription
+SELECT admin_revoke_subscription('a1b2c3d4', 'Reason');
+
+-- View CS log
+SELECT * FROM cs_actions ORDER BY created_at DESC LIMIT 20;
 ```
 
 ---
 
-### 프리미엄 부여
+## Business Metrics
 
 ```sql
--- 사용법: '앞8자리'와 개월수(숫자) 수정
-INSERT INTO subscriptions (user_id, status, started_at, expires_at)
-SELECT id, 'active', NOW(), NOW() + INTERVAL '3 month'
-FROM users WHERE linking_key LIKE '앞8자리%'
-ON CONFLICT (user_id) DO UPDATE SET
-  status = 'active',
-  expires_at = NOW() + INTERVAL '3 month';
-```
-
-**예시:**
-```sql
--- abc12345로 시작하는 사용자에게 1개월 프리미엄
-INSERT INTO subscriptions (user_id, status, started_at, expires_at)
-SELECT id, 'active', NOW(), NOW() + INTERVAL '1 month'
-FROM users WHERE linking_key LIKE 'abc12345%'
-ON CONFLICT (user_id) DO UPDATE SET
-  status = 'active',
-  expires_at = NOW() + INTERVAL '1 month';
+SELECT * FROM v_subscription_summary;   -- Active subscribers, tier breakdown
+SELECT * FROM v_revenue_monthly;        -- Monthly revenue
+SELECT * FROM v_discount_usage;         -- Discount code performance
 ```
 
 ---
 
-### 프리미엄 회수 (즉시 만료)
+## Pricing (Multiplier System)
+
+Monthly price x multiplier = tier price. Change monthly, all tiers update.
 
 ```sql
--- 사용법: '앞8자리' 수정
-UPDATE subscriptions
-SET status = 'expired', expires_at = NOW()
-WHERE user_id = (SELECT id FROM users WHERE linking_key LIKE '앞8자리%');
-```
+-- Change monthly base price (annual = x10, lifetime = x60)
+UPDATE subscription_prices SET price_sats = 1500 WHERE tier = 'monthly';
 
-**예시:**
-```sql
--- abc12345로 시작하는 사용자의 프리미엄 회수
-UPDATE subscriptions
-SET status = 'expired', expires_at = NOW()
-WHERE user_id = (SELECT id FROM users WHERE linking_key LIKE 'abc12345%');
+-- View prices
+SELECT tier, price_sats, base_multiplier, price_sats * base_multiplier AS effective_price
+FROM subscription_prices ORDER BY base_multiplier;
 ```
 
 ---
 
-### 프리미엄 연장
+## Discount Codes
 
-기존 만료일에서 추가 연장:
 ```sql
--- 현재 만료일에서 1개월 추가
-UPDATE subscriptions
-SET expires_at = expires_at + INTERVAL '1 month'
-WHERE user_id = (SELECT id FROM users WHERE linking_key LIKE '앞8자리%')
-  AND status = 'active';
+-- Create new code
+INSERT INTO discount_codes (code, discount_type, discount_value, max_uses, valid_until, description)
+VALUES ('EARLYBIRD', 'percent', 30, 100, '2026-12-31T23:59:59Z', 'Early bird 30% off');
+
+-- Disable code
+UPDATE discount_codes SET is_active = false WHERE LOWER(code) = LOWER('EARLYBIRD');
 ```
 
 ---
 
-### 전체 구독자 목록 조회
+## Full Subscriber List
 
 ```sql
-SELECT
-  u.memo,
-  LEFT(u.linking_key, 8) AS "식별코드",
-  s.status,
-  s.started_at,
-  s.expires_at,
-  CASE
-    WHEN s.expires_at > NOW() THEN '활성'
-    ELSE '만료'
-  END AS "상태"
-FROM subscriptions s
-JOIN users u ON s.user_id = u.id
-ORDER BY s.expires_at DESC;
+SELECT u.display_id, u.memo, s.tier, s.status, s.is_lifetime, s.started_at, s.expires_at,
+  CASE WHEN s.is_lifetime THEN 'LIFETIME' WHEN s.expires_at > now() THEN 'ACTIVE' ELSE 'EXPIRED' END AS state
+FROM subscriptions s JOIN users u ON s.user_id = u.id
+ORDER BY s.started_at DESC;
 ```
 
 ---
 
-### 구독료 변경
+## Auto-Expire Setup (one-time)
 
 ```sql
--- Supabase app_config 테이블에서 변경
-UPDATE app_config
-SET value = '15000', updated_at = NOW()
-WHERE key = 'subscription_price_sats';
+-- Enable pg_cron extension first (Dashboard > Database > Extensions)
+SELECT cron.schedule('auto-expire-subs', '0 3 * * *', 'SELECT auto_expire_subscriptions()');
+
+-- Manual run
+SELECT auto_expire_subscriptions();
 ```
-
-현재 가격 확인:
-```sql
-SELECT * FROM app_config WHERE key = 'subscription_price_sats';
-```
-
----
-
-## 참고
-
-- 모든 작업은 Supabase Dashboard → SQL Editor에서 실행
-- `linking_key`는 Lightning 지갑마다 고유한 값
-- 사용자가 다른 지갑으로 로그인하면 새로운 `linking_key` 생성됨

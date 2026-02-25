@@ -14,14 +14,14 @@ import { usePriceStore } from '../../src/stores/priceStore';
 import { useSnapshotStore } from '../../src/stores/snapshotStore';
 import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { useCategoryStore } from '../../src/stores/categoryStore';
-// [TODO: 공식 배포 전 주석 해제] Push Notification - Personal 개발자 계정에서 미지원
+// [BACKLOG] Push Notification - 대출/할부 상환 알림 + 월말 분석 알림
+// Apple Developer Program 전환 후 구현 예정 (v0.2.x)
 // import {
 //   scheduleLoanRepaymentNotifications,
 //   scheduleInstallmentPaymentNotifications,
 // } from '../../src/services/debtAutoRecord';
 // import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
 import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
-import { getSubscriptionPriceSats } from '../../src/services/appConfigService';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
 
 export default function TabsLayout() {
@@ -48,8 +48,6 @@ export default function TabsLayout() {
     const initPrices = async () => {
       await loadCachedPrices();
       fetchPrices();
-      // Prefetch subscription price from Supabase
-      getSubscriptionPriceSats().catch(() => {});
     };
     initPrices();
   }, []);
@@ -117,7 +115,7 @@ export default function TabsLayout() {
             console.error('[TabsLayout] Snapshot save error:', error);
           }
 
-          // [TODO: 공식 배포 전 주석 해제] Push Notification
+          // [BACKLOG] 월말 분석 알림 - v0.2.x에서 구현 예정
           // try {
           //   await scheduleMonthlySummaryNotification();
           // } catch (error) {
@@ -129,7 +127,7 @@ export default function TabsLayout() {
     initData();
   }, [isAuthenticated, encryptionKey]);
 
-  // [TODO: 공식 배포 전 주석 해제] Push Notification - 대출/할부 알림 스케줄링
+  // [BACKLOG] 대출/할부 상환 알림 스케줄링 - v0.2.x에서 구현 예정
   // useEffect(() => {
   //   if (loans.length > 0 || installments.length > 0) {
   //     scheduleLoanRepaymentNotifications(loans).catch(console.error);

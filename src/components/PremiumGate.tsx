@@ -1,11 +1,8 @@
-import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSubscriptionStore } from '../stores/subscriptionStore';
-import { getSubscriptionPriceSats } from '../services/appConfigService';
-import { CONFIG } from '../constants/config';
 import { useTheme } from '../hooks/useTheme';
 
 interface PremiumGateProps {
@@ -14,16 +11,15 @@ interface PremiumGateProps {
 }
 
 export function PremiumGate({ children, feature }: PremiumGateProps) {
-  const { isSubscribed } = useSubscriptionStore();
+  const { isSubscribed, availableTiers } = useSubscriptionStore();
   const { t } = useTranslation();
-  const { theme, isDark } = useTheme();
-  const [subscriptionPrice, setSubscriptionPrice] = useState<number>(CONFIG.SUBSCRIPTION_PRICE_SATS);
+  const { theme } = useTheme();
 
   const displayFeature = feature || t('premium.feature');
 
-  useEffect(() => {
-    getSubscriptionPriceSats().then(setSubscriptionPrice);
-  }, []);
+  // v2: subscription_prices 테이블에서 monthly 가격 가져오기
+  const monthlyTier = availableTiers.find(p => p.tier === 'monthly');
+  const isLoadingPrice = availableTiers.length === 0;
 
   if (isSubscribed) {
     return <>{children}</>;
@@ -117,9 +113,16 @@ export function PremiumGate({ children, feature }: PremiumGateProps) {
         </Text>
       </TouchableOpacity>
 
-      <Text style={{ fontSize: 14, color: theme.primary, marginTop: 12, fontWeight: '600' }}>
-        {t('premium.monthlyPrice', { price: subscriptionPrice.toLocaleString() })}
-      </Text>
+      {isLoadingPrice ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
+          <ActivityIndicator size="small" color={theme.primary} />
+          <Text style={{ fontSize: 14, color: theme.textSecondary }}>...</Text>
+        </View>
+      ) : (
+        <Text style={{ fontSize: 14, color: theme.primary, marginTop: 12, fontWeight: '600' }}>
+          {t('premium.monthlyPrice', { price: monthlyTier!.price_sats.toLocaleString() })}
+        </Text>
+      )}
     </View>
   );
 }

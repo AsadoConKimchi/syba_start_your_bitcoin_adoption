@@ -7,6 +7,32 @@
 
 ---
 
+## [1.0.0] - 2026-02-25
+versionCode: 4
+
+### 코드 품질 & 보안
+- C-1: installment.ts/loan.ts 중복 타입 제거 → debt.ts 단일 소스로 통일
+- C-3: 암호화 키를 Zustand state에서 클로저 변수로 이동 (React DevTools 노출 방지)
+- C-4: addExpense/addIncome에 자산 차감 실패 시 자동 롤백 추가
+- C-5: blink.ts 레거시 파일 삭제 (blinkProxy.ts만 사용)
+- v1 잔재 정리: payment.tsx 모달, appConfigService prefetch 제거
+- PremiumGate v2 전환: subscription_prices 테이블 기반 가격 표시 + 로딩 상태 UI
+
+### 신규 기능
+- display_id: Settings에서 SYBA-xxxxxxxx 형식 사용자 식별자 표시 + 복사 기능
+- Supabase CS 인프라: subscription_history, cs_actions, 관리자 RPC 함수, 비즈니스 메트릭 뷰
+
+### UI/UX
+- 다크모드: DateTimePicker 10개 인스턴스에 themeVariant 적용
+- Push Notification 코드 BACKLOG 처리 (v0.2.x 예정)
+
+### 백엔드
+- subscribe.html: 3-tier 구독 시스템 (monthly/annual/lifetime), 할인 코드 지원
+- blink-proxy Edge Function 재배포
+- Supabase migration 003: CS 개선사항 (display_id, subscription_history, admin RPC)
+
+---
+
 ## [0.1.13] - 2026-02-24
 versionCode: 3
 
