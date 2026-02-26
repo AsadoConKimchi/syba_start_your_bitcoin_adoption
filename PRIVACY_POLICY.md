@@ -4,16 +4,23 @@
 
 ## Overview
 
-SYBA ("Be Your Own Bank") is a personal finance app focused on Bitcoin. Your privacy is our top priority — SYBA is designed to keep your data on your device.
+SYBA ("Start Your Bitcoin Adoption") is a Bitcoin-first personal finance app. Your privacy is our top priority — SYBA is designed to keep your financial data on your device.
 
 ## Data Collection
 
-**SYBA does not collect, store, or transmit any personal data to external servers.**
+**SYBA does not collect, store, or transmit your personal financial data to external servers.**
 
-- **No account creation required** — SYBA does not require you to create an account or provide any personal information.
 - **No tracking or analytics** — SYBA does not use any analytics SDKs, tracking pixels, or third-party analytics services.
 - **No advertising** — SYBA does not display ads or share data with advertisers.
-- **All data stays on your device** — Your financial records, settings, and preferences are stored locally on your device using secure storage.
+- **All financial data stays on your device** — Your financial records, settings, and preferences are stored locally on your device using encrypted secure storage (AES-256).
+
+## Authentication
+
+SYBA uses LNURL-auth for optional Lightning-based authentication. This is a privacy-preserving login method that does not require an email address, phone number, or password. Authentication is handled through your Lightning wallet, and no personally identifiable information is collected during this process.
+
+## Subscription
+
+SYBA offers a premium subscription paid via Lightning Network. Payment processing is handled through the Blink API. No credit card information or traditional payment data is collected by SYBA.
 
 ## Biometric Authentication
 
@@ -23,12 +30,15 @@ SYBA supports optional biometric authentication (fingerprint/face recognition) f
 
 SYBA makes the following network requests solely to provide core functionality:
 
-- **Exchange rate data** — Fetches current Bitcoin and fiat currency exchange rates from public APIs. No personal data is sent in these requests.
+- **Exchange rate data** — Fetches current Bitcoin and fiat currency exchange rates from public APIs (Upbit). No personal data is sent in these requests.
+- **Authentication** — LNURL-auth requests to Supabase for login verification.
+- **Subscription** — Lightning payment verification through Blink API.
 
 ## Data Security
 
-- All locally stored data is protected using your device's secure storage mechanisms.
-- SYBA does not transmit your financial data over the internet.
+- All locally stored data is encrypted using AES-256 and protected using your device's secure storage mechanisms.
+- SYBA does not transmit your financial records over the internet.
+- Biometric and PIN-based app lock options are available for additional security.
 
 ## Children's Privacy
 
