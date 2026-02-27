@@ -12,14 +12,14 @@ interface PremiumGateProps {
 }
 
 export function PremiumGate({ children, feature }: PremiumGateProps) {
-  const { isSubscribed, availableTiers, fetchAvailableTiers } = useSubscriptionStore();
+  const { isSubscribed, availableTiers, loadTierPrices } = useSubscriptionStore();
   const { t } = useTranslation();
   const { theme } = useTheme();
 
   // 컴포넌트 마운트 시 가격 데이터 로딩 (아직 안 불러왔으면)
   useEffect(() => {
     if (availableTiers.length === 0) {
-      fetchAvailableTiers();
+      loadTierPrices();
     }
   }, []);
 

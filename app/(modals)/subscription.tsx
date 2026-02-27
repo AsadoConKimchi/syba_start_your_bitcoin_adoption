@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Modal,
   TextInput,
   Linking,
+  AppState,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -66,6 +67,7 @@ export default function SubscriptionScreen() {
   // subscriptionPrice state 제거 — availableTiers에서 직접 읽음
   const [discountMessage, setDiscountMessage] = useState<string>('');
   const [discountApplied, setDiscountApplied] = useState(false);
+  const webPaymentPollingRef = useRef<NodeJS.Timeout | null>(null);
 
   // 결제 모달 상태
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -167,11 +169,49 @@ export default function SubscriptionScreen() {
     setTimeout(() => setDiscountMessage(''), 3000);
   };
 
+  const stopWebPaymentPolling = useCallback(() => {
+    if (webPaymentPollingRef.current) {
+      clearInterval(webPaymentPollingRef.current);
+      webPaymentPollingRef.current = null;
+    }
+  }, []);
+
   const handleWebPayment = () => {
     if (!user) return;
     const url = `${CONFIG.WEB_PAYMENT_URL}?uid=${user.id}&tier=${selectedTier}`;
     Linking.openURL(url);
+
+    // Poll for subscription activation every 5 seconds after opening web payment
+    stopWebPaymentPolling();
+    webPaymentPollingRef.current = setInterval(async () => {
+      await refreshSubscription();
+      const { isSubscribed: nowSubscribed } = useSubscriptionStore.getState();
+      if (nowSubscribed) {
+        stopWebPaymentPolling();
+        Alert.alert(t('subscription.paymentComplete'), t('subscription.paymentDone'));
+      }
+    }, 5000);
   };
+
+  // Stop polling when app goes to background or component unmounts
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && webPaymentPollingRef.current) {
+        // App returned to foreground — do an immediate check
+        refreshSubscription().then(() => {
+          const { isSubscribed: nowSubscribed } = useSubscriptionStore.getState();
+          if (nowSubscribed) {
+            stopWebPaymentPolling();
+            Alert.alert(t('subscription.paymentComplete'), t('subscription.paymentDone'));
+          }
+        });
+      }
+    });
+    return () => {
+      sub.remove();
+      stopWebPaymentPolling();
+    };
+  }, []);
 
   const handleSubscribe = async () => {
     setIsStartingPayment(true);

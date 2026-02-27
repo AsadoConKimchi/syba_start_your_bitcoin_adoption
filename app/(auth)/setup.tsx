@@ -21,6 +21,7 @@ import {
   generateSalt,
   hashPassword,
   deriveKey,
+  deriveKeySync,
   saveSecure,
   SECURE_KEYS,
 } from '../../src/utils/encryption';
@@ -129,8 +130,6 @@ export default function SetupScreen() {
         salt = fileContent.substring('SYBA_BACKUP:'.length, newlineIdx);
       } else {
         // Old format without salt header - can't restore cross-device
-        // Old backups used deriveKeySync(password, salt) where salt was device-specific
-        // from SecureStore. Without the original salt, decryption is impossible.
         Alert.alert(
           t('common.error'),
           '이 백업 파일은 이전 버전 형식입니다. 원래 기기에서 새 백업을 생성해주세요.'
@@ -138,11 +137,21 @@ export default function SetupScreen() {
         return;
       }
 
-      // Derive encryption key using backup's original salt
-      const encryptionKey = await deriveKey(backupPassword, salt);
-
-      // Restore backup data (re-encrypts all files with the same key)
-      await restoreBackup(fileUri, encryptionKey);
+      // Derive encryption key — try new async method first, fallback to old sync method
+      let encryptionKey: string;
+      try {
+        encryptionKey = await deriveKey(backupPassword, salt);
+        await restoreBackup(fileUri, encryptionKey);
+      } catch {
+        // Fallback: pre-v0.1.10 backups used CryptoJS.PBKDF2 (sync) which produces different keys
+        const fallbackKey = deriveKeySync(backupPassword, salt);
+        await restoreBackup(fileUri, fallbackKey);
+        // Fallback succeeded — re-derive with new method for future consistency
+        encryptionKey = await deriveKey(backupPassword, salt);
+        // Re-encrypt all restored files with the new key
+        const { reEncryptAllData } = await import('../../src/utils/storage');
+        await reEncryptAllData(fallbackKey, encryptionKey);
+      }
 
       // Save credentials to SecureStore
       const hash = hashPassword(backupPassword, salt);
@@ -151,6 +160,9 @@ export default function SetupScreen() {
         saveSecure(SECURE_KEYS.PASSWORD_HASH, hash),
         saveSecure(SECURE_KEYS.ENCRYPTION_KEY, encryptionKey),
       ]);
+
+      // Update authStore state so data loads immediately
+      useAuthStore.getState().setAuthenticatedFromRestore(encryptionKey);
 
       Alert.alert('', t('auth.restoreSuccess'), [
         { text: 'OK', onPress: () => router.replace('/(tabs)') },

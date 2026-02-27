@@ -33,6 +33,7 @@ interface AuthActions {
   getEncryptionKey: () => string | null;
   setupPassword: (password: string, onProgress?: (progress: number) => void) => Promise<void>;
   verifyPassword: (password: string, onProgress?: (progress: number) => void) => Promise<boolean>;
+  setAuthenticatedFromRestore: (encryptionKey: string) => void;
   changePassword: (currentPassword: string, newPassword: string, onProgress?: (progress: number) => void) => Promise<boolean>;
   authenticateWithBiometric: () => Promise<boolean>;
   enableBiometric: () => Promise<void>;
@@ -131,6 +132,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       console.error('Auth 초기화 실패:', error);
       set({ isLoading: false });
     }
+  },
+
+  // 백업 복원 후 인증 상태 설정
+  setAuthenticatedFromRestore: (encryptionKey: string) => {
+    _encryptionKey = encryptionKey;
+    set({
+      isAuthenticated: true,
+      isFirstLaunch: false,
+    });
   },
 
   // 비밀번호 설정
