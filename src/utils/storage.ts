@@ -36,6 +36,7 @@ export const FILE_PATHS = {
   CATEGORIES: DATA_DIR + 'categories.enc',
   SUBSCRIPTION: DATA_DIR + 'subscription.enc',
   SNAPSHOTS: DATA_DIR + 'snapshots.enc',
+  RECURRING: DATA_DIR + 'recurring.enc',
 } as const;
 
 // 디렉토리 초기화
@@ -132,6 +133,7 @@ export async function checkDataIntegrity(
     FILE_PATHS.ASSETS,
     FILE_PATHS.CATEGORIES,
     FILE_PATHS.SNAPSHOTS,
+    FILE_PATHS.RECURRING,
   ];
 
   for (const path of filesToCheck) {
@@ -204,6 +206,7 @@ export async function createBackup(
       income: [],
     }),
     snapshots: await loadEncrypted(FILE_PATHS.SNAPSHOTS, encryptionKey, []),
+    recurring: await loadEncrypted(FILE_PATHS.RECURRING, encryptionKey, []),
     exportedAt: new Date().toISOString(),
     version: '1.0.0',
     salt,
@@ -226,6 +229,7 @@ interface BackupData {
   assets: unknown[];
   categories: { expense: unknown[]; income: unknown[] };
   snapshots?: unknown[]; // 선택적 (기존 백업 호환)
+  recurring?: unknown[]; // 선택적 (기존 백업 호환)
   exportedAt: string;
   version: string;
   salt?: string; // v1.0.0+ 백업에 포함된 솔트
@@ -272,6 +276,8 @@ export async function restoreBackup(
     saveEncrypted(FILE_PATHS.CATEGORIES, backupData.categories, encryptionKey),
     // 스냅샷이 있으면 복원 (기존 백업 호환)
     ...(backupData.snapshots ? [saveEncrypted(FILE_PATHS.SNAPSHOTS, backupData.snapshots, encryptionKey)] : []),
+    // 고정비용이 있으면 복원 (기존 백업 호환)
+    ...(backupData.recurring ? [saveEncrypted(FILE_PATHS.RECURRING, backupData.recurring, encryptionKey)] : []),
   ]);
 
   console.log('[DEBUG] 모든 데이터 복원 완료');
@@ -296,6 +302,7 @@ export async function reEncryptAllData(
     { path: FILE_PATHS.CATEGORIES, default: { expense: [], income: [] } },
     { path: FILE_PATHS.SUBSCRIPTION, default: null },
     { path: FILE_PATHS.SNAPSHOTS, default: [] },
+    { path: FILE_PATHS.RECURRING, default: [] },
   ];
 
   for (const { path, default: defaultValue } of filePaths) {

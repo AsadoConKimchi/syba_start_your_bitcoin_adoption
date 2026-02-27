@@ -74,6 +74,7 @@
     "quickInput": "빠른 입력",
     "addExpense": "+ 지출",
     "addIncome": "+ 수입",
+    "transfer": "이체",
     "recentRecords": "최근 기록",
     "viewMore": "더보기 →",
     "noRecordsToday": "오늘 기록이 없습니다",
@@ -288,7 +289,8 @@
     "envSet": "설정됨",
     "envMissing": "없음",
     "language": "언어",
-    "region": "지역"
+    "region": "지역",
+    "recurringManagement": "고정비용 관리"
   },
   "expense": {
     "title": "지출 입력",
@@ -391,7 +393,13 @@
     "initialBalanceHint": "선불카드에 충전된 금액을 입력하세요 (원)",
     "insufficientBalance": "잔액 부족",
     "currentBalance": "현재 잔액: {{balance}}",
-    "currentBalanceLabel": "잔액"
+    "currentBalanceLabel": "잔액",
+    "editTitle": "카드 수정",
+    "editDone": "카드 정보가 수정되었습니다.",
+    "editFailed": "카드 수정에 실패했습니다.",
+    "hasLinkedRecords": "연결된 기록이 있어 변경 불가",
+    "editRestricted": "변경 불가",
+    "editRestrictedMessage": "이 카드에 연결된 지출 기록이 있어 카드사와 카드 종류를 변경할 수 없습니다."
   },
   "asset": {
     "addTitle": "자산 추가",
@@ -929,6 +937,33 @@
     "save": "저장",
     "cancel": "취소",
     "usingGroup": "사용 중인 그룹"
+  },
+  "recurring": {
+    "title": "고정비용",
+    "addTitle": "고정비용 등록",
+    "editTitle": "고정비용 수정",
+    "name": "이름",
+    "namePlaceholder": "예: 넷플릭스, 보험료",
+    "frequency": "결제 주기",
+    "monthly": "매월",
+    "yearly": "매년",
+    "paymentDay": "결제일",
+    "paymentMonth": "결제 월",
+    "everyMonth": "매월 {{day}}일",
+    "everyYear": "매년 {{month}}월",
+    "everyYearMonth": "매년 {{month}}월 {{day}}일",
+    "selectDay": "결제일 선택",
+    "selectMonth": "결제 월 선택",
+    "startDate": "시작일",
+    "monthlyTotal": "월간 고정비용",
+    "activeCount": "{{count}}건 활성",
+    "noItems": "등록된 고정비용이 없습니다",
+    "addFirst": "고정비용 등록하기",
+    "deleteConfirm": "고정비용 삭제",
+    "deleteMessage": "\"{{name}}\" 고정비용을 삭제하시겠습니까?",
+    "editDone": "고정비용이 수정되었습니다.",
+    "nameRequired": "이름을 입력해주세요.",
+    "auto": "자동"
   },
   "csvImport": {
     "downloadTemplate": "CSV 양식 다운로드",

@@ -413,6 +413,20 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 24, marginBottom: 4 }}>📥</Text>
               <Text style={{ fontSize: 14, fontWeight: '500', color: theme.success }}>{t('home.addIncome')}</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flex: 1,
+                backgroundColor: theme.backgroundSecondary,
+                padding: 16,
+                borderRadius: 12,
+                alignItems: 'center',
+              }}
+              onPress={() => router.push('/(modals)/add-transfer')}
+            >
+              <Text style={{ fontSize: 24, marginBottom: 4 }}>🔄</Text>
+              <Text style={{ fontSize: 14, fontWeight: '500', color: theme.primary }}>{t('home.transfer')}</Text>
+            </TouchableOpacity>
           </View>
         </View>
 

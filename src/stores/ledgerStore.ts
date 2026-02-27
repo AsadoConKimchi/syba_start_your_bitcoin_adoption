@@ -207,6 +207,40 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
         }
       }
 
+      // 체크카드 연결계좌 자동 차감
+      if (
+        expenseData.paymentMethod === 'card' &&
+        expenseData.cardId &&
+        encryptionKey
+      ) {
+        const card = useCardStore.getState().getCardById(expenseData.cardId);
+        if (card?.type === 'debit' && card.linkedAccountId) {
+          const deductAmount = expenseData.currency === 'SATS'
+            ? (satsEquivalent ? satsToKrw(expenseData.amount, btcKrwAtTime!) : expenseData.amount)
+            : expenseData.amount;
+          try {
+            await useAssetStore.getState().adjustAssetBalance(
+              card.linkedAccountId,
+              -deductAmount,
+              encryptionKey
+            );
+            // linkedAssetId를 기록에 반영하여 수정/삭제 시 역복원 가능하게
+            set(state => ({
+              records: state.records.map(r =>
+                r.id === id ? { ...r, linkedAssetId: card.linkedAccountId } as LedgerRecord : r
+              ),
+            }));
+            await get().saveRecords();
+            if (__DEV__) { console.log('[DEBUG] 체크카드 연결계좌 차감 완료:', card.linkedAccountId); }
+          } catch (assetError) {
+            if (__DEV__) { console.log('[DEBUG] 체크카드 연결계좌 차감 실패, 기록 롤백:', assetError); }
+            set(state => ({ records: state.records.filter(r => r.id !== id) }));
+            await get().saveRecords();
+            throw assetError;
+          }
+        }
+      }
+
       return id; // Return expense ID for linking
     } catch (error) {
       if (__DEV__) { console.log('[DEBUG] addExpense 에러:', error); }
@@ -407,12 +441,13 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       if (record.type === 'transfer') return false;
       if (!record.linkedAssetId) return false;
       if (record.type === 'income') return true;
-      // expense는 bank/lightning/onchain만 자산 연동
+      // expense는 bank/lightning/onchain + 체크카드(card with linkedAssetId) 자산 연동
       return (
         record.type === 'expense' &&
         (record.paymentMethod === 'bank' ||
           record.paymentMethod === 'lightning' ||
-          record.paymentMethod === 'onchain')
+          record.paymentMethod === 'onchain' ||
+          record.paymentMethod === 'card')
       );
     };
 
@@ -486,11 +521,12 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       let restoreAmount = 0;
 
       if (record.type === 'expense') {
-        // expense는 bank/lightning/onchain만 자산 연동되었음
+        // expense는 bank/lightning/onchain + 체크카드(linkedAssetId 있는 card) 자산 연동
         if (
           record.paymentMethod === 'bank' ||
           record.paymentMethod === 'lightning' ||
-          record.paymentMethod === 'onchain'
+          record.paymentMethod === 'onchain' ||
+          record.paymentMethod === 'card'
         ) {
           shouldRestore = true;
           // 원래 차감된 금액 복원 (addExpense 로직 역순)

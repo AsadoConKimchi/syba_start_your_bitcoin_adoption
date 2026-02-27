@@ -74,6 +74,7 @@
     "quickInput": "クイック入力",
     "addExpense": "+ 支出",
     "addIncome": "+ 収入",
+    "transfer": "振替",
     "recentRecords": "最近の記録",
     "viewMore": "もっと見る →",
     "noRecordsToday": "今日の記録はありません",
@@ -288,7 +289,8 @@
     "envSet": "設定済み",
     "envMissing": "未設定",
     "language": "言語",
-    "region": "地域"
+    "region": "地域",
+    "recurringManagement": "固定費管理"
   },
   "expense": {
     "title": "支出を追加",
@@ -391,7 +393,13 @@
     "initialBalanceHint": "プリペイドカードの残高を入力してください（現地通貨）",
     "insufficientBalance": "残高不足",
     "currentBalance": "現在の残高: {{balance}}",
-    "currentBalanceLabel": "残高"
+    "currentBalanceLabel": "残高",
+    "editTitle": "カード編集",
+    "editDone": "カード情報を更新しました。",
+    "editFailed": "カードの更新に失敗しました。",
+    "hasLinkedRecords": "関連記録があるため変更不可",
+    "editRestricted": "変更不可",
+    "editRestrictedMessage": "このカードに関連する支出記録があるため、カード会社とカードの種類を変更できません。"
   },
   "asset": {
     "addTitle": "資産を追加",
@@ -910,6 +918,33 @@
     "save": "保存",
     "cancel": "キャンセル",
     "usingGroup": "使用中のグループ"
+  },
+  "recurring": {
+    "title": "固定費",
+    "addTitle": "固定費を追加",
+    "editTitle": "固定費を編集",
+    "name": "名称",
+    "namePlaceholder": "例：Netflix、保険料",
+    "frequency": "頻度",
+    "monthly": "毎月",
+    "yearly": "毎年",
+    "paymentDay": "支払日",
+    "paymentMonth": "支払月",
+    "everyMonth": "毎月{{day}}日",
+    "everyYear": "毎年{{month}}月",
+    "everyYearMonth": "毎年{{month}}月{{day}}日",
+    "selectDay": "支払日を選択",
+    "selectMonth": "支払月を選択",
+    "startDate": "開始日",
+    "monthlyTotal": "月間固定費",
+    "activeCount": "{{count}}件アクティブ",
+    "noItems": "登録された固定費はありません",
+    "addFirst": "固定費を追加",
+    "deleteConfirm": "固定費を削除",
+    "deleteMessage": "「{{name}}」の固定費を削除しますか？",
+    "editDone": "固定費を更新しました。",
+    "nameRequired": "名称を入力してください。",
+    "auto": "自動"
   },
   "csvImport": {
     "downloadTemplate": "CSVテンプレートをダウンロード",

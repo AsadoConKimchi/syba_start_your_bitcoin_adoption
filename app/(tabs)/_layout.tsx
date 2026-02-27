@@ -22,6 +22,7 @@ import { useCategoryStore } from '../../src/stores/categoryStore';
 // } from '../../src/services/debtAutoRecord';
 // import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
 import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
+import { useRecurringStore } from '../../src/stores/recurringStore';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
 
 export default function TabsLayout() {
@@ -35,6 +36,7 @@ export default function TabsLayout() {
   const { loadCachedPrices, fetchPrices } = usePriceStore();
   const { loadSnapshots, checkAndSaveMonthlySnapshot } = useSnapshotStore();
   const { loadCategories } = useCategoryStore();
+  const { loadRecurrings, executeOverdueRecurrings } = useRecurringStore();
   const { initialize: initSubscription } = useSubscriptionStore();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -89,6 +91,7 @@ export default function TabsLayout() {
           loadAssets(encryptionKey),
           loadSnapshots(encryptionKey),
           loadCategories(encryptionKey),
+          loadRecurrings(encryptionKey),
           initSubscription(),
         ]);
 
@@ -101,6 +104,16 @@ export default function TabsLayout() {
             }
           } catch (error) {
             console.error('[TabsLayout] Auto deduction error:', error);
+          }
+
+          // 고정비용 자동 실행
+          try {
+            const recurringResult = await executeOverdueRecurrings();
+            if (recurringResult.executed.length > 0) {
+              console.log('[TabsLayout] Recurring expenses executed:', recurringResult.executed.length);
+            }
+          } catch (error) {
+            console.error('[TabsLayout] Recurring expense error:', error);
           }
         }
 

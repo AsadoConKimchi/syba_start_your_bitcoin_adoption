@@ -74,6 +74,7 @@
     "quickInput": "Quick Entry",
     "addExpense": "+ Expense",
     "addIncome": "+ Income",
+    "transfer": "Transfer",
     "recentRecords": "Recent Records",
     "viewMore": "View more →",
     "noRecordsToday": "No records today",
@@ -288,7 +289,8 @@
     "envSet": "Set",
     "envMissing": "Missing",
     "language": "Language",
-    "region": "Region"
+    "region": "Region",
+    "recurringManagement": "Recurring Expenses"
   },
   "expense": {
     "title": "Add Expense",
@@ -391,7 +393,13 @@
     "initialBalanceHint": "Enter the prepaid card balance",
     "insufficientBalance": "Insufficient Balance",
     "currentBalance": "Current balance: {{balance}}",
-    "currentBalanceLabel": "Balance"
+    "currentBalanceLabel": "Balance",
+    "editTitle": "Edit Card",
+    "editDone": "Card updated successfully.",
+    "editFailed": "Failed to update card.",
+    "hasLinkedRecords": "Cannot change — linked records exist",
+    "editRestricted": "Change Restricted",
+    "editRestrictedMessage": "This card has linked expense records, so the card issuer and type cannot be changed."
   },
   "asset": {
     "addTitle": "Add Asset",
@@ -910,6 +918,33 @@
     "save": "Save",
     "cancel": "Cancel",
     "usingGroup": "Active Group"
+  },
+  "recurring": {
+    "title": "Recurring Expenses",
+    "addTitle": "Add Recurring Expense",
+    "editTitle": "Edit Recurring Expense",
+    "name": "Name",
+    "namePlaceholder": "e.g., Netflix, Insurance",
+    "frequency": "Frequency",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "paymentDay": "Payment Day",
+    "paymentMonth": "Payment Month",
+    "everyMonth": "Every {{day}}th",
+    "everyYear": "Every {{month}}th month",
+    "everyYearMonth": "{{month}}/{{day}} every year",
+    "selectDay": "Select Payment Day",
+    "selectMonth": "Select Payment Month",
+    "startDate": "Start Date",
+    "monthlyTotal": "Monthly Fixed Costs",
+    "activeCount": "{{count}} active",
+    "noItems": "No recurring expenses registered",
+    "addFirst": "Add Recurring Expense",
+    "deleteConfirm": "Delete Recurring Expense",
+    "deleteMessage": "Delete \"{{name}}\" recurring expense?",
+    "editDone": "Recurring expense updated.",
+    "nameRequired": "Please enter a name.",
+    "auto": "Auto"
   },
   "csvImport": {
     "downloadTemplate": "Download CSV Template",

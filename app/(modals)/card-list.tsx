@@ -150,6 +150,16 @@ export default function CardListScreen() {
 
                     {editMode ? (
                       <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <TouchableOpacity
+                          style={{
+                            backgroundColor: 'rgba(255,255,255,0.2)',
+                            padding: 8,
+                            borderRadius: 8,
+                          }}
+                          onPress={() => router.push({ pathname: '/(modals)/edit-card', params: { cardId: card.id } })}
+                        >
+                          <Ionicons name="create-outline" size={16} color="#FFFFFF" />
+                        </TouchableOpacity>
                         {!card.isDefault && (
                           <TouchableOpacity
                             style={{

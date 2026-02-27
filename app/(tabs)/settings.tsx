@@ -793,6 +793,21 @@ export default function SettingsScreen() {
                 borderBottomWidth: 1,
                 borderBottomColor: theme.border,
               }}
+              onPress={() => router.push('/(modals)/recurring-list')}
+            >
+              <Ionicons name="repeat" size={24} color={theme.textSecondary} style={{ marginRight: 12 }} />
+              <Text style={{ flex: 1, fontSize: 16, color: theme.text }}>{t('settings.recurringManagement')}</Text>
+              <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: theme.border,
+              }}
               onPress={handleBackup}
               disabled={isBackingUp}
             >

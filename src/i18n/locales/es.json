@@ -74,6 +74,7 @@
     "quickInput": "Registro rápido",
     "addExpense": "+ Gasto",
     "addIncome": "+ Ingreso",
+    "transfer": "Transferir",
     "recentRecords": "Registros recientes",
     "viewMore": "Ver más →",
     "noRecordsToday": "Sin registros hoy",
@@ -288,7 +289,8 @@
     "envSet": "Configurada",
     "envMissing": "Faltante",
     "language": "Idioma",
-    "region": "Región"
+    "region": "Región",
+    "recurringManagement": "Gastos Fijos"
   },
   "expense": {
     "title": "Agregar Gasto",
@@ -391,7 +393,13 @@
     "initialBalanceHint": "Ingresá el saldo de la tarjeta prepaga",
     "insufficientBalance": "Saldo insuficiente",
     "currentBalance": "Saldo actual: {{balance}}",
-    "currentBalanceLabel": "Saldo"
+    "currentBalanceLabel": "Saldo",
+    "editTitle": "Editar Tarjeta",
+    "editDone": "Tarjeta actualizada.",
+    "editFailed": "Error al actualizar tarjeta.",
+    "hasLinkedRecords": "No se puede cambiar — hay registros vinculados",
+    "editRestricted": "Cambio Restringido",
+    "editRestrictedMessage": "Esta tarjeta tiene registros de gastos vinculados, por lo que no se puede cambiar el emisor ni el tipo."
   },
   "asset": {
     "addTitle": "Agregar Activo",
@@ -910,6 +918,33 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "usingGroup": "Grupo Activo"
+  },
+  "recurring": {
+    "title": "Gastos Fijos",
+    "addTitle": "Agregar Gasto Fijo",
+    "editTitle": "Editar Gasto Fijo",
+    "name": "Nombre",
+    "namePlaceholder": "ej., Netflix, Seguro",
+    "frequency": "Frecuencia",
+    "monthly": "Mensual",
+    "yearly": "Anual",
+    "paymentDay": "Día de pago",
+    "paymentMonth": "Mes de pago",
+    "everyMonth": "Cada día {{day}}",
+    "everyYear": "Cada mes {{month}}",
+    "everyYearMonth": "{{month}}/{{day}} cada año",
+    "selectDay": "Seleccionar día de pago",
+    "selectMonth": "Seleccionar mes de pago",
+    "startDate": "Fecha de inicio",
+    "monthlyTotal": "Gastos fijos mensuales",
+    "activeCount": "{{count}} activos",
+    "noItems": "No hay gastos fijos registrados",
+    "addFirst": "Agregar Gasto Fijo",
+    "deleteConfirm": "Eliminar Gasto Fijo",
+    "deleteMessage": "¿Eliminar gasto fijo \"{{name}}\"?",
+    "editDone": "Gasto fijo actualizado.",
+    "nameRequired": "Ingresá un nombre.",
+    "auto": "Auto"
   },
   "csvImport": {
     "downloadTemplate": "Descargar plantilla CSV",
