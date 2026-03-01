@@ -946,6 +946,10 @@
     "nameRequired": "名称を入力してください。",
     "auto": "自動"
   },
+  "autoDeduction": {
+    "insufficientBalanceTitle": "残高不足のお知らせ",
+    "insufficientBalanceMessage": "残高不足により、一部の自動引き落としが制限されました。"
+  },
   "csvImport": {
     "downloadTemplate": "CSVテンプレートをダウンロード",
     "downloadTemplateSub": "カスタムテンプレートでデータを入力",

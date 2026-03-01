@@ -965,6 +965,10 @@
     "nameRequired": "이름을 입력해주세요.",
     "auto": "자동"
   },
+  "autoDeduction": {
+    "insufficientBalanceTitle": "잔액 부족 알림",
+    "insufficientBalanceMessage": "일부 자동 차감이 잔액 부족으로 제한되었습니다."
+  },
   "csvImport": {
     "downloadTemplate": "CSV 양식 다운로드",
     "downloadTemplateSub": "맞춤 양식을 받아 데이터를 입력하세요",

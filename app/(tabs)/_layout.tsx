@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Tabs } from 'expo-router';
-import { Alert, Platform } from 'react-native';
+import { Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -101,6 +101,12 @@ export default function TabsLayout() {
             const result = await processAllAutoDeductions();
             if (result.cards.processed > 0 || result.loans.processed > 0) {
               console.log('[TabsLayout] Auto deduction done:', result);
+            }
+
+            const allWarnings = [...result.cards.warnings, ...result.loans.warnings];
+            if (allWarnings.length > 0) {
+              const message = allWarnings.map(w => `${w.assetName}: ${w.requested.toLocaleString()} → ${w.actual.toLocaleString()}`).join('\n');
+              Alert.alert(t('autoDeduction.insufficientBalanceTitle'), t('autoDeduction.insufficientBalanceMessage') + '\n\n' + message);
             }
           } catch (error) {
             console.error('[TabsLayout] Auto deduction error:', error);

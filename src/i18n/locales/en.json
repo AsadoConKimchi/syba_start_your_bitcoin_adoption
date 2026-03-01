@@ -946,6 +946,10 @@
     "nameRequired": "Please enter a name.",
     "auto": "Auto"
   },
+  "autoDeduction": {
+    "insufficientBalanceTitle": "Insufficient Balance",
+    "insufficientBalanceMessage": "Some automatic deductions were limited due to insufficient balance."
+  },
   "csvImport": {
     "downloadTemplate": "Download CSV Template",
     "downloadTemplateSub": "Get a custom template to enter your data",

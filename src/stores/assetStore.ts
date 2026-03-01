@@ -49,7 +49,7 @@ interface AssetActions {
     id: string,
     amount: number, // 양수: 증가, 음수: 감소
     encryptionKey: string
-  ) => Promise<void>;
+  ) => Promise<{ clamped: boolean; requested: number; actual: number; assetName: string }>;
 
   // ID로 자산 조회
   getAssetById: (id: string) => Asset | undefined;
@@ -187,10 +187,11 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
     const asset = get().assets.find((a) => a.id === id);
     if (!asset) {
       console.error('[adjustAssetBalance] 자산을 찾을 수 없음:', id);
-      return;
+      return { clamped: false, requested: 0, actual: 0, assetName: '' };
     }
 
-    let newBalance = asset.balance + amount;
+    const originalNewBalance = asset.balance + amount;
+    let newBalance = originalNewBalance;
 
     // 일반 계좌 (마이너스통장 아님): 잔액 0 이하 방지
     if (isFiatAsset(asset) && !asset.isOverdraft && newBalance < 0) {
@@ -219,6 +220,14 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
     set({ assets });
     await saveEncrypted(FILE_PATHS.ASSETS, assets, encryptionKey);
     if (__DEV__) { console.log(`[adjustAssetBalance] ${asset.name}: ${asset.balance} → ${newBalance} (${amount >= 0 ? '+' : ''}${amount})`); }
+
+    const actualChange = newBalance - asset.balance;
+    return {
+      clamped: originalNewBalance !== newBalance,
+      requested: Math.abs(amount),
+      actual: Math.abs(actualChange),
+      assetName: asset.name,
+    };
   },
 
   // ID로 자산 조회

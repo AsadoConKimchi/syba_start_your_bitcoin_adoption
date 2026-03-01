@@ -87,8 +87,9 @@ export async function processCardPayments(): Promise<{
   processed: number;
   skipped: number;
   errors: string[];
+  warnings: Array<{ assetName: string; requested: number; actual: number }>;
 }> {
-  const result = { processed: 0, skipped: 0, errors: [] as string[] };
+  const result = { processed: 0, skipped: 0, errors: [] as string[], warnings: [] as Array<{ assetName: string; requested: number; actual: number }> };
 
   const encryptionKey = useAuthStore.getState().getEncryptionKey();
   if (!encryptionKey) {
@@ -142,11 +143,14 @@ export async function processCardPayments(): Promise<{
         }
 
         // 자산에서 차감
-        await adjustAssetBalance(
+        const balanceResult = await adjustAssetBalance(
           card.linkedAssetId,
           -payment.totalPayment,
           encryptionKey
         );
+        if (balanceResult.clamped) {
+          result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
+        }
 
         // 처리 기록 저장
         lastDeduction[card.id] = yearMonth;
@@ -179,8 +183,9 @@ export async function processLoanRepayments(): Promise<{
   processed: number;
   skipped: number;
   errors: string[];
+  warnings: Array<{ assetName: string; requested: number; actual: number }>;
 }> {
-  const result = { processed: 0, skipped: 0, errors: [] as string[] };
+  const result = { processed: 0, skipped: 0, errors: [] as string[], warnings: [] as Array<{ assetName: string; requested: number; actual: number }> };
 
   const encryptionKey = useAuthStore.getState().getEncryptionKey();
   if (!encryptionKey) {
@@ -233,11 +238,14 @@ export async function processLoanRepayments(): Promise<{
         }
 
         // 자산에서 차감
-        await adjustAssetBalance(
+        const balanceResult = await adjustAssetBalance(
           loan.linkedAssetId,
           -loan.monthlyPayment,
           encryptionKey
         );
+        if (balanceResult.clamped) {
+          result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
+        }
 
         // 기록탭에 지출 자동 기록 (원화 기준)
         const recordData = createLoanRepaymentRecordData({
@@ -434,8 +442,8 @@ export async function processInstallmentPayments(): Promise<{
  * 모든 자동 차감 처리 (앱 시작 시 호출)
  */
 export async function processAllAutoDeductions(): Promise<{
-  cards: { processed: number; skipped: number; errors: string[] };
-  loans: { processed: number; skipped: number; errors: string[] };
+  cards: { processed: number; skipped: number; errors: string[]; warnings: Array<{ assetName: string; requested: number; actual: number }> };
+  loans: { processed: number; skipped: number; errors: string[]; warnings: Array<{ assetName: string; requested: number; actual: number }> };
   installments: { processed: number; skipped: number; errors: string[] };
 }> {
   console.log('[AutoDeduction] 자동 차감 처리 시작...');

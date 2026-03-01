@@ -140,13 +140,16 @@ export default function SetupScreen() {
 
       // Derive encryption key — try new async method first, fallback to old sync method
       let encryptionKey: string;
+      let hasDeductionRecords = false;
       try {
         encryptionKey = await deriveKey(backupPassword, salt);
-        await restoreBackup(fileUri, encryptionKey);
+        const restoreResult = await restoreBackup(fileUri, encryptionKey);
+        hasDeductionRecords = restoreResult.hasDeductionRecords;
       } catch {
         // Fallback: pre-v0.1.10 backups used CryptoJS.PBKDF2 (sync) which produces different keys
         const fallbackKey = deriveKeySync(backupPassword, salt);
-        await restoreBackup(fileUri, fallbackKey);
+        const restoreResult = await restoreBackup(fileUri, fallbackKey);
+        hasDeductionRecords = restoreResult.hasDeductionRecords;
         // Fallback succeeded — re-derive with new method for future consistency
         encryptionKey = await deriveKey(backupPassword, salt);
         // Re-encrypt all restored files with the new key
@@ -162,13 +165,15 @@ export default function SetupScreen() {
         saveSecure(SECURE_KEYS.ENCRYPTION_KEY, encryptionKey),
       ]);
 
-      // 자동차감 기록 초기화 — 백업의 자산 잔액에 이미 반영되어 있으므로
-      // 이 기록이 없으면 앱 시작 시 이중 차감 발생
-      await AsyncStorage.multiRemove([
-        'lastCardDeduction',
-        'lastLoanDeduction',
-        'lastInstallmentDeduction',
-      ]);
+      // 자동차감 기록 초기화 — 백업에 차감 기록이 포함되지 않은 경우만
+      // 백업의 자산 잔액에 이미 반영되어 있으므로 이 기록이 없으면 앱 시작 시 이중 차감 발생
+      if (!hasDeductionRecords) {
+        await AsyncStorage.multiRemove([
+          'lastCardDeduction',
+          'lastLoanDeduction',
+          'lastInstallmentDeduction',
+        ]);
+      }
 
       // Update authStore state so data loads immediately
       useAuthStore.getState().setAuthenticatedFromRestore(encryptionKey);
