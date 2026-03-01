@@ -14,6 +14,7 @@ import {
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import * as DocumentPicker from 'expo-document-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
 import { restoreBackup } from '../../src/utils/storage';
@@ -159,6 +160,14 @@ export default function SetupScreen() {
         saveSecure(SECURE_KEYS.ENCRYPTION_SALT, salt),
         saveSecure(SECURE_KEYS.PASSWORD_HASH, hash),
         saveSecure(SECURE_KEYS.ENCRYPTION_KEY, encryptionKey),
+      ]);
+
+      // 자동차감 기록 초기화 — 백업의 자산 잔액에 이미 반영되어 있으므로
+      // 이 기록이 없으면 앱 시작 시 이중 차감 발생
+      await AsyncStorage.multiRemove([
+        'lastCardDeduction',
+        'lastLoanDeduction',
+        'lastInstallmentDeduction',
       ]);
 
       // Update authStore state so data loads immediately

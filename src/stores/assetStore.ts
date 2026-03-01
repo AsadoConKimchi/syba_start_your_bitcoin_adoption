@@ -73,7 +73,41 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
         encryptionKey,
         []
       );
-      set({ assets, isLoading: false });
+
+      // 잔액 정상화: 비정상 데이터가 저장된 경우 보정
+      let needsSave = false;
+      const sanitized = assets.map((asset) => {
+        if (!isFiatAsset(asset)) return asset;
+
+        let balance = asset.balance;
+
+        // 일반 계좌: 0 미만 방지
+        if (!asset.isOverdraft && balance < 0) {
+          console.warn(`[loadAssets] 일반 계좌 마이너스 보정: ${asset.name} (${balance} → 0)`);
+          balance = 0;
+          needsSave = true;
+        }
+
+        // 마이너스통장: 한도 초과 방지
+        if (asset.isOverdraft && asset.creditLimit && balance < -asset.creditLimit) {
+          console.warn(`[loadAssets] 마이너스 한도 초과 보정: ${asset.name} (${balance} → ${-asset.creditLimit})`);
+          balance = -asset.creditLimit;
+          needsSave = true;
+        }
+
+        if (balance !== asset.balance) {
+          return { ...asset, balance, updatedAt: new Date().toISOString() };
+        }
+        return asset;
+      });
+
+      set({ assets: sanitized, isLoading: false });
+
+      // 보정된 데이터가 있으면 저장
+      if (needsSave) {
+        await saveEncrypted(FILE_PATHS.ASSETS, sanitized, encryptionKey);
+        console.log('[loadAssets] 보정된 자산 데이터 저장 완료');
+      }
     } catch (error) {
       console.error('자산 데이터 로드 실패:', error);
       set({ isLoading: false });
@@ -156,20 +190,20 @@ export const useAssetStore = create<AssetState & AssetActions>((set, get) => ({
       return;
     }
 
-    const newBalance = asset.balance + amount;
+    let newBalance = asset.balance + amount;
 
-    // 마이너스통장이 아닌 법정화폐 자산의 경우 0 이하로 내려가지 않도록
-    // (마이너스통장은 한도까지 허용)
+    // 일반 계좌 (마이너스통장 아님): 잔액 0 이하 방지
     if (isFiatAsset(asset) && !asset.isOverdraft && newBalance < 0) {
-      console.warn('[adjustAssetBalance] 잔액 부족 (마이너스통장 아님):', asset.name);
-      // 잔액 부족해도 일단 진행 (사용자가 나중에 조정 가능)
+      console.warn(`[adjustAssetBalance] 잔액 부족, 0으로 제한: ${asset.name} (요청: ${newBalance})`);
+      newBalance = 0;
     }
 
-    // 마이너스통장의 경우 한도 체크
+    // 마이너스통장: 한도까지만 허용
     if (isFiatAsset(asset) && asset.isOverdraft && asset.creditLimit) {
-      if (newBalance < -asset.creditLimit) {
-        console.warn('[adjustAssetBalance] 마이너스 한도 초과:', asset.name);
-        // 한도 초과해도 일단 진행 (사용자가 나중에 조정 가능)
+      const floor = -asset.creditLimit;
+      if (newBalance < floor) {
+        console.warn(`[adjustAssetBalance] 마이너스 한도 초과, 한도로 제한: ${asset.name} (요청: ${newBalance}, 한도: ${floor})`);
+        newBalance = floor;
       }
     }
 

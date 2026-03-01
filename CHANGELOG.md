@@ -7,6 +7,39 @@
 
 ---
 
+## [1.0.1] - 2026-02-27
+versionCode: TBD
+
+### 버그 수정
+- PremiumGate 크래시: `fetchAvailableTiers()` → `loadTierPrices()` 함수명 불일치 수정
+- 웹 결제 후 구독 미활성화: `Linking.openURL()` 후 5초 간격 폴링 + AppState 포그라운드 감지 추가
+- 백업 복원 후 데이터 미표시: 복원 후 `setAuthenticatedFromRestore()` 호출로 즉시 인증 상태 설정, PBKDF2 폴백 추가
+- 백업 복원 후 자산 이중 차감: AsyncStorage 자동차감 기록이 백업에 미포함 → 복원 시 기록 초기화하여 이중 차감 방지
+- 일반 계좌 마이너스 잔액 허용: `adjustAssetBalance` 및 `loadAssets`에서 잔액 0 이하 차단
+- 마이너스통장 한도 초과: `adjustAssetBalance` 및 `loadAssets`에서 `-creditLimit` 이하 차단
+
+### 신규 기능
+- 카드 편집: 등록된 카드의 이름/결제일/계좌/색상 편집 가능 (카드사/종류는 변경 불가)
+- 체크카드 연결계좌 자동 차감: 체크카드 지출 시 `linkedAccountId` 계좌에서 자동 차감 + 수정/삭제 시 역복원
+- 홈 이체 바로가기: 홈 빠른입력에 "이체" 버튼 추가
+- 고정비용 시스템: 반복 지출 등록/편집/삭제, 앱 시작 시 자동 실행, 월/연 주기
+- 설정 메뉴 연동: 고정비용 관리 진입점, 라우트 등록, 암호화 파일 경로, 4개 언어 번역 추가
+
+### UI/UX
+- 모달 상단 여백 제거: 19개 모달에 `SafeAreaView edges={['bottom', 'left', 'right']}` 적용 (iOS 모달의 불필요한 상단 패딩 제거)
+
+### 기타
+- 개인정보 처리방침 (`PRIVACY_POLICY.md`) 신규 추가
+- 내부 개발 문서 정리: `ADMIN_GUIDE.md`, `AUDIT_*.md`, `SECURITY_ASSESSMENT.md` 등 삭제
+- `.gitignore`에 내부 문서 패턴 추가
+
+### 파일 변동
+- 신규 생성: 8개 파일
+- 수정: 18개 파일 (모달 SafeAreaView 19개 포함)
+- 삭제: 10개 파일 (내부 문서)
+
+---
+
 ## [1.0.0] - 2026-02-25
 versionCode: 1
 
