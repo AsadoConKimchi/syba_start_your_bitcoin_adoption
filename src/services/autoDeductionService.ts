@@ -433,6 +433,66 @@ export async function processInstallmentPayments(): Promise<{
 }
 
 /**
+ * 대출 원리금 자동 기록의 중복 데이터 제거
+ *
+ * 원인: commit 627069d 이전 코드에서 getMonthsToProcess()가 2개월을 반환할 때
+ *       loan.paidMonths를 로컬 변수로 추적하지 않아 동일 회차가 2번 기록됨.
+ *       코드는 이미 수정되었으나, 기존 데이터에 남아있는 중복을 정리함.
+ *
+ * 로직: (date + memo) 기준으로 그룹핑 → 2개 이상이면 첫 번째만 남기고 삭제
+ * 대상: type='expense', category='finance', paymentMethod='bank', memo에 상환 패턴 포함
+ * 안전: linkedAssetId=null이므로 삭제 시 자산 잔액에 영향 없음
+ *
+ * @returns 제거된 중복 기록 수
+ */
+export async function deduplicateLoanRecords(): Promise<number> {
+  const { records } = useLedgerStore.getState();
+
+  // 대출 원리금 자동 기록만 필터: (N/N) 패턴이 메모에 포함된 finance/bank 지출
+  const repaymentPattern = /\(\d+\/\d+/; // matches "(28/360" in any language
+  const loanExpenses = records.filter(
+    (r) =>
+      r.type === 'expense' &&
+      r.category === 'finance' &&
+      r.paymentMethod === 'bank' &&
+      r.memo &&
+      repaymentPattern.test(r.memo)
+  );
+
+  // (date + memo) 기준으로 그룹핑
+  const groups = new Map<string, typeof loanExpenses>();
+  for (const record of loanExpenses) {
+    const key = `${record.date}|${record.memo}`;
+    const group = groups.get(key) || [];
+    group.push(record);
+    groups.set(key, group);
+  }
+
+  // 중복 그룹에서 첫 번째(createdAt 기준)만 남기고 나머지 ID 수집
+  const idsToRemove = new Set<string>();
+  for (const [, group] of groups) {
+    if (group.length <= 1) continue;
+    group.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    for (let i = 1; i < group.length; i++) {
+      idsToRemove.add(group[i].id);
+    }
+  }
+
+  if (idsToRemove.size === 0) return 0;
+
+  // 중복 제거 후 저장
+  useLedgerStore.setState((state) => ({
+    records: state.records.filter((r) => !idsToRemove.has(r.id)),
+  }));
+  await useLedgerStore.getState().saveRecords();
+
+  console.log(
+    `[Migration] 대출 원리금 중복 기록 ${idsToRemove.size}건 제거 완료`
+  );
+  return idsToRemove.size;
+}
+
+/**
  * 모든 자동 차감 처리 (앱 시작 시 호출)
  */
 export async function processAllAutoDeductions(): Promise<{
