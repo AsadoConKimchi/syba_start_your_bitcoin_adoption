@@ -25,6 +25,10 @@ import { processAllAutoDeductions } from '../../src/services/autoDeductionServic
 import { useRecurringStore } from '../../src/stores/recurringStore';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
 
+// 모듈 레벨 잠금 — 컴포넌트 언마운트/리마운트에도 유지
+let autoDeductionLock = false;
+let autoDeductionDone = false;
+
 export default function TabsLayout() {
   const { isAuthenticated, getEncryptionKey } = useAuthStore();
   const encryptionKey = getEncryptionKey();
@@ -42,7 +46,6 @@ export default function TabsLayout() {
   const { t } = useTranslation();
   const { theme } = useTheme();
 
-  const autoDeductionProcessed = useRef(false);
   const snapshotChecked = useRef(false);
   const integrityChecked = useRef(false);
 
@@ -95,8 +98,8 @@ export default function TabsLayout() {
           initSubscription(),
         ]);
 
-        if (!autoDeductionProcessed.current) {
-          autoDeductionProcessed.current = true;
+        if (!autoDeductionDone && !autoDeductionLock) {
+          autoDeductionLock = true;
           try {
             const result = await processAllAutoDeductions();
             if (result.cards.processed > 0 || result.loans.processed > 0) {
@@ -121,6 +124,7 @@ export default function TabsLayout() {
           } catch (error) {
             console.error('[TabsLayout] Recurring expense error:', error);
           }
+          autoDeductionDone = true;
         }
 
         if (!snapshotChecked.current) {

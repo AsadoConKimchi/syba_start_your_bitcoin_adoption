@@ -152,8 +152,12 @@ export async function processCardPayments(): Promise<{
           result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
         }
 
-        // 처리 기록 저장
+        // 처리 기록 즉시 저장 (Race Condition 방지)
         lastDeduction[card.id] = yearMonth;
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.LAST_CARD_DEDUCTION,
+          JSON.stringify(lastDeduction)
+        );
         result.processed++;
 
         console.log(
@@ -166,12 +170,6 @@ export async function processCardPayments(): Promise<{
       console.error('[AutoDeduction]', errorMsg);
     }
   }
-
-  // 마지막 차감 기록 저장
-  await AsyncStorage.setItem(
-    STORAGE_KEYS.LAST_CARD_DEDUCTION,
-    JSON.stringify(lastDeduction)
-  );
 
   return result;
 }
@@ -303,8 +301,12 @@ export async function processLoanRepayments(): Promise<{
         currentPaidMonths = newPaidMonths;
         currentRemainingPrincipal = Math.round(newRemainingPrincipal);
 
-        // 처리 기록 저장
+        // 처리 기록 즉시 저장 (Race Condition 방지)
         lastDeduction[loan.id] = yearMonth;
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.LAST_LOAN_DEDUCTION,
+          JSON.stringify(lastDeduction)
+        );
         result.processed++;
 
         console.log(
@@ -317,12 +319,6 @@ export async function processLoanRepayments(): Promise<{
       console.error('[AutoDeduction]', errorMsg);
     }
   }
-
-  // 마지막 차감 기록 저장
-  await AsyncStorage.setItem(
-    STORAGE_KEYS.LAST_LOAN_DEDUCTION,
-    JSON.stringify(lastDeduction)
-  );
 
   return result;
 }
@@ -414,8 +410,12 @@ export async function processInstallmentPayments(): Promise<{
         currentPaidMonths = newPaidMonths;
         currentRemainingAmount = Math.round(newRemainingAmount);
 
-        // 처리 기록 저장
+        // 처리 기록 즉시 저장 (Race Condition 방지)
         lastDeduction[installment.id] = yearMonth;
+        await AsyncStorage.setItem(
+          STORAGE_KEYS.LAST_INSTALLMENT_DEDUCTION,
+          JSON.stringify(lastDeduction)
+        );
         result.processed++;
 
         console.log(
@@ -428,12 +428,6 @@ export async function processInstallmentPayments(): Promise<{
       console.error('[AutoDeduction]', errorMsg);
     }
   }
-
-  // 마지막 처리 기록 저장
-  await AsyncStorage.setItem(
-    STORAGE_KEYS.LAST_INSTALLMENT_DEDUCTION,
-    JSON.stringify(lastDeduction)
-  );
 
   return result;
 }
