@@ -21,7 +21,7 @@ import { useCategoryStore } from '../../src/stores/categoryStore';
 //   scheduleInstallmentPaymentNotifications,
 // } from '../../src/services/debtAutoRecord';
 // import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
-import { processAllAutoDeductions, deduplicateLoanRecords } from '../../src/services/autoDeductionService';
+import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
 import { useRecurringStore } from '../../src/stores/recurringStore';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
 
@@ -98,18 +98,10 @@ export default function TabsLayout() {
           initSubscription(),
         ]);
 
+        console.log(`[TabsLayout:TRACE] lock 확인 — autoDeductionDone:${autoDeductionDone}, autoDeductionLock:${autoDeductionLock}`);
         if (!autoDeductionDone && !autoDeductionLock) {
           autoDeductionLock = true;
-
-          // 기존 중복 데이터 정리 (627069d 이전 버그로 생성된 데이터)
-          try {
-            const removed = await deduplicateLoanRecords();
-            if (removed > 0) {
-              console.log(`[TabsLayout] 대출 원리금 중복 ${removed}건 제거됨`);
-            }
-          } catch (error) {
-            console.error('[TabsLayout] Deduplication error:', error);
-          }
+          console.log('[TabsLayout:TRACE] processAllAutoDeductions 시작');
 
           try {
             const result = await processAllAutoDeductions();

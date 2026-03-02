@@ -10,6 +10,51 @@ import { fetchHistoricalBtcPrice } from '../services/api/upbit';
 import { krwToSats, satsToKrw } from '../utils/calculations';
 import { getTodayString } from '../utils/formatters';
 
+/**
+ * 대출 원리금 자동 기록의 중복 제거 (순수 함수)
+ * 동일한 (date + memo) 조합이 2건 이상이면 첫 번째만 남기고 나머지 제거.
+ * loadRecords()에서 Zustand 세팅 전에 호출 → UI에 중복 금액이 절대 표시되지 않음.
+ */
+function deduplicateLoanRecords(
+  records: LedgerRecord[]
+): { deduped: LedgerRecord[]; removedCount: number } {
+  const repaymentPattern = /\(\d+\/\d+/;
+  const groups = new Map<string, LedgerRecord[]>();
+
+  for (const r of records) {
+    if (
+      r.type === 'expense' &&
+      r.category === 'finance' &&
+      r.paymentMethod === 'bank' &&
+      r.memo &&
+      repaymentPattern.test(r.memo)
+    ) {
+      const key = `${r.date}|${r.memo}`;
+      const group = groups.get(key) || [];
+      group.push(r);
+      groups.set(key, group);
+    }
+  }
+
+  const idsToRemove = new Set<string>();
+  for (const [key, group] of groups) {
+    if (group.length <= 1) continue;
+    console.log(`[Dedup:TRACE] 중복 발견 — key:"${key}", count:${group.length}, ids:[${group.map(r => r.id.slice(0,8)).join(',')}], createdAts:[${group.map(r => r.createdAt).join(',')}]`);
+    group.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    for (let i = 1; i < group.length; i++) {
+      idsToRemove.add(group[i].id);
+    }
+  }
+
+  if (idsToRemove.size === 0) return { deduped: records, removedCount: 0 };
+
+  console.log(`[Dedup] 대출 원리금 중복 기록 ${idsToRemove.size}건 제거`);
+  return {
+    deduped: records.filter((r) => !idsToRemove.has(r.id)),
+    removedCount: idsToRemove.size,
+  };
+}
+
 interface LedgerState {
   records: LedgerRecord[];
   isLoading: boolean;
@@ -74,12 +119,20 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     set({ isLoading: true });
 
     try {
-      const records = await loadEncrypted<LedgerRecord[]>(
+      const rawRecords = await loadEncrypted<LedgerRecord[]>(
         FILE_PATHS.LEDGER,
         encryptionKey,
         []
       );
-      set({ records, isLoading: false, error: null });
+
+      // 대출 원리금 중복 제거 (Zustand 세팅 전에 처리 → UI에 중복 표시 방지)
+      const { deduped, removedCount } = deduplicateLoanRecords(rawRecords);
+      if (removedCount > 0) {
+        // 정리된 데이터를 디스크에도 반영
+        await saveEncrypted(FILE_PATHS.LEDGER, deduped, encryptionKey);
+      }
+
+      set({ records: deduped, isLoading: false, error: null });
     } catch (error) {
       set({ error: i18n.t('errors.dataLoadFailed'), isLoading: false });
     }
