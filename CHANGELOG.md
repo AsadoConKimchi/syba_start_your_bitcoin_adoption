@@ -8,7 +8,7 @@
 ---
 
 ## [1.0.1] - 2026-02-27
-versionCode: TBD
+versionCode: 2
 
 ### 버그 수정
 - PremiumGate 크래시: `fetchAvailableTiers()` → `loadTierPrices()` 함수명 불일치 수정
