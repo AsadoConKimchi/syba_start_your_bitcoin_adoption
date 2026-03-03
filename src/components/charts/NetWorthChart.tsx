@@ -376,7 +376,7 @@ export function NetWorthChart() {
         >
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.netWorth')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: latestData.netWorth >= 0 ? theme.success : theme.error }} numberOfLines={1} adjustsFontSizeToFit>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: latestData.netWorth >= 0 ? theme.success : theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.netWorth * 10000)
                 : `${Math.round(latestData.netWorth).toLocaleString()} K`}
@@ -384,7 +384,7 @@ export function NetWorthChart() {
           </View>
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.assets')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.success }} numberOfLines={1} adjustsFontSizeToFit>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.success, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.asset * 10000)
                 : `${Math.round(latestData.asset).toLocaleString()} K`}
@@ -392,7 +392,7 @@ export function NetWorthChart() {
           </View>
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 4 }}>{t('charts.debts')}</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {displayMode === 'KRW'
                 ? formatKrw(latestData.debt * 10000)
                 : `${Math.round(latestData.debt).toLocaleString()} K`}
@@ -405,9 +405,11 @@ export function NetWorthChart() {
                 fontSize: 13,
                 fontWeight: '600',
                 color: netWorthChange >= 0 ? theme.success : theme.error,
+                fontVariant: ['tabular-nums'],
               }}
               numberOfLines={1}
               adjustsFontSizeToFit
+              minimumFontScale={0.7}
             >
               {netWorthChange >= 0 ? '+' : ''}{netWorthChange.toFixed(1)}%
             </Text>

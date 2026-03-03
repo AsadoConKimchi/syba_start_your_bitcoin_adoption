@@ -113,15 +113,15 @@ export default function DebtsScreen() {
               {card?.name || t('debts.deletedCard')} • {item.isInterestFree ? t('common.noInterest') : `${t('loan.annualRate').replace(' *', '')} ${item.interestRate}%`}
             </Text>
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
+          <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {formatKrw(item.remainingAmount)}
             </Text>
-            <Text style={{ fontSize: 12, color: theme.textMuted }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
               {t('debts.monthlyPayment')} {formatKrw(item.monthlyPayment)}
             </Text>
             {btcKrw && (
-              <Text style={{ fontSize: 10, color: theme.borderLight }}>
+              <Text style={{ fontSize: 10, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                 ≈ {formatSats(krwToSats(item.remainingAmount))}
               </Text>
             )}
@@ -183,15 +183,15 @@ export default function DebtsScreen() {
               {item.institution} • {REPAYMENT_TYPE_LABELS[item.repaymentType]}
             </Text>
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
+          <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
+            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
               {formatKrw(item.remainingPrincipal)}
             </Text>
-            <Text style={{ fontSize: 12, color: theme.textMuted }}>
+            <Text style={{ fontSize: 12, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
               {t('debts.monthlyPayment')} {formatKrw(item.monthlyPayment)}
             </Text>
             {btcKrw && (
-              <Text style={{ fontSize: 10, color: theme.borderLight }}>
+              <Text style={{ fontSize: 10, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                 ≈ {formatSats(krwToSats(item.remainingPrincipal))}
               </Text>
             )}
@@ -323,11 +323,11 @@ export default function DebtsScreen() {
             }}
           >
             <Text style={{ fontSize: 14, color: theme.offlineBannerText, marginBottom: 4 }}>{t('debts.totalDebt')}</Text>
-            <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
+            <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {formatKrw(totalDebt)}
             </Text>
             {btcKrw && (
-              <Text style={{ fontSize: 12, color: theme.textMuted }}>
+              <Text style={{ fontSize: 12, color: theme.textMuted, fontVariant: ['tabular-nums'] }}>
                 ≈ {formatSats(krwToSats(totalDebt))}
               </Text>
             )}
@@ -343,7 +343,7 @@ export default function DebtsScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 12, color: theme.offlineBannerText }}>{t('debts.installments')}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                   {formatKrw(activeInstallments.reduce((s, i) => s + i.remainingAmount, 0))}
                 </Text>
                 <Text style={{ fontSize: 11, color: theme.textMuted }}>
@@ -353,7 +353,7 @@ export default function DebtsScreen() {
               <View style={{ width: 1, backgroundColor: theme.errorBannerBorder, marginHorizontal: 16 }} />
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 12, color: theme.offlineBannerText }}>{t('debts.loans')}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error }} numberOfLines={1} adjustsFontSizeToFit>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                   {formatKrw(activeLoans.reduce((s, l) => s + l.remainingPrincipal, 0))}
                 </Text>
                 <Text style={{ fontSize: 11, color: theme.textMuted }}>
@@ -378,11 +378,11 @@ export default function DebtsScreen() {
                   {t('debts.thisMonthDue')}
                 </Text>
               </View>
-              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.warning }} numberOfLines={1} adjustsFontSizeToFit>
+              <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.warning, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
                 {formatKrw(thisMonthTotal)}
               </Text>
               {btcKrw && (
-                <Text style={{ fontSize: 11, color: theme.priceBannerText }}>
+                <Text style={{ fontSize: 11, color: theme.priceBannerText, fontVariant: ['tabular-nums'] }}>
                   ≈ {formatSats(krwToSats(thisMonthTotal))}
                 </Text>
               )}

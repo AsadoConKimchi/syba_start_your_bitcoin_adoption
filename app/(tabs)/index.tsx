@@ -109,19 +109,19 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('home.income')}</Text>
               {settings.displayUnit === 'BTC' ? (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.success }}>
+                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.success, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                     {formatSats(todayIncomeSats)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                     {formatKrw(todayTotal.income)}
                   </Text>
                 </>
               ) : (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.success }}>
+                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.success, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                     {formatKrw(todayTotal.income)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                     {formatSats(todayIncomeSats)}
                   </Text>
                 </>
@@ -131,19 +131,19 @@ export default function HomeScreen() {
               <Text style={{ fontSize: 14, color: theme.textSecondary }}>{t('home.expense')}</Text>
               {settings.displayUnit === 'BTC' ? (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.error }}>
+                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                     {formatSats(todayExpenseSats)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                     {formatKrw(todayTotal.expense)}
                   </Text>
                 </>
               ) : (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.error }}>
+                  <Text style={{ fontSize: 20, fontWeight: '600', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                     {formatKrw(todayTotal.expense)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                     {formatSats(todayExpenseSats)}
                   </Text>
                 </>
@@ -165,45 +165,45 @@ export default function HomeScreen() {
             }}
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('home.income')}</Text>
                 {settings.displayUnit === 'BTC' ? (
                   <>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.success }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.success, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                       {formatSats(monthlyTotal.incomeSats)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                       {formatKrw(monthlyTotal.income)}
                     </Text>
                   </>
                 ) : (
                   <>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.success }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.success, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                       {formatKrw(monthlyTotal.income)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                       {formatSats(monthlyTotal.incomeSats)}
                     </Text>
                   </>
                 )}
               </View>
-              <View style={{ alignItems: 'flex-end' }}>
+              <View style={{ flex: 1, alignItems: 'flex-end' }}>
                 <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('home.expense')}</Text>
                 {settings.displayUnit === 'BTC' ? (
                   <>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.error }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                       {formatSats(monthlyTotal.expenseSats)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                       {formatKrw(monthlyTotal.expense)}
                     </Text>
                   </>
                 ) : (
                   <>
-                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.error }}>
+                    <Text style={{ fontSize: 18, fontWeight: '600', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                       {formatKrw(monthlyTotal.expense)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                       {formatSats(monthlyTotal.expenseSats)}
                     </Text>
                   </>
@@ -226,11 +226,15 @@ export default function HomeScreen() {
                       fontSize: 24,
                       fontWeight: 'bold',
                       color: netSavingSats >= 0 ? theme.success : theme.error,
+                      fontVariant: ['tabular-nums'],
                     }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.6}
                   >
                     {formatSats(Math.abs(netSavingSats))} {netSavingSats >= 0 ? '✨' : ''}
                   </Text>
-                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                     {formatKrw(netSaving)}
                   </Text>
                 </>
@@ -241,11 +245,15 @@ export default function HomeScreen() {
                       fontSize: 24,
                       fontWeight: 'bold',
                       color: netSaving >= 0 ? theme.success : theme.error,
+                      fontVariant: ['tabular-nums'],
                     }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.6}
                   >
                     {formatKrw(netSaving)}
                   </Text>
-                  <Text style={{ fontSize: 12, color: theme.textMuted }}>
+                  <Text style={{ fontSize: 12, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                     {formatSats(Math.abs(netSavingSats))} {netSavingSats >= 0 ? '✨' : ''}
                   </Text>
                 </>
@@ -304,23 +312,23 @@ export default function HomeScreen() {
                       </Text>
                     ) : null}
                   </View>
-                  <View style={{ alignItems: 'flex-end' }}>
+                  <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
                     {settings.displayUnit === 'BTC' ? (
                       <>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.error }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                           {formatSats(payment.totalPaymentSats)}
                         </Text>
-                        <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                        <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                           {formatKrw(payment.totalPayment)}
                         </Text>
                       </>
                     ) : (
                       <>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.error }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.error, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                           {formatKrw(payment.totalPayment)}
                         </Text>
                         {payment.totalPaymentSats > 0 && (
-                          <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                          <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                             {formatSats(payment.totalPaymentSats)}
                           </Text>
                         )}
@@ -331,12 +339,12 @@ export default function HomeScreen() {
                 <View style={{ flexDirection: 'row', marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.border }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('home.lumpSum')}</Text>
-                    <Text style={{ fontSize: 13, color: theme.text }}>{formatKrw(payment.periodExpenses)}</Text>
+                    <Text style={{ fontSize: 13, color: theme.text, fontVariant: ['tabular-nums'] }}>{formatKrw(payment.periodExpenses)}</Text>
                   </View>
                   {payment.installmentCount > 0 && (
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                       <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('home.installment', { count: payment.installmentCount })}</Text>
-                      <Text style={{ fontSize: 13, color: theme.text }}>{formatKrw(payment.installmentPayments)}</Text>
+                      <Text style={{ fontSize: 13, color: theme.text, fontVariant: ['tabular-nums'] }}>{formatKrw(payment.installmentPayments)}</Text>
                     </View>
                   )}
                 </View>
@@ -360,17 +368,17 @@ export default function HomeScreen() {
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <View>
                         <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('home.lumpSum')}</Text>
-                        <Text style={{ fontSize: 13, color: theme.text }}>{formatKrw(nextPayment.periodExpenses)}</Text>
+                        <Text style={{ fontSize: 13, color: theme.text, fontVariant: ['tabular-nums'] }}>{formatKrw(nextPayment.periodExpenses)}</Text>
                       </View>
                       {nextPayment.installmentCount > 0 && (
                         <View style={{ alignItems: 'flex-end' }}>
                           <Text style={{ fontSize: 11, color: theme.textSecondary }}>{t('home.installment', { count: nextPayment.installmentCount })}</Text>
-                          <Text style={{ fontSize: 13, color: theme.text }}>{formatKrw(nextPayment.installmentPayments)}</Text>
+                          <Text style={{ fontSize: 13, color: theme.text, fontVariant: ['tabular-nums'] }}>{formatKrw(nextPayment.installmentPayments)}</Text>
                         </View>
                       )}
                     </View>
                     <View style={{ alignItems: 'flex-end', marginTop: 4 }}>
-                      <Text style={{ fontSize: 15, fontWeight: 'bold', color: theme.error }}>
+                      <Text style={{ fontSize: 15, fontWeight: 'bold', color: theme.error, fontVariant: ['tabular-nums'] }}>
                         {formatKrw(nextPayment.totalPayment)}
                       </Text>
                     </View>
@@ -482,7 +490,7 @@ export default function HomeScreen() {
                       : ''}
                   </Text>
                 </View>
-                <View style={{ alignItems: 'flex-end' }}>
+                <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
                   {settings.displayUnit === 'BTC' ? (
                     <>
                       <Text
@@ -490,12 +498,16 @@ export default function HomeScreen() {
                           fontSize: 14,
                           fontWeight: '600',
                           color: record.type === 'income' ? theme.success : theme.error,
+                          fontVariant: ['tabular-nums'],
                         }}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.7}
                       >
                         {record.type === 'income' ? '+' : '-'}
                         {formatSats(record.satsEquivalent || 0)}
                       </Text>
-                      <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                      <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                         {formatKrw(getKrwAmount(record))}
                       </Text>
                     </>
@@ -506,13 +518,17 @@ export default function HomeScreen() {
                           fontSize: 14,
                           fontWeight: '600',
                           color: record.type === 'income' ? theme.success : theme.error,
+                          fontVariant: ['tabular-nums'],
                         }}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.7}
                       >
                         {record.type === 'income' ? '+' : '-'}
                         {formatKrw(getKrwAmount(record))}
                       </Text>
                       {record.satsEquivalent && (
-                        <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                        <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                           {formatSats(record.satsEquivalent)}
                         </Text>
                       )}
@@ -559,7 +575,7 @@ export default function HomeScreen() {
                   )}
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.primary }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.primary, fontVariant: ['tabular-nums'] }}>
                     {formatKrw(btcKrw)}
                   </Text>
                   {kimchiPremium !== null && (
@@ -569,6 +585,7 @@ export default function HomeScreen() {
                         fontWeight: '600',
                         color: kimchiPremium >= 0 ? theme.success : theme.error,
                         marginLeft: 8,
+                        fontVariant: ['tabular-nums'],
                       }}
                     >
                       (P{kimchiPremium >= 0 ? '+' : ''}{kimchiPremium.toFixed(1)}%)

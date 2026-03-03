@@ -121,15 +121,15 @@ export default function AssetsScreen() {
             <Text style={{ fontSize: 14, color: theme.success, marginBottom: 8 }}>{t('assets.totalAssets')}</Text>
             {settings.displayUnit === 'BTC' ? (
               <>
-                <Text style={{ fontSize: 36, fontWeight: 'bold', color: theme.primary, marginBottom: 4 }}>
+                <Text style={{ fontSize: 36, fontWeight: 'bold', color: theme.primary, marginBottom: 4, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
                   {formatSats(totalAssetSats)}
                 </Text>
-                <Text style={{ fontSize: 14, color: theme.textMuted, marginBottom: 16 }}>
+                <Text style={{ fontSize: 14, color: theme.textMuted, marginBottom: 16, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                   {formatKrw(Math.round(totalAssetKrw))}
                 </Text>
               </>
             ) : (
-              <Text style={{ fontSize: 36, fontWeight: 'bold', color: theme.success, marginBottom: 16 }}>
+              <Text style={{ fontSize: 36, fontWeight: 'bold', color: theme.success, marginBottom: 16, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
                 {formatKrw(Math.round(totalAssetKrw))}
               </Text>
             )}
@@ -139,26 +139,26 @@ export default function AssetsScreen() {
                 <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('assets.fiatAssets')}</Text>
                 {settings.displayUnit === 'BTC' ? (
                   <>
-                    <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
+                    <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                       {formatSats(totalFiatSats)}
                     </Text>
-                    <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                    <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                       {formatKrw(totalFiat)}
                     </Text>
                   </>
                 ) : (
-                  <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
+                  <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                     {formatKrw(totalFiat)}
                   </Text>
                 )}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 12, color: theme.textSecondary }}>{t('assets.btcAssets')}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.primary }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: theme.primary, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                   {formatSats(totalBtc)}
                 </Text>
                 {settings.displayUnit === 'KRW' && btcKrw && (
-                  <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                  <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                     {formatKrw(Math.round(totalBtc * (btcKrw / 100_000_000)))}
                   </Text>
                 )}
@@ -202,15 +202,15 @@ export default function AssetsScreen() {
               </Text>
               {settings.displayUnit === 'BTC' ? (
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ fontSize: 14, color: theme.success, fontWeight: '600' }}>
+                  <Text style={{ fontSize: 14, color: theme.success, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
                     {formatSats(totalFiatSats)}
                   </Text>
-                  <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                  <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }}>
                     {formatKrw(totalFiat)}
                   </Text>
                 </View>
               ) : (
-                <Text style={{ fontSize: 14, color: theme.success, fontWeight: '600' }}>
+                <Text style={{ fontSize: 14, color: theme.success, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
                   {formatKrw(totalFiat)}
                 </Text>
               )}
@@ -273,16 +273,16 @@ export default function AssetsScreen() {
                     </View>
                   </View>
                   {settings.displayUnit === 'BTC' && btcKrw ? (
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.success }}>
+                    <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.success, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                         {formatSats(Math.round(asset.balance / (btcKrw / 100_000_000)))}
                       </Text>
-                      <Text style={{ fontSize: 11, color: theme.textMuted }}>
+                      <Text style={{ fontSize: 11, color: theme.textMuted, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                         {formatKrw(asset.balance)}
                       </Text>
                     </View>
                   ) : (
-                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.success }}>
+                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.success, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                       {formatKrw(asset.balance)}
                     </Text>
                   )}
@@ -297,7 +297,7 @@ export default function AssetsScreen() {
               <Text style={{ fontSize: 16, fontWeight: '600', color: theme.text }}>
                 {t('assets.btcCount', { count: btcAssets.length })}
               </Text>
-              <Text style={{ fontSize: 14, color: theme.primary, fontWeight: '600' }}>
+              <Text style={{ fontSize: 14, color: theme.primary, fontWeight: '600', fontVariant: ['tabular-nums'] }}>
                 {formatSats(totalBtc)}
               </Text>
             </View>
@@ -360,12 +360,12 @@ export default function AssetsScreen() {
                       </Text>
                     </View>
                   </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.primary }}>
+                  <View style={{ alignItems: 'flex-end', flexShrink: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.primary, fontVariant: ['tabular-nums'] }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
                       {formatSats(asset.balance)}
                     </Text>
                     {btcKrw && (
-                      <Text style={{ fontSize: 11, color: theme.priceBannerText }}>
+                      <Text style={{ fontSize: 11, color: theme.priceBannerText, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
                         {formatKrw(Math.round(asset.balance * (btcKrw / 100_000_000)))}
                       </Text>
                     )}
@@ -436,7 +436,7 @@ export default function AssetsScreen() {
                     )}
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.primary }}>
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.primary, fontVariant: ['tabular-nums'] }}>
                       {formatKrw(btcKrw)}
                     </Text>
                     {kimchiPremium !== null && (
@@ -446,6 +446,7 @@ export default function AssetsScreen() {
                           fontWeight: '600',
                           color: kimchiPremium >= 0 ? theme.success : theme.error,
                           marginLeft: 8,
+                          fontVariant: ['tabular-nums'],
                         }}
                       >
                         (P{kimchiPremium >= 0 ? '+' : ''}{kimchiPremium.toFixed(1)}%)
