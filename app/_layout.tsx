@@ -40,7 +40,9 @@ export default function RootLayout() {
       await loadCachedPrices();
       fetchPrices().catch(() => {});
     };
-    init();
+    init().catch((error) => {
+      console.error('App init failed:', error);
+    });
   }, []);
 
   if (authLoading) {

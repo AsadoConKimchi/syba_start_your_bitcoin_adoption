@@ -22,6 +22,8 @@ export async function getSubscriptionPriceSats(): Promise<number> {
     return cachedSubscriptionPrice;
   }
 
+  if (!supabase) return CONFIG.FALLBACK_MONTHLY_PRICE_SATS;
+
   try {
     const { data, error } = await supabase
       .from('subscription_prices')

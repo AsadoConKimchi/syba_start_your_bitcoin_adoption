@@ -161,6 +161,7 @@ export async function createLnurlAuthSession(): Promise<{
 
 // 세션 상태 확인
 export async function checkAuthSession(sessionId: string): Promise<LnurlAuthSession | null> {
+  if (!supabase) return null;
   const { data, error } = await supabase
     .from('lnurl_auth_sessions')
     .select('*')
@@ -215,6 +216,8 @@ export async function getOrCreateUserByLinkingKey(linkingKey: string): Promise<{
   linking_key: string;
   created_at: string;
 } | null> {
+  if (!supabase) return null;
+
   // 기존 사용자 확인
   const { data: existingUser } = await supabase
     .from('users')

@@ -3,11 +3,16 @@ import { SUPABASE_CONFIG } from '../constants/supabase';
 import { CONFIG } from '../constants/config';
 import type { SubscriptionTier, SubscriptionPrice, DiscountCode, PriceCalculation } from '../types/subscription';
 
-// Supabase 클라이언트 생성
-export const supabase = createClient(
-  SUPABASE_CONFIG.URL,
-  SUPABASE_CONFIG.ANON_KEY
-);
+// Supabase 클라이언트 생성 (환경변수 미설정 시 크래시 방지)
+function createSafeClient() {
+  if (!SUPABASE_CONFIG.URL || !SUPABASE_CONFIG.ANON_KEY) {
+    console.warn('[Supabase] 환경변수 미설정 — 구독 기능 비활성화');
+    return null;
+  }
+  return createClient(SUPABASE_CONFIG.URL, SUPABASE_CONFIG.ANON_KEY);
+}
+
+export const supabase = createSafeClient();
 
 // 타입 정의
 export interface User {
@@ -190,6 +195,7 @@ export async function calculatePrice(
 // ============================================================
 
 export async function getSubscription(userId: string): Promise<Subscription | null> {
+  if (!supabase) return null;
   const { data, error } = await supabase
     .from('subscriptions')
     .select('*')
@@ -233,6 +239,7 @@ export async function createPayment(
   discountCodeId?: string,
   discountAmount?: number
 ): Promise<Payment | null> {
+  if (!supabase) return null;
   const { data, error } = await supabase
     .from('payments')
     .insert({
@@ -261,6 +268,7 @@ export async function updatePaymentStatus(
   status: 'paid' | 'expired',
   paymentHash?: string
 ): Promise<boolean> {
+  if (!supabase) return false;
   const updateData: Record<string, unknown> = { status };
   if (status === 'paid') {
     updateData.paid_at = new Date().toISOString();
@@ -286,6 +294,7 @@ export async function activateSubscription(
   tier: SubscriptionTier = 'monthly',
   discountCodeId?: string
 ): Promise<Subscription | null> {
+  if (!supabase) return null;
   const now = new Date();
 
   // 티어별 duration 조회
