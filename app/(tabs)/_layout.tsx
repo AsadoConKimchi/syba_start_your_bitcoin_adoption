@@ -23,6 +23,7 @@ import { useCategoryStore } from '../../src/stores/categoryStore';
 // import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
 import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
 import { useRecurringStore } from '../../src/stores/recurringStore';
+import { useRecurringTransferStore } from '../../src/stores/recurringTransferStore';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
 
 // 모듈 레벨 잠금 — 컴포넌트 언마운트/리마운트에도 유지
@@ -41,6 +42,7 @@ export default function TabsLayout() {
   const { loadSnapshots, checkAndSaveMonthlySnapshot } = useSnapshotStore();
   const { loadCategories } = useCategoryStore();
   const { loadRecurrings, executeOverdueRecurrings } = useRecurringStore();
+  const { loadRecurringTransfers, executeOverdueRecurringTransfers } = useRecurringTransferStore();
   const { initialize: initSubscription } = useSubscriptionStore();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -95,6 +97,7 @@ export default function TabsLayout() {
           loadSnapshots(encryptionKey),
           loadCategories(encryptionKey),
           loadRecurrings(encryptionKey),
+          loadRecurringTransfers(encryptionKey),
           initSubscription(),
         ]);
 
@@ -124,6 +127,16 @@ export default function TabsLayout() {
             }
           } catch (error) {
             console.error('[TabsLayout] Recurring expense error:', error);
+          }
+
+          // 고정이체 자동 실행
+          try {
+            const transferResult = await executeOverdueRecurringTransfers();
+            if (transferResult.executed.length > 0) {
+              console.log('[TabsLayout] Recurring transfers executed:', transferResult.executed.length);
+            }
+          } catch (error) {
+            console.error('[TabsLayout] Recurring transfer error:', error);
           }
           autoDeductionDone = true;
         }

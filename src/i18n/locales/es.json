@@ -283,6 +283,7 @@
     "emailOptional": "Correo electronico (opcional)",
     "emailPlaceholder": "Correo para soporte al cliente",
     "emailSaved": "Correo guardado",
+    "emailInvalid": "Formato de correo invalido",
     "paymentHistory": "Historial de pagos",
     "noPaymentHistory": "Sin historial de pagos",
     "receiptTier": "Plan",
@@ -306,7 +307,8 @@
     "envMissing": "Faltante",
     "language": "Idioma",
     "region": "Región",
-    "recurringManagement": "Gastos Fijos"
+    "recurringManagement": "Gastos Fijos",
+    "recurringTransferManagement": "Transferencias Recurrentes"
   },
   "expense": {
     "title": "Agregar Gasto",
@@ -975,6 +977,29 @@
     "editDone": "Gasto fijo actualizado.",
     "nameRequired": "Ingresá un nombre.",
     "auto": "Auto"
+  },
+  "recurringTransfer": {
+    "title": "Transferencias Recurrentes",
+    "addTitle": "Agregar Transferencia Recurrente",
+    "editTitle": "Editar Transferencia Recurrente",
+    "name": "Nombre",
+    "namePlaceholder": "Ej: Alquiler, Ahorro",
+    "fromAccount": "Cuenta de origen",
+    "toAccount": "Cuenta de destino",
+    "toCard": "Tarjeta de destino",
+    "transferType": "Tipo de transferencia",
+    "accountToAccount": "Transferencia entre cuentas",
+    "accountToCard": "Carga de tarjeta",
+    "monthlyTotal": "Transferencias mensuales",
+    "activeCount": "{{count}} activas",
+    "noItems": "No hay transferencias recurrentes",
+    "addFirst": "Agregar transferencia recurrente",
+    "deleteConfirm": "Eliminar transferencia recurrente",
+    "deleteMessage": "Eliminar \"{{name}}\"?",
+    "editDone": "Transferencia recurrente actualizada.",
+    "selectFromAccount": "Selecciona una cuenta de origen",
+    "selectToTarget": "Selecciona un destino",
+    "sameAccountError": "El origen y destino son iguales"
   },
   "autoDeduction": {
     "insufficientBalanceTitle": "Saldo insuficiente",

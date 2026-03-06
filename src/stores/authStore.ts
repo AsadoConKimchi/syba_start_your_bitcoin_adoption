@@ -222,15 +222,23 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         // 2. SHA-256으로 새 키 파생
         const newKey = await deriveKey(password, salt, (p) => onProgress?.(0.3 + p * 0.3));
 
-        // 3. 모든 데이터를 새 키로 재암호화
-        await reEncryptAllData(oldKey, newKey);
+        // 3. 새 키를 먼저 저장 (crash safety: reEncrypt 후 크래시해도 새 키로 접근 가능)
+        await saveSecure(SECURE_KEYS.ENCRYPTION_KEY, newKey);
+
+        // 4. 모든 데이터를 새 키로 재암호화
+        try {
+          await reEncryptAllData(oldKey, newKey);
+        } catch (error) {
+          // reEncrypt 실패 시 이전 키 복원
+          await saveSecure(SECURE_KEYS.ENCRYPTION_KEY, oldKey);
+          throw error;
+        }
         onProgress?.(0.8);
 
-        // 4. 새 해시 + 새 키 + v2 플래그 저장
+        // 5. 재암호화 성공 후 해시 + v2 플래그 저장
         const newHash = hashPassword(password, salt);
         await Promise.all([
           saveSecure(SECURE_KEYS.PASSWORD_HASH, newHash),
-          saveSecure(SECURE_KEYS.ENCRYPTION_KEY, newKey),
           saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V2),
         ]);
         onProgress?.(1);

@@ -283,6 +283,7 @@
     "emailOptional": "Email (optional)",
     "emailPlaceholder": "Email for customer support",
     "emailSaved": "Email saved",
+    "emailInvalid": "Invalid email format",
     "paymentHistory": "Payment History",
     "noPaymentHistory": "No payment history",
     "receiptTier": "Plan",
@@ -306,7 +307,8 @@
     "envMissing": "Missing",
     "language": "Language",
     "region": "Region",
-    "recurringManagement": "Recurring Expenses"
+    "recurringManagement": "Recurring Expenses",
+    "recurringTransferManagement": "Recurring Transfers"
   },
   "expense": {
     "title": "Add Expense",
@@ -975,6 +977,29 @@
     "editDone": "Recurring expense updated.",
     "nameRequired": "Please enter a name.",
     "auto": "Auto"
+  },
+  "recurringTransfer": {
+    "title": "Recurring Transfers",
+    "addTitle": "Add Recurring Transfer",
+    "editTitle": "Edit Recurring Transfer",
+    "name": "Name",
+    "namePlaceholder": "e.g., Rent, Savings",
+    "fromAccount": "From Account",
+    "toAccount": "To Account",
+    "toCard": "To Card",
+    "transferType": "Transfer Type",
+    "accountToAccount": "Account Transfer",
+    "accountToCard": "Card Top-Up",
+    "monthlyTotal": "Monthly Recurring Transfers",
+    "activeCount": "{{count}} active",
+    "noItems": "No recurring transfers registered",
+    "addFirst": "Add Recurring Transfer",
+    "deleteConfirm": "Delete Recurring Transfer",
+    "deleteMessage": "Delete \"{{name}}\" recurring transfer?",
+    "editDone": "Recurring transfer updated.",
+    "selectFromAccount": "Please select a source account",
+    "selectToTarget": "Please select a destination",
+    "sameAccountError": "Source and destination are the same"
   },
   "autoDeduction": {
     "insufficientBalanceTitle": "Insufficient Balance",

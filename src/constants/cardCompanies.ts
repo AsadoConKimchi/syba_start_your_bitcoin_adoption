@@ -89,8 +89,8 @@ export async function fetchRemoteInstallmentRates(): Promise<void> {
 
     _remoteRates = rates;
     _remoteRatesFetchedAt = Date.now();
-  } catch {
-    // Silently fall back to bundled defaults
+  } catch (error) {
+    if (__DEV__) console.warn('[InstallmentRates] Remote fetch failed, using defaults:', error);
   }
 }
 

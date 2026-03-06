@@ -22,10 +22,17 @@ import { useSubscriptionStore } from '../../src/stores/subscriptionStore';
 import { CONFIG } from '../../src/constants/config';
 // getSubscriptionPriceSats는 더 이상 사용하지 않음 — subscription_prices 단일 소스 사용
 import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import type { Locale } from 'date-fns';
+import { ko, enUS, es, ja } from 'date-fns/locale';
+import i18n from '../../src/i18n';
 import { waitForPaymentWs, PaymentStatus } from '../../src/services/blinkProxy';
 import { lastLnurlError } from '../../src/services/lnurlAuth';
 import type { SubscriptionTier } from '../../src/types/subscription';
+
+const DATE_LOCALE_MAP: Record<string, Locale> = { ko, en: enUS, es, ja };
+function getDateLocale(): Locale {
+  return DATE_LOCALE_MAP[i18n.language] || ko;
+}
 
 export default function SubscriptionScreen() {
   const { t } = useTranslation();
@@ -174,7 +181,12 @@ export default function SubscriptionScreen() {
   };
 
   const handleSaveEmail = async () => {
-    if (!emailInput.trim()) return;
+    const trimmed = emailInput.trim();
+    if (!trimmed) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      Alert.alert(t('common.error'), t('settings.emailInvalid'));
+      return;
+    }
     setEmailSaving(true);
     const success = await updateEmail(emailInput.trim());
     setEmailSaving(false);
@@ -744,7 +756,7 @@ export default function SubscriptionScreen() {
                   </View>
                   {subscription.expires_at && !subscription.is_lifetime && (
                     <Text style={{ fontSize: 14, color: theme.textSecondary }}>
-                      {t('subscription.expiresAt', { date: format(new Date(subscription.expires_at), 'PPP', { locale: ko }) })}
+                      {t('subscription.expiresAt', { date: format(new Date(subscription.expires_at), 'PPP', { locale: getDateLocale() }) })}
                     </Text>
                   )}
                 </View>
@@ -826,7 +838,7 @@ export default function SubscriptionScreen() {
                         </Text>
                         {payment.paid_at && (
                           <Text style={{ fontSize: 11, color: theme.textMuted }}>
-                            {format(new Date(payment.paid_at), 'PPP', { locale: ko })}
+                            {format(new Date(payment.paid_at), 'PPP', { locale: getDateLocale() })}
                           </Text>
                         )}
                       </View>

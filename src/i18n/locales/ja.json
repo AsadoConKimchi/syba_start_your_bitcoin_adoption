@@ -283,6 +283,7 @@
     "emailOptional": "メール（任意）",
     "emailPlaceholder": "カスタマーサポート用メール",
     "emailSaved": "メールが保存されました",
+    "emailInvalid": "メール形式が正しくありません",
     "paymentHistory": "決済履歴",
     "noPaymentHistory": "決済履歴がありません",
     "receiptTier": "プラン",
@@ -306,7 +307,8 @@
     "envMissing": "未設定",
     "language": "言語",
     "region": "地域",
-    "recurringManagement": "固定費管理"
+    "recurringManagement": "固定費管理",
+    "recurringTransferManagement": "定期振替管理"
   },
   "expense": {
     "title": "支出を追加",
@@ -975,6 +977,29 @@
     "editDone": "固定費を更新しました。",
     "nameRequired": "名称を入力してください。",
     "auto": "自動"
+  },
+  "recurringTransfer": {
+    "title": "定期振替",
+    "addTitle": "定期振替を追加",
+    "editTitle": "定期振替を編集",
+    "name": "名前",
+    "namePlaceholder": "例：家賃、積立",
+    "fromAccount": "引き落とし口座",
+    "toAccount": "振込先口座",
+    "toCard": "チャージ先カード",
+    "transferType": "振替タイプ",
+    "accountToAccount": "口座振替",
+    "accountToCard": "カードチャージ",
+    "monthlyTotal": "月間定期振替",
+    "activeCount": "{{count}}件アクティブ",
+    "noItems": "登録された定期振替がありません",
+    "addFirst": "定期振替を追加",
+    "deleteConfirm": "定期振替を削除",
+    "deleteMessage": "「{{name}}」を削除しますか？",
+    "editDone": "定期振替を更新しました。",
+    "selectFromAccount": "引き落とし口座を選択してください",
+    "selectToTarget": "振込先を選択してください",
+    "sameAccountError": "引き落とし先と振込先が同じです"
   },
   "autoDeduction": {
     "insufficientBalanceTitle": "残高不足のお知らせ",

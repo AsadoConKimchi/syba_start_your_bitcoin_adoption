@@ -265,10 +265,12 @@ export async function processLoanRepayments(): Promise<{
         await AsyncStorage.setItem(STORAGE_KEYS.PENDING_LOAN_TX, JSON.stringify({
           loanId: loan.id,
           yearMonth,
-          step: 'started',
+          step: 'asset_deducted',
           newPaidMonths,
           newRemainingPrincipal: Math.round(newRemainingPrincipal),
           isCompleted,
+          monthlyPayment: loan.monthlyPayment,
+          loanName: loan.name,
         }));
 
         // Step 2: 자산에서 차감
@@ -492,11 +494,35 @@ async function recoverPendingLoanTransaction(
       newPaidMonths: number;
       newRemainingPrincipal: number;
       isCompleted: boolean;
+      monthlyPayment?: number;
+      loanName?: string;
     };
 
-    console.log(`[AutoDeduction] 미완료 대출 트랜잭션 복구: ${pending.loanId} (${pending.yearMonth})`);
+    console.log(`[AutoDeduction] 미완료 대출 트랜잭션 복구: ${pending.loanId} (${pending.yearMonth}, step: ${pending.step})`);
 
-    // 대출 상태 업데이트 (자산 차감은 이미 완료된 것으로 간주)
+    // 누락된 기록탭 지출 기록 복구 (자산 차감은 이미 완료됨)
+    if (pending.step === 'asset_deducted' && pending.monthlyPayment) {
+      try {
+        const { addExpense } = useLedgerStore.getState();
+        await addExpense({
+          date: `${pending.yearMonth}-01`,
+          amount: pending.monthlyPayment,
+          currency: 'KRW',
+          category: i18n.t('categories.loanRepayment'),
+          paymentMethod: 'bank',
+          cardId: null,
+          installmentMonths: null,
+          isInterestFree: null,
+          installmentId: null,
+          memo: `[${i18n.t('recurring.auto')}] ${pending.loanName || pending.loanId}`,
+          linkedAssetId: null, // 이미 차감됨
+        });
+      } catch {
+        console.error('[AutoDeduction] 복구 중 기록 생성 실패 (무시하고 계속)');
+      }
+    }
+
+    // 대출 상태 업데이트
     const { updateLoan } = useDebtStore.getState();
     await updateLoan(
       pending.loanId,

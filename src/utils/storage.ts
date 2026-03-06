@@ -37,6 +37,7 @@ export const FILE_PATHS = {
   SUBSCRIPTION: DATA_DIR + 'subscription.enc',
   SNAPSHOTS: DATA_DIR + 'snapshots.enc',
   RECURRING: DATA_DIR + 'recurring.enc',
+  RECURRING_TRANSFERS: DATA_DIR + 'recurring_transfers.enc',
 } as const;
 
 // 디렉토리 초기화
@@ -326,6 +327,7 @@ export async function reEncryptAllData(
     { path: FILE_PATHS.SUBSCRIPTION, default: null },
     { path: FILE_PATHS.SNAPSHOTS, default: [] },
     { path: FILE_PATHS.RECURRING, default: [] },
+    { path: FILE_PATHS.RECURRING_TRANSFERS, default: [] },
   ];
 
   // Phase 1: Decrypt all and write to temp files

@@ -184,10 +184,12 @@ function getOverdueDates(recurring: RecurringExpense, today: Date): string[] {
       cursorMonth = lastExecuted.getMonth() + 1;
     }
 
-    while (true) {
+    const MAX_ITERATIONS = 120; // Safety: max 10 years of monthly
+    let iterations = 0;
+    while (iterations++ < MAX_ITERATIONS) {
       // 해당 월의 실제 일수를 확인하여 dayOfMonth 조정
       const lastDay = new Date(cursorYear, cursorMonth + 1, 0).getDate();
-      const day = Math.min(recurring.dayOfMonth, lastDay);
+      const day = Math.min(Math.max(recurring.dayOfMonth, 1), lastDay);
       const cursorDate = new Date(cursorYear, cursorMonth, day);
 
       if (cursorDate > today) break;

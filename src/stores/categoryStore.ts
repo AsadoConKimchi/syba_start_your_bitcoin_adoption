@@ -63,10 +63,14 @@ export const useCategoryStore = create<CategoryState & CategoryActions>((set, ge
             name: 'My Categories',
             isDefault: false,
             expenseCategories: Array.isArray(oldData.expense)
-              ? (oldData.expense as CustomCategory[])
+              ? oldData.expense.filter((c): c is CustomCategory =>
+                  typeof c === 'object' && c !== null && 'id' in c && 'name' in c && 'icon' in c && 'color' in c
+                )
               : [...DEFAULT_EXPENSE_CATEGORIES],
             incomeCategories: Array.isArray(oldData.income)
-              ? (oldData.income as CustomCategory[])
+              ? oldData.income.filter((c): c is CustomCategory =>
+                  typeof c === 'object' && c !== null && 'id' in c && 'name' in c && 'icon' in c && 'color' in c
+                )
               : [...DEFAULT_INCOME_CATEGORIES],
             createdAt: now,
             updatedAt: now,

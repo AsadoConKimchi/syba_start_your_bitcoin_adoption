@@ -17,7 +17,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
-import { restoreBackup } from '../../src/utils/storage';
+import { restoreBackup, loadEncrypted, FILE_PATHS } from '../../src/utils/storage';
 import {
   generateSalt,
   hashPassword,
@@ -184,16 +184,32 @@ export default function SetupScreen() {
         saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V2),
       ]);
 
-      // Legacy backups without deduction records: set current month as already processed
+      // Legacy backups without deduction records: mark all items as already processed
       // to prevent auto-deduction from re-processing transactions already reflected in balances
       if (!hasDeductionRecords) {
         const now = new Date();
         const currentYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        const sentinel = JSON.stringify({ __restored: currentYM });
+
+        // Read restored data to get actual IDs
+        const [cards, loans, installments] = await Promise.all([
+          loadEncrypted<Array<{ id: string }>>(FILE_PATHS.CARDS, encryptionKey, []),
+          loadEncrypted<Array<{ id: string }>>(FILE_PATHS.LOANS, encryptionKey, []),
+          loadEncrypted<Array<{ id: string }>>(FILE_PATHS.INSTALLMENTS, encryptionKey, []),
+        ]);
+
+        const cardSentinel: Record<string, string> = {};
+        cards.forEach(c => { cardSentinel[c.id] = currentYM; });
+
+        const loanSentinel: Record<string, string> = {};
+        loans.forEach(l => { loanSentinel[l.id] = currentYM; });
+
+        const installmentSentinel: Record<string, string> = {};
+        installments.forEach(i => { installmentSentinel[i.id] = currentYM; });
+
         await AsyncStorage.multiSet([
-          ['lastCardDeduction', sentinel],
-          ['lastLoanDeduction', sentinel],
-          ['lastInstallmentDeduction', sentinel],
+          ['lastCardDeduction', JSON.stringify(cardSentinel)],
+          ['lastLoanDeduction', JSON.stringify(loanSentinel)],
+          ['lastInstallmentDeduction', JSON.stringify(installmentSentinel)],
         ]);
       }
 

@@ -22,6 +22,8 @@ export interface User {
   created_at: string;
 }
 
+// NOTE: Requires RLS policy: UPDATE users SET email WHERE auth.uid() = id (or service role)
+// Verify RLS is properly configured in Supabase Dashboard
 export async function updateUserEmail(userId: string, email: string): Promise<boolean> {
   if (!supabase) return false;
   const { error } = await supabase

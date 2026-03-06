@@ -34,6 +34,11 @@ export default function ModalsLayout() {
       <Stack.Screen name="add-recurring" />
       <Stack.Screen name="edit-recurring" />
 
+      {/* 고정이체 관련 */}
+      <Stack.Screen name="recurring-transfer-list" />
+      <Stack.Screen name="add-recurring-transfer" />
+      <Stack.Screen name="edit-recurring-transfer" />
+
       {/* 설정 관련 */}
       <Stack.Screen name="change-password" />
       <Stack.Screen name="subscription" />
