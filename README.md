@@ -1,6 +1,6 @@
 # SYBA - Start Your Bitcoin Adoption
 
-> v1.1.1 | 비트코인 기반 개인 재무 관리 앱
+> v1.2.0 | 비트코인 기반 개인 재무 관리 앱
 
 <!-- 향후 Play Store 출시 시 배지 추가
 [![Google Play](https://img.shields.io/badge/Google_Play-다운로드-green?logo=google-play)](https://play.google.com/store/apps/details?id=com.syba.finance)
