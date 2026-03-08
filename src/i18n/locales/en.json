@@ -279,7 +279,7 @@
     "billingInfo": "Card billing period information",
     "billingInfoDetail": "Billing periods shown during card registration are based on official data from each card company. If you find any discrepancies, please let us know via the email above.",
     "refundPolicy": "Refund Policy",
-    "refundPolicyDetail": "Due to the nature of Lightning Network payments, refunds can be requested within 7 days of the payment date.\n\nTo request a refund, please email AsadoConKimchi@proton.me with your Support ID (found in Settings).\n\nRefunds are processed via a Lightning invoice provided by the customer.",
+    "refundPolicyDetail": "Due to the nature of Lightning Network payments, refunds can be requested within 7 days of the payment date.\n\nTo request a refund, please email {{supportEmail}} with your Support ID (found in Settings).\n\nRefunds are processed via a Lightning invoice provided by the customer.",
     "emailOptional": "Email (optional)",
     "emailPlaceholder": "Email for customer support",
     "emailSaved": "Email saved",

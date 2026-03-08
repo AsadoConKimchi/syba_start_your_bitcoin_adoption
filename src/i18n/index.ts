@@ -7,6 +7,7 @@ import ko from './locales/ko.json';
 import en from './locales/en.json';
 import es from './locales/es.json';
 import ja from './locales/ja.json';
+import { SUPPORT_EMAIL } from '../constants/config';
 
 const LANGUAGE_KEY = 'app_language';
 
@@ -45,6 +46,9 @@ i18n.use(initReactI18next).init({
   fallbackLng: 'ko',
   interpolation: {
     escapeValue: false,
+    defaultVariables: {
+      supportEmail: SUPPORT_EMAIL,
+    },
   },
   react: {
     useSuspense: false,

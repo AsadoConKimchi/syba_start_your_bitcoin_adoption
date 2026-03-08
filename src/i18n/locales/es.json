@@ -279,7 +279,7 @@
     "billingInfo": "Info de períodos de facturación",
     "billingInfoDetail": "Los períodos de facturación mostrados durante el registro de tarjetas se basan en datos oficiales de cada compañía. Si encuentras alguna discrepancia, avísanos por correo.",
     "refundPolicy": "Politica de reembolso",
-    "refundPolicyDetail": "Debido a la naturaleza de los pagos de Lightning Network, los reembolsos se pueden solicitar dentro de los 7 dias posteriores a la fecha de pago.\n\nPara solicitar un reembolso, envie un correo a AsadoConKimchi@proton.me con su Support ID (en Configuracion).\n\nLos reembolsos se procesan a traves de una factura Lightning proporcionada por el cliente.",
+    "refundPolicyDetail": "Debido a la naturaleza de los pagos de Lightning Network, los reembolsos se pueden solicitar dentro de los 7 dias posteriores a la fecha de pago.\n\nPara solicitar un reembolso, envie un correo a {{supportEmail}} con su Support ID (en Configuracion).\n\nLos reembolsos se procesan a traves de una factura Lightning proporcionada por el cliente.",
     "emailOptional": "Correo electronico (opcional)",
     "emailPlaceholder": "Correo para soporte al cliente",
     "emailSaved": "Correo guardado",

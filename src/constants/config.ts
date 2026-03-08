@@ -37,4 +37,7 @@ export const CONFIG = {
   FREE_MAX_CARDS: 3,
 } as const;
 
+// 고객 지원 이메일 (i18n 파일에서 {{supportEmail}} 인터폴레이션으로 사용)
+export const SUPPORT_EMAIL = 'AsadoConKimchi@proton.me';
+
 export type AutoLockTime = keyof typeof CONFIG.AUTO_LOCK_OPTIONS;

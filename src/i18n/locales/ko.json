@@ -279,7 +279,7 @@
     "billingInfo": "카드사별 결제일/산정기간 정보 안내",
     "billingInfoDetail": "카드 등록 시 표시되는 결제일별 산정기간은 각 카드사 공식 자료를 참고하여 작성되었습니다. 혹시 정보가 실제와 다르다면 위 이메일로 알려주시면 수정하겠습니다.",
     "refundPolicy": "환불 정책",
-    "refundPolicyDetail": "Lightning Network 결제 특성상 환불은 결제일로부터 7일 이내에 요청하실 수 있습니다.\n\n환불 요청 시 설정 > Support ID를 포함하여 이메일(AsadoConKimchi@proton.me)로 문의해 주세요.\n\n환불은 고객이 제공하는 Lightning 인보이스를 통해 처리됩니다.",
+    "refundPolicyDetail": "Lightning Network 결제 특성상 환불은 결제일로부터 7일 이내에 요청하실 수 있습니다.\n\n환불 요청 시 설정 > Support ID를 포함하여 이메일({{supportEmail}})로 문의해 주세요.\n\n환불은 고객이 제공하는 Lightning 인보이스를 통해 처리됩니다.",
     "emailOptional": "이메일 (선택)",
     "emailPlaceholder": "CS 연락용 이메일",
     "emailSaved": "이메일이 저장되었습니다",

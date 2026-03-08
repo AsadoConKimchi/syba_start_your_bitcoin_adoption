@@ -279,7 +279,7 @@
     "billingInfo": "カード会社別請求期間情報",
     "billingInfoDetail": "カード登録時に表示される請求期間は各カード会社の公式データに基づいています。相違がある場合はメールでお知らせください。",
     "refundPolicy": "返金ポリシー",
-    "refundPolicyDetail": "Lightning Networkの決済特性上、返金は決済日から7日以内にリクエストできます。\n\n返金をリクエストする場合は、設定のSupport IDを含めてAsadoConKimchi@proton.meまでメールでお問い合わせください。\n\n返金はお客様が提供するLightningインボイスを通じて処理されます。",
+    "refundPolicyDetail": "Lightning Networkの決済特性上、返金は決済日から7日以内にリクエストできます。\n\n返金をリクエストする場合は、設定のSupport IDを含めて{{supportEmail}}までメールでお問い合わせください。\n\n返金はお客様が提供するLightningインボイスを通じて処理されます。",
     "emailOptional": "メール（任意）",
     "emailPlaceholder": "カスタマーサポート用メール",
     "emailSaved": "メールが保存されました",

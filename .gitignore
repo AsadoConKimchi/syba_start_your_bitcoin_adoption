@@ -64,3 +64,11 @@ eas.json
 # 자동 생성 파일
 app.d.ts
 nativewind-env.d.ts
+
+# Android SDK artifacts (local SDK install, not project files)
+build-tools/
+licenses/
+ndk/
+platform-tools/
+platforms/
+.knownPackages
