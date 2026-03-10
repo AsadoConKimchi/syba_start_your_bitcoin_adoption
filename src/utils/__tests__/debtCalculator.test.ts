@@ -4,6 +4,7 @@ import {
   generateRepaymentSchedule,
   calculateEndDate,
   isDueThisMonth,
+  formatDateLocal,
 } from '../debtCalculator';
 
 describe('calculateInstallmentPayment', () => {
@@ -117,7 +118,7 @@ describe('isDueThisMonth', () => {
     const startYear = now.getFullYear();
     const startMonth = now.getMonth(); // 0-indexed, 1개월 전
     const startDate = new Date(startYear, startMonth - 1, 15);
-    const startDateStr = startDate.toISOString().split('T')[0];
+    const startDateStr = formatDateLocal(startDate);
 
     expect(isDueThisMonth(startDateStr, 0)).toBe(true);
   });
@@ -125,7 +126,7 @@ describe('isDueThisMonth', () => {
   it('이미 납부한 회차는 false', () => {
     const now = new Date();
     const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 15);
-    const startDateStr = startDate.toISOString().split('T')[0];
+    const startDateStr = formatDateLocal(startDate);
 
     // paidMonths = 1이면 다음 납부는 2회차 (2개월 후)
     expect(isDueThisMonth(startDateStr, 1)).toBe(false);

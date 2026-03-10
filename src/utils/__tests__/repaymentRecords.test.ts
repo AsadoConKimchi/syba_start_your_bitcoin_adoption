@@ -1,4 +1,5 @@
 import { generateRepaymentRecords } from '../repaymentRecords';
+import { formatDateLocal } from '../debtCalculator';
 import { Loan } from '../../types/debt';
 
 // uuid mock
@@ -53,7 +54,7 @@ describe('generateRepaymentRecords', () => {
     const records = generateRepaymentRecords(loan);
 
     // 모든 과거 날짜가 overdue여야 함
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatDateLocal(new Date());
     const overdueRecords = records.filter((r) => r.status === 'overdue');
     overdueRecords.forEach((r) => {
       expect(r.date <= today).toBe(true);
@@ -64,7 +65,7 @@ describe('generateRepaymentRecords', () => {
     // 미래 시작 대출
     const futureDate = new Date();
     futureDate.setFullYear(futureDate.getFullYear() + 1);
-    const startDate = futureDate.toISOString().split('T')[0];
+    const startDate = formatDateLocal(futureDate);
 
     const loan = createMockLoan({ startDate, paidMonths: 0 });
     const records = generateRepaymentRecords(loan);

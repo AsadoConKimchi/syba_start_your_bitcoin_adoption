@@ -4,7 +4,7 @@ import { RepaymentType, RepaymentSchedule } from '../types/debt';
  * Date → 'YYYY-MM-DD' 형식 (로컬 타임존 기준)
  * toISOString()은 UTC 변환으로 날짜가 1일 밀릴 수 있어 로컬 포맷 사용
  */
-function formatDateLocal(date: Date): string {
+export function formatDateLocal(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');

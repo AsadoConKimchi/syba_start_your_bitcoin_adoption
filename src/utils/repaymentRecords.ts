@@ -43,8 +43,7 @@ export function generateRepaymentRecords(loan: Loan): RepaymentRecord[] {
       total: s.total,
       remainingPrincipal: s.remainingPrincipal,
       status,
-      // 마이그레이션 시 정확한 paidAt은 알 수 없으므로 undefined
-      paidAt: status === 'paid' ? undefined : undefined,
+      // paidAt은 markRecordAsPaid에서만 설정 (실제 자동차감 시점)
     };
   });
 }
