@@ -193,15 +193,28 @@ export default function SetupScreen() {
         // Read restored data to get actual IDs
         const [cards, loans, installments] = await Promise.all([
           loadEncrypted<Array<{ id: string }>>(FILE_PATHS.CARDS, encryptionKey, []),
-          loadEncrypted<Array<{ id: string }>>(FILE_PATHS.LOANS, encryptionKey, []),
+          loadEncrypted<Array<{ id: string; startDate: string; paidMonths?: number; repaymentDay?: number }>>(FILE_PATHS.LOANS, encryptionKey, []),
           loadEncrypted<Array<{ id: string }>>(FILE_PATHS.INSTALLMENTS, encryptionKey, []),
         ]);
 
         const cardSentinel: Record<string, string> = {};
         cards.forEach(c => { cardSentinel[c.id] = currentYM; });
 
+        // 대출 sentinel: paidMonths 기반으로 마지막 납부 yearMonth 계산
+        // currentYM 대신 실제 마지막 납부 시점을 사용하여 정당한 미래 처리가 차단되지 않도록 함
         const loanSentinel: Record<string, string> = {};
-        loans.forEach(l => { loanSentinel[l.id] = currentYM; });
+        loans.forEach((l) => {
+          if (!l.paidMonths || l.paidMonths === 0) return;
+          // 마지막 납부 회차의 yearMonth 계산: startDate + paidMonths 개월
+          const start = new Date(l.startDate);
+          const repaymentDay = l.repaymentDay ?? parseInt(l.startDate.split('-')[2]);
+          const targetMonth = start.getMonth() + l.paidMonths;
+          const firstOfMonth = new Date(start.getFullYear(), targetMonth, 1);
+          const lastDay = new Date(firstOfMonth.getFullYear(), firstOfMonth.getMonth() + 1, 0).getDate();
+          const day = Math.min(repaymentDay, lastDay);
+          const lastPaymentDate = new Date(firstOfMonth.getFullYear(), firstOfMonth.getMonth(), day);
+          loanSentinel[l.id] = `${lastPaymentDate.getFullYear()}-${String(lastPaymentDate.getMonth() + 1).padStart(2, '0')}`;
+        });
 
         const installmentSentinel: Record<string, string> = {};
         installments.forEach(i => { installmentSentinel[i.id] = currentYM; });
