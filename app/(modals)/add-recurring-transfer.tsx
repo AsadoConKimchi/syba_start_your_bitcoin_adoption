@@ -106,6 +106,14 @@ export default function AddRecurringTransferScreen() {
         startDate: formatDateString(startDate),
         memo: memo || undefined,
       }, encryptionKey);
+
+      // 추가 직후 즉시 소급 실행 (앱 재시작 없이)
+      try {
+        await useRecurringTransferStore.getState().executeOverdueRecurringTransfers();
+      } catch (error) {
+        console.error('[AddRecurringTransfer] 즉시 실행 실패:', error);
+      }
+
       router.back();
     } catch (error) {
       Alert.alert(t('common.error'), `${error}`);

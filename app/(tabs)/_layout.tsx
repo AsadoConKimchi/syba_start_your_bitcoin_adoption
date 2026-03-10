@@ -21,7 +21,7 @@ import { useCategoryStore } from '../../src/stores/categoryStore';
 //   scheduleInstallmentPaymentNotifications,
 // } from '../../src/services/debtAutoRecord';
 // import { scheduleMonthlySummaryNotification } from '../../src/services/notifications';
-import { processAllAutoDeductions } from '../../src/services/autoDeductionService';
+import { processAllAutoDeductions, backfillLoanExpenseRecords } from '../../src/services/autoDeductionService';
 import { useRecurringStore } from '../../src/stores/recurringStore';
 import { useRecurringTransferStore } from '../../src/stores/recurringTransferStore';
 import { checkDataIntegrity, deleteCorruptedFiles, FILE_PATHS } from '../../src/utils/storage';
@@ -108,6 +108,16 @@ export default function TabsLayout() {
             const result = await processAllAutoDeductions();
             if (result.cards.processed > 0 || result.loans.processed > 0) {
               console.log('[TabsLayout] Auto deduction done:', result);
+            }
+
+            // 과거 대출 지출 기록 소급 생성
+            try {
+              const backfillResult = await backfillLoanExpenseRecords();
+              if (backfillResult.created > 0) {
+                console.log('[TabsLayout] Loan backfill done:', backfillResult);
+              }
+            } catch (error) {
+              console.error('[TabsLayout] Loan backfill error:', error);
             }
 
             const allWarnings = [...result.cards.warnings, ...result.loans.warnings];
