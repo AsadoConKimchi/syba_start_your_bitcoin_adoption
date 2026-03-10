@@ -120,6 +120,7 @@ export default function SetupScreen() {
 
   const executeRestore = async (fileUri: string, backupPassword: string) => {
     setIsRestoring(true);
+    setProgress(0);
     setRestoreModalVisible(false);
     try {
       // Read file to check for embedded salt in header
@@ -240,6 +241,49 @@ export default function SetupScreen() {
     }
   };
 
+  // ── 공통 프로그레스 바 ──────────────────────────────────────────────
+  const ProgressBar = ({ label }: { label: string }) => (
+    <View>
+      <View style={{ height: 36, justifyContent: 'flex-end', alignItems: 'flex-start' }}>
+        <Image
+          source={require('../../assets/icon.png')}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 8,
+            marginLeft: progress * (Dimensions.get('window').width - 48 - 32),
+          }}
+        />
+      </View>
+      <View style={{
+        borderRadius: 8,
+        overflow: 'hidden',
+        backgroundColor: theme.border,
+        height: 52,
+        justifyContent: 'center',
+      }}>
+        <View style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: `${Math.round(progress * 100)}%`,
+          backgroundColor: '#F7931A',
+          borderRadius: 8,
+        }} />
+        <Text style={{
+          color: '#FFFFFF',
+          fontSize: 16,
+          fontWeight: '600',
+          textAlign: 'center',
+          zIndex: 1,
+        }}>
+          {label} {Math.round(progress * 100)}%
+        </Text>
+      </View>
+    </View>
+  );
+
   // ── 공통 로고 헤더 ──────────────────────────────────────────────────
   const LogoHeader = () => (
     <View style={{ alignItems: 'center', marginBottom: 48 }}>
@@ -277,38 +321,42 @@ export default function SetupScreen() {
           <>
             <LogoHeader />
 
-            <TouchableOpacity
-              style={{
-                backgroundColor: theme.primary,
-                padding: 18,
-                borderRadius: 12,
-                alignItems: 'center',
-                marginBottom: 16,
-              }}
-              onPress={() => setView('setup')}
-            >
-              <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '700' }}>
-                🚀 {t('auth.newStart')}
-              </Text>
-            </TouchableOpacity>
+            {isRestoring ? (
+              <ProgressBar label={`📂 ${t('auth.restoring')}`} />
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: theme.primary,
+                    padding: 18,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    marginBottom: 16,
+                  }}
+                  onPress={() => setView('setup')}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '700' }}>
+                    🚀 {t('auth.newStart')}
+                  </Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={{
-                backgroundColor: theme.backgroundSecondary,
-                padding: 18,
-                borderRadius: 12,
-                alignItems: 'center',
-                borderWidth: 1,
-                borderColor: theme.inputBorder,
-                opacity: isRestoring ? 0.5 : 1,
-              }}
-              onPress={handlePickBackup}
-              disabled={isRestoring}
-            >
-              <Text style={{ color: theme.text, fontSize: 17, fontWeight: '600' }}>
-                📂 {isRestoring ? t('auth.restoring') : t('auth.restoreFromBackup')}
-              </Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: theme.backgroundSecondary,
+                    padding: 18,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    borderWidth: 1,
+                    borderColor: theme.inputBorder,
+                  }}
+                  onPress={handlePickBackup}
+                >
+                  <Text style={{ color: theme.text, fontSize: 17, fontWeight: '600' }}>
+                    📂 {t('auth.restoreFromBackup')}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </>
         )}
 
@@ -381,45 +429,7 @@ export default function SetupScreen() {
             </View>
 
             {isLoading ? (
-              <View>
-                <View style={{ height: 36, justifyContent: 'flex-end', alignItems: 'flex-start' }}>
-                  <Image
-                    source={require('../../assets/icon.png')}
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 8,
-                      marginLeft: progress * (Dimensions.get('window').width - 48 - 32),
-                    }}
-                  />
-                </View>
-                <View style={{
-                  borderRadius: 8,
-                  overflow: 'hidden',
-                  backgroundColor: theme.border,
-                  height: 52,
-                  justifyContent: 'center',
-                }}>
-                  <View style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: `${Math.round(progress * 100)}%`,
-                    backgroundColor: '#F7931A',
-                    borderRadius: 8,
-                  }} />
-                  <Text style={{
-                    color: '#FFFFFF',
-                    fontSize: 16,
-                    fontWeight: '600',
-                    textAlign: 'center',
-                    zIndex: 1,
-                  }}>
-                    🔐 {t('auth.settingUp')} {Math.round(progress * 100)}%
-                  </Text>
-                </View>
-              </View>
+              <ProgressBar label={`🔐 ${t('auth.settingUp')}`} />
             ) : (
               <TouchableOpacity
                 style={{
