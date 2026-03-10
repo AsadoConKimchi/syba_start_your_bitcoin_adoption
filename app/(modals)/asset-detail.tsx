@@ -192,7 +192,7 @@ export default function AssetDetailScreen() {
           {/* 자산 정보 카드 */}
           <View
             style={{
-              backgroundColor: isOverdraft && asset.balance < 0 ? '#FEE2E2' : isFiat ? theme.incomeButtonBg : theme.warningBanner,
+              backgroundColor: isOverdraft && asset.balance < 0 ? theme.errorBanner : isFiat ? theme.incomeButtonBg : theme.warningBanner,
               borderRadius: 16,
               padding: 24,
               marginBottom: 20,
@@ -348,7 +348,7 @@ export default function AssetDetailScreen() {
           {/* 삭제 버튼 */}
           <TouchableOpacity
             style={{
-              backgroundColor: '#FEE2E2',
+              backgroundColor: theme.errorBanner,
               borderRadius: 12,
               padding: 16,
               alignItems: 'center',
@@ -480,7 +480,7 @@ export default function AssetDetailScreen() {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: isNegativeBalance ? '#FEE2E2' : theme.backgroundTertiary,
+                      backgroundColor: isNegativeBalance ? theme.errorBanner : theme.backgroundTertiary,
                       paddingHorizontal: 12,
                       paddingVertical: 6,
                       borderRadius: 16,
@@ -497,7 +497,7 @@ export default function AssetDetailScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: isNegativeBalance ? '#FEE2E2' : theme.backgroundSecondary,
+                  backgroundColor: isNegativeBalance ? theme.errorBanner : theme.backgroundSecondary,
                   borderRadius: 8,
                   paddingHorizontal: 16,
                 }}

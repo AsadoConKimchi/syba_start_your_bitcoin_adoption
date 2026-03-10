@@ -339,7 +339,7 @@ export default function InstallmentDetailScreen() {
           {/* 삭제 버튼 */}
           <TouchableOpacity
             style={{
-              backgroundColor: '#FEE2E2',
+              backgroundColor: theme.errorBanner,
               borderRadius: 12,
               padding: 16,
               alignItems: 'center',

@@ -273,7 +273,7 @@ export function NetWorthChart() {
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: 16,
-            backgroundColor: showDebts ? (isDark ? '#3D1515' : '#FEE2E2') : theme.backgroundTertiary,
+            backgroundColor: showDebts ? theme.expenseButtonBg : theme.backgroundTertiary,
           }}
           onPress={() => setShowDebts(!showDebts)}
         >

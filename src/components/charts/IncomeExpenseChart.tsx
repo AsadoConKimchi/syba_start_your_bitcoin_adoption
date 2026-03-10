@@ -153,7 +153,7 @@ export function IncomeExpenseChart() {
             paddingHorizontal: 12,
             paddingVertical: 6,
             borderRadius: 16,
-            backgroundColor: showExpense ? (isDark ? '#3D1515' : '#FEE2E2') : theme.backgroundTertiary,
+            backgroundColor: showExpense ? theme.expenseButtonBg : theme.backgroundTertiary,
           }}
           onPress={() => setShowExpense(!showExpense)}
         >

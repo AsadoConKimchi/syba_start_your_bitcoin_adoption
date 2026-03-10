@@ -449,7 +449,7 @@ export default function AddAssetScreen() {
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: isNegativeBalance ? '#FEE2E2' : theme.backgroundTertiary,
+                      backgroundColor: isNegativeBalance ? theme.errorBanner : theme.backgroundTertiary,
                       paddingHorizontal: 12,
                       paddingVertical: 6,
                       borderRadius: 16,
@@ -466,7 +466,7 @@ export default function AddAssetScreen() {
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  backgroundColor: isNegativeBalance ? '#FEE2E2' : theme.backgroundSecondary,
+                  backgroundColor: isNegativeBalance ? theme.errorBanner : theme.backgroundSecondary,
                   borderRadius: 8,
                   paddingHorizontal: 16,
                 }}
