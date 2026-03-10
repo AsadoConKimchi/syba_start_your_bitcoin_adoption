@@ -70,8 +70,11 @@ export async function saveEncrypted<T>(
     if (__DEV__) { console.log('[DEBUG] initializeStorage 완료'); }
     const encrypted = await encrypt(data, encryptionKey);
     if (__DEV__) { console.log('[DEBUG] 암호화 완료, 길이:', encrypted.length); }
-    await FileSystem.writeAsStringAsync(path, encrypted);
-    if (__DEV__) { console.log('[DEBUG] 파일 쓰기 완료'); }
+    // 원자적 쓰기: tmp에 먼저 쓴 후 rename (POSIX rename = 원자적)
+    const tmpPath = path + '.tmp';
+    await FileSystem.writeAsStringAsync(tmpPath, encrypted);
+    await FileSystem.moveAsync({ from: tmpPath, to: path });
+    if (__DEV__) { console.log('[DEBUG] 파일 쓰기 완료 (atomic)'); }
   } catch (error) {
     if (__DEV__) { console.log('[DEBUG] saveEncrypted 에러:', error); }
     throw error;
