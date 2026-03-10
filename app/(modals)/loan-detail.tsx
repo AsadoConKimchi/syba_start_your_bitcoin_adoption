@@ -63,7 +63,6 @@ export default function LoanDetailScreen() {
   const [linkedAssetId, setLinkedAssetId] = useState<string | null>(null);
 
   const [showBankPicker, setShowBankPicker] = useState(false);
-  const [showTypePicker, setShowTypePicker] = useState(false);
   const [showTermPicker, setShowTermPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showRepaymentDayPicker, setShowRepaymentDayPicker] = useState(false);
@@ -978,57 +977,6 @@ export default function LoanDetailScreen() {
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* 상환 방식 선택 모달 */}
-      <Modal visible={showTypePicker} transparent animationType="slide">
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: theme.modalOverlay }}>
-          <View
-            style={{
-              backgroundColor: theme.modalBackground,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-              padding: 20,
-            }}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold', color: theme.text }}>{t('loan.selectRepaymentType')}</Text>
-              <TouchableOpacity onPress={() => setShowTypePicker(false)}>
-                <Ionicons name="close" size={24} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            {(Object.keys(REPAYMENT_TYPE_LABEL_KEYS) as RepaymentType[]).map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={{
-                  padding: 16,
-                  backgroundColor: repaymentType === type ? theme.infoBanner : theme.backgroundSecondary,
-                  borderRadius: 8,
-                  marginBottom: 8,
-                  borderWidth: repaymentType === type ? 1 : 0,
-                  borderColor: theme.info,
-                }}
-                onPress={() => {
-                  setRepaymentType(type);
-                  setShowTypePicker(false);
-                }}
-              >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>
-                      {t(REPAYMENT_TYPE_LABEL_KEYS[type])}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>
-                      {t(REPAYMENT_TYPE_DESCRIPTION_KEYS[type])}
-                    </Text>
-                  </View>
-                  {repaymentType === type && <Ionicons name="checkmark-circle" size={24} color={theme.info} />}
-                </View>
-              </TouchableOpacity>
-            ))}
           </View>
         </View>
       </Modal>
