@@ -161,30 +161,46 @@ export const useRecurringTransferStore = create<RecurringTransferState & Recurri
         const dueDates = getOverdueDates(item, today);
 
         for (const dueDate of dueDates) {
-          await useLedgerStore.getState().addTransfer({
-            date: dueDate,
-            amount: item.amount,
-            currency: item.currency,
-            fromAssetId: item.fromAssetId,
-            toAssetId: item.toAssetId || null,
-            toCardId: item.toCardId || null,
-            memo: item.memo
-              ? `[${i18n.t('recurring.auto')}] ${item.memo}`
-              : `[${i18n.t('recurring.auto')}] ${item.name}`,
-          });
+          const expectedMemo = item.memo
+            ? `[${i18n.t('recurring.auto')}] ${item.memo}`
+            : `[${i18n.t('recurring.auto')}] ${item.name}`;
 
-          // 각 dueDate 처리 후 즉시 lastExecutedDate 갱신 (크래시 시 재실행 방지)
+          // 중복 검사 (크래시 복구: addTransfer 후 lastExecutedDate 갱신 전 크래시 시 재실행 방지)
+          const currentRecords = useLedgerStore.getState().records;
+          const isDuplicate = currentRecords.some(
+            (r) =>
+              r.type === 'transfer' &&
+              r.date === dueDate &&
+              r.memo === expectedMemo &&
+              r.amount === item.amount
+          );
+
+          if (!isDuplicate) {
+            await useLedgerStore.getState().addTransfer({
+              date: dueDate,
+              amount: item.amount,
+              currency: item.currency,
+              fromAssetId: item.fromAssetId,
+              toAssetId: item.toAssetId || null,
+              toCardId: item.toCardId || null,
+              memo: expectedMemo,
+            });
+          }
+
+          // 각 dueDate 처리 후 즉시 lastExecutedDate 갱신 (중복이어도 전진)
           await get().updateRecurringTransfer(
             item.id,
             { lastExecutedDate: dueDate },
             encryptionKey
           );
 
-          executed.push({
-            name: item.name,
-            amount: item.amount,
-            date: dueDate,
-          });
+          if (!isDuplicate) {
+            executed.push({
+              name: item.name,
+              amount: item.amount,
+              date: dueDate,
+            });
+          }
         }
       } catch (error) {
         errors.push(`${item.name}: ${error}`);

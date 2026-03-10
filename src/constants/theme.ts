@@ -34,6 +34,7 @@ export interface Theme {
   primary: string;
   primaryDark: string;
   primaryLight: string;
+  primaryText: string;
   bitcoin: string;
   lightning: string;
 
@@ -103,6 +104,7 @@ export const lightTheme: Theme = {
   primary: '#F7931A',
   primaryDark: '#E8850F',
   primaryLight: '#FFB347',
+  primaryText: '#FFFFFF',
   bitcoin: '#F7931A',
   lightning: '#792DE4',
 
@@ -166,6 +168,7 @@ export const darkTheme: Theme = {
   primary: '#F7931A',
   primaryDark: '#E8850F',
   primaryLight: '#FFB347',
+  primaryText: '#FFFFFF',
   bitcoin: '#F7931A',
   lightning: '#A855F7',
 

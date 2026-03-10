@@ -157,33 +157,51 @@ export const useRecurringStore = create<RecurringState & RecurringActions>((set,
         const dueDates = getOverdueDates(recurring, today);
 
         for (const dueDate of dueDates) {
-          // 지출 기록 생성
-          await useLedgerStore.getState().addExpense({
-            date: dueDate,
-            amount: recurring.amount,
-            currency: recurring.currency,
-            category: recurring.category,
-            paymentMethod: recurring.paymentMethod,
-            cardId: recurring.cardId || null,
-            installmentMonths: null,
-            isInterestFree: null,
-            installmentId: null,
-            memo: recurring.memo ? `[${i18n.t('recurring.auto')}] ${recurring.memo}` : `[${i18n.t('recurring.auto')}] ${recurring.name}`,
-            linkedAssetId: recurring.linkedAssetId || null,
-          });
+          const expectedMemo = recurring.memo
+            ? `[${i18n.t('recurring.auto')}] ${recurring.memo}`
+            : `[${i18n.t('recurring.auto')}] ${recurring.name}`;
 
-          // 각 dueDate 처리 후 즉시 lastExecutedDate 갱신 (크래시 시 재실행 방지)
+          // 중복 검사 (크래시 복구: addExpense 후 lastExecutedDate 갱신 전 크래시 시 재실행 방지)
+          const currentRecords = useLedgerStore.getState().records;
+          const isDuplicate = currentRecords.some(
+            (r) =>
+              r.type === 'expense' &&
+              r.date === dueDate &&
+              r.memo === expectedMemo &&
+              r.amount === recurring.amount
+          );
+
+          if (!isDuplicate) {
+            // 지출 기록 생성
+            await useLedgerStore.getState().addExpense({
+              date: dueDate,
+              amount: recurring.amount,
+              currency: recurring.currency,
+              category: recurring.category,
+              paymentMethod: recurring.paymentMethod,
+              cardId: recurring.cardId || null,
+              installmentMonths: null,
+              isInterestFree: null,
+              installmentId: null,
+              memo: expectedMemo,
+              linkedAssetId: recurring.linkedAssetId || null,
+            });
+          }
+
+          // 각 dueDate 처리 후 즉시 lastExecutedDate 갱신 (중복이어도 전진)
           await get().updateRecurring(
             recurring.id,
             { lastExecutedDate: dueDate },
             encryptionKey
           );
 
-          executed.push({
-            name: recurring.name,
-            amount: recurring.amount,
-            date: dueDate,
-          });
+          if (!isDuplicate) {
+            executed.push({
+              name: recurring.name,
+              amount: recurring.amount,
+              date: dueDate,
+            });
+          }
         }
       } catch (error) {
         errors.push(`${recurring.name}: ${error}`);

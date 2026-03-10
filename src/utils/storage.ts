@@ -236,10 +236,12 @@ export async function createBackup(
     salt,
   };
 
-  // 암호화 후 저장 (솔트를 평문 헤더로 포함)
+  // 암호화 후 원자적 저장 (솔트를 평문 헤더로 포함)
   const encrypted = await encrypt(backupData, encryptionKey);
   const fileContent = `SYBA_BACKUP:${salt}\n${encrypted}`;
-  await FileSystem.writeAsStringAsync(backupPath, fileContent);
+  const tmpPath = backupPath + '.tmp';
+  await FileSystem.writeAsStringAsync(tmpPath, fileContent);
+  await FileSystem.moveAsync({ from: tmpPath, to: backupPath });
 
   return { path: backupPath, filename };
 }
@@ -283,7 +285,13 @@ export async function restoreBackup(
 
   if (fileContent.startsWith('SYBA_BACKUP:')) {
     const newlineIdx = fileContent.indexOf('\n');
+    if (newlineIdx === -1) {
+      throw new Error('Invalid backup file: missing header separator');
+    }
     embeddedSalt = fileContent.substring('SYBA_BACKUP:'.length, newlineIdx);
+    if (!embeddedSalt || embeddedSalt.length === 0) {
+      throw new Error('Invalid backup file: empty salt in header');
+    }
     encrypted = fileContent.substring(newlineIdx + 1);
     if (__DEV__) { console.log('[DEBUG] 백업 헤더에서 솔트 추출됨'); }
   } else {

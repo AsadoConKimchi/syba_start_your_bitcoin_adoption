@@ -82,7 +82,7 @@ interface DebtActions {
   // 상환 기록
   getRecordsForLoan: (loanId: string) => RepaymentRecord[];
   getAutoDeductedTotal: (loanId: string) => { total: number; count: number };
-  markRecordAsPaid: (recordId: string, encryptionKey: string) => Promise<void>;
+  markRecordAsPaid: (recordId: string, encryptionKey: string, fallback?: { loanId: string; month: number }) => Promise<void>;
 
   // 헬퍼
   getInstallmentByExpenseId: (expenseId: string) => Installment | undefined;
@@ -101,11 +101,22 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
   // 데이터 로드
   loadDebts: async (encryptionKey: string) => {
     try {
-      const [installmentsData, loansData, recordsData] = await Promise.all([
+      const results = await Promise.allSettled([
         loadEncrypted<Installment[]>(FILE_PATHS.INSTALLMENTS, encryptionKey, []),
         loadEncrypted<Loan[]>(FILE_PATHS.LOANS, encryptionKey, []),
         loadEncrypted<RepaymentRecord[]>(FILE_PATHS.REPAYMENT_RECORDS, encryptionKey, []),
       ]);
+
+      const dataNames = ['installments', 'loans', 'repaymentRecords'] as const;
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.error(`부채 데이터 부분 로드 실패 (${dataNames[i]}):`, r.reason);
+        }
+      });
+
+      const installmentsData = results[0].status === 'fulfilled' ? results[0].value : [];
+      const loansData = results[1].status === 'fulfilled' ? results[1].value : [];
+      const recordsData = results[2].status === 'fulfilled' ? results[2].value : [];
 
       // v1.1.x → v1.2.0 마이그레이션: 상환 기록이 없으면 기존 대출에서 생성
       let records = recordsData;
@@ -446,13 +457,33 @@ export const useDebtStore = create<DebtState & DebtActions>((set, get) => ({
   },
 
   // 상환 기록 납부 완료 처리
-  markRecordAsPaid: async (recordId: string, encryptionKey: string) => {
+  markRecordAsPaid: async (recordId: string, encryptionKey: string, fallback?: { loanId: string; month: number }) => {
+    const now = new Date().toISOString();
+    let found = false;
+
     const repaymentRecords = get().repaymentRecords.map((r) => {
-      if (r.id !== recordId) return r;
-      return { ...r, status: 'paid' as const, paidAt: new Date().toISOString() };
+      if (r.id === recordId) {
+        found = true;
+        return { ...r, status: 'paid' as const, paidAt: now };
+      }
+      return r;
     });
-    set({ repaymentRecords });
-    await saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, repaymentRecords, encryptionKey);
+
+    let finalRecords = repaymentRecords;
+    if (!found && fallback) {
+      // ID 불일치 시 loanId + month로 재검색 (레코드 재생성으로 UUID가 변경된 경우)
+      let fallbackFound = false;
+      finalRecords = repaymentRecords.map((r) => {
+        if (!fallbackFound && r.loanId === fallback.loanId && r.month === fallback.month && !r.paidAt) {
+          fallbackFound = true;
+          return { ...r, status: 'paid' as const, paidAt: now };
+        }
+        return r;
+      });
+    }
+
+    set({ repaymentRecords: finalRecords });
+    await saveEncrypted(FILE_PATHS.REPAYMENT_RECORDS, finalRecords, encryptionKey);
   },
 
   // 지출 기록 ID로 할부 조회
