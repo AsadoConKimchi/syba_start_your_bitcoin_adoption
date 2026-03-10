@@ -24,8 +24,8 @@ import { isFiatAsset } from '../../src/types/asset';
 import { calculateLoanPayment, calculatePaidMonths } from '../../src/utils/debtCalculator';
 import {
   RepaymentType,
-  REPAYMENT_TYPE_LABELS,
-  REPAYMENT_TYPE_DESCRIPTIONS,
+  REPAYMENT_TYPE_LABEL_KEYS,
+  REPAYMENT_TYPE_DESCRIPTION_KEYS,
 } from '../../src/types/debt';
 import { getCurrentRegion } from '../../src/regions';
 
@@ -291,10 +291,10 @@ export default function AddLoanScreen() {
             >
               <View>
                 <Text style={{ fontSize: 16, color: theme.text }}>
-                  {REPAYMENT_TYPE_LABELS[repaymentType]}
+                  {t(REPAYMENT_TYPE_LABEL_KEYS[repaymentType])}
                 </Text>
                 <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 2 }}>
-                  {REPAYMENT_TYPE_DESCRIPTIONS[repaymentType]}
+                  {t(REPAYMENT_TYPE_DESCRIPTION_KEYS[repaymentType])}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
@@ -337,7 +337,7 @@ export default function AddLoanScreen() {
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={{ fontSize: 16, color: theme.text }}>
-                {startDate.toLocaleDateString('ko-KR')}
+                {startDate.toLocaleDateString(getLocale())}
               </Text>
               <Ionicons name="calendar-outline" size={20} color={theme.textMuted} />
             </TouchableOpacity>
@@ -489,7 +489,7 @@ export default function AddLoanScreen() {
               </Text>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                 <Text style={{ color: theme.infoBannerSubtext }}>
-                  {t('loan.monthlyPayment')} {repaymentType === 'bullet' && `(${t('loan.monthlyPaymentInterest').replace(t('loan.monthlyPayment') + ' ', '')})`}
+                  {t('loan.monthlyPayment')} {repaymentType === 'bullet' && `(${t('loan.interestOnlyLabel')})`}
                 </Text>
                 <Text style={{ fontWeight: 'bold', color: theme.infoBannerText }}>
                   {formatKrw(monthlyPayment)}
@@ -531,7 +531,7 @@ export default function AddLoanScreen() {
               </TouchableOpacity>
             </View>
 
-            {(Object.keys(REPAYMENT_TYPE_LABELS) as RepaymentType[]).map((type) => (
+            {(Object.keys(REPAYMENT_TYPE_LABEL_KEYS) as RepaymentType[]).map((type) => (
               <TouchableOpacity
                 key={type}
                 style={{
@@ -550,10 +550,10 @@ export default function AddLoanScreen() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>
-                      {REPAYMENT_TYPE_LABELS[type]}
+                      {t(REPAYMENT_TYPE_LABEL_KEYS[type])}
                     </Text>
                     <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>
-                      {REPAYMENT_TYPE_DESCRIPTIONS[type]}
+                      {t(REPAYMENT_TYPE_DESCRIPTION_KEYS[type])}
                     </Text>
                   </View>
                   {repaymentType === type && (

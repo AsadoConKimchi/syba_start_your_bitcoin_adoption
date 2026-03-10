@@ -24,8 +24,8 @@ import { formatKrw, formatKrwPlain, getLocale } from '../../src/utils/formatters
 import { calculateLoanPayment } from '../../src/utils/debtCalculator';
 import {
   RepaymentType,
-  REPAYMENT_TYPE_LABELS,
-  REPAYMENT_TYPE_DESCRIPTIONS,
+  REPAYMENT_TYPE_LABEL_KEYS,
+  REPAYMENT_TYPE_DESCRIPTION_KEYS,
 } from '../../src/types/debt';
 import { getCurrentRegion } from '../../src/regions';
 
@@ -312,7 +312,7 @@ export default function LoanDetailScreen() {
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
               <Text style={{ fontSize: 14, color: theme.info }}>
-                {t('loan.monthlyPayment')} {loan.repaymentType === 'bullet' && `(${t('loan.monthlyPaymentInterest').replace(t('loan.monthlyPayment') + ' ', '')})`}
+                {t('loan.monthlyPayment')} {loan.repaymentType === 'bullet' && `(${t('loan.interestOnlyLabel')})`}
               </Text>
               <Text style={{ fontSize: 16, fontWeight: '600', color: theme.info }}>
                 {formatKrw(loan.monthlyPayment)}
@@ -381,10 +381,10 @@ export default function LoanDetailScreen() {
             <View style={{ marginBottom: 12 }}>
               <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>{t('loan.repaymentType')}</Text>
               <Text style={{ fontSize: 14, color: theme.text }}>
-                {REPAYMENT_TYPE_LABELS[loan.repaymentType]}
+                {t(REPAYMENT_TYPE_LABEL_KEYS[loan.repaymentType])}
               </Text>
               <Text style={{ fontSize: 12, color: theme.textSecondary }}>
-                {REPAYMENT_TYPE_DESCRIPTIONS[loan.repaymentType]}
+                {t(REPAYMENT_TYPE_DESCRIPTION_KEYS[loan.repaymentType])}
               </Text>
             </View>
             <View style={{ marginBottom: 12 }}>
@@ -400,7 +400,7 @@ export default function LoanDetailScreen() {
             <View style={{ marginBottom: 12 }}>
               <Text style={{ fontSize: 12, color: theme.textMuted, marginBottom: 4 }}>{t('loan.startEndDate')}</Text>
               <Text style={{ fontSize: 14, color: theme.text }}>
-                {new Date(loan.startDate).toLocaleDateString('ko-KR')} ~ {new Date(loan.endDate).toLocaleDateString('ko-KR')}
+                {new Date(loan.startDate).toLocaleDateString(getLocale())} ~ {new Date(loan.endDate).toLocaleDateString(getLocale())}
               </Text>
             </View>
             <View style={{ marginBottom: 12 }}>
@@ -559,7 +559,7 @@ export default function LoanDetailScreen() {
                           textAlign: 'center',
                         }}
                       >
-                        {new Date(item.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                        {new Date(item.date).toLocaleDateString(getLocale(), { month: 'short', day: 'numeric' })}
                       </Text>
                       <Text
                         style={{
@@ -736,7 +736,7 @@ export default function LoanDetailScreen() {
               }}
             >
               <Text style={{ fontSize: 16, color: theme.textMuted }}>
-                {REPAYMENT_TYPE_LABELS[repaymentType]}
+                {t(REPAYMENT_TYPE_LABEL_KEYS[repaymentType])}
               </Text>
             </View>
             <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 6 }}>
@@ -780,7 +780,7 @@ export default function LoanDetailScreen() {
               onPress={() => setShowDatePicker(true)}
             >
               <Text style={{ fontSize: 16, color: theme.text }}>
-                {startDate.toLocaleDateString('ko-KR')}
+                {startDate.toLocaleDateString(getLocale())}
               </Text>
               <Ionicons name="calendar-outline" size={20} color={theme.textMuted} />
             </TouchableOpacity>
@@ -1000,7 +1000,7 @@ export default function LoanDetailScreen() {
               </TouchableOpacity>
             </View>
 
-            {(Object.keys(REPAYMENT_TYPE_LABELS) as RepaymentType[]).map((type) => (
+            {(Object.keys(REPAYMENT_TYPE_LABEL_KEYS) as RepaymentType[]).map((type) => (
               <TouchableOpacity
                 key={type}
                 style={{
@@ -1019,10 +1019,10 @@ export default function LoanDetailScreen() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 16, fontWeight: '500', color: theme.text }}>
-                      {REPAYMENT_TYPE_LABELS[type]}
+                      {t(REPAYMENT_TYPE_LABEL_KEYS[type])}
                     </Text>
                     <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 4 }}>
-                      {REPAYMENT_TYPE_DESCRIPTIONS[type]}
+                      {t(REPAYMENT_TYPE_DESCRIPTION_KEYS[type])}
                     </Text>
                   </View>
                   {repaymentType === type && <Ionicons name="checkmark-circle" size={24} color={theme.info} />}

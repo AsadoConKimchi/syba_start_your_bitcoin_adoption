@@ -99,6 +99,13 @@ export const REPAYMENT_TYPE_LABEL_KEYS: Record<RepaymentType, string> = {
   equalPrincipal: 'loan.equalPrincipal',
 };
 
+// Repayment type description i18n keys (use with t())
+export const REPAYMENT_TYPE_DESCRIPTION_KEYS: Record<RepaymentType, string> = {
+  bullet: 'loan.bulletDescription',
+  equalPrincipalAndInterest: 'loan.equalPrincipalInterestDescription',
+  equalPrincipal: 'loan.equalPrincipalDescription',
+};
+
 // Legacy labels for backward compatibility
 export const REPAYMENT_TYPE_LABELS: Record<RepaymentType, string> = {
   bullet: '만기일시상환',
