@@ -325,6 +325,49 @@ export async function restoreBackup(
   return { salt: embeddedSalt ?? backupData.salt, hasDeductionRecords: !!backupData.deductionRecords };
 }
 
+// reEncrypt 크래시 복구용 매니페스트
+const REENCRYPT_MANIFEST = DATA_DIR + 'reencrypt_manifest.json';
+
+/**
+ * reEncryptAllData 크래시 복구
+ * Phase 2(rename) 도중 크래시 시 매니페스트를 읽어 남은 rename 완료
+ */
+export async function recoverReEncryptIfNeeded(): Promise<boolean> {
+  try {
+    const info = await FileSystem.getInfoAsync(REENCRYPT_MANIFEST);
+    if (!info.exists) return false;
+
+    let manifest: { pendingRenames: { tmp: string; final: string }[] };
+    try {
+      const raw = await FileSystem.readAsStringAsync(REENCRYPT_MANIFEST);
+      manifest = JSON.parse(raw);
+    } catch {
+      // 매니페스트 자체 손상 — 삭제하여 무한 재시도 방지
+      await FileSystem.deleteAsync(REENCRYPT_MANIFEST, { idempotent: true }).catch(() => {});
+      console.warn('[Recovery] reEncrypt 매니페스트 손상, 삭제됨');
+      return false;
+    }
+
+    // 남은 .tmp 파일들을 rename하여 Phase 2 완료
+    for (const { tmp, final } of manifest.pendingRenames) {
+      const tmpInfo = await FileSystem.getInfoAsync(tmp);
+      if (tmpInfo.exists) {
+        await FileSystem.moveAsync({ from: tmp, to: final });
+      }
+    }
+
+    // 매니페스트 삭제 (복구 완료)
+    await FileSystem.deleteAsync(REENCRYPT_MANIFEST, { idempotent: true }).catch(() => {});
+    console.log('[Recovery] reEncrypt 크래시 복구 완료');
+    return true;
+  } catch (error) {
+    console.error('[Recovery] reEncrypt 복구 실패:', error);
+    // 매니페스트 삭제하여 무한 재시도 방지
+    await FileSystem.deleteAsync(REENCRYPT_MANIFEST, { idempotent: true }).catch(() => {});
+    return false;
+  }
+}
+
 export async function reEncryptAllData(
   oldKey: string,
   newKey: string,
@@ -370,17 +413,30 @@ export async function reEncryptAllData(
       onProgress?.(processedFiles / totalFiles * 0.9);
     }
 
+    // Phase 2 시작 전 매니페스트 저장 (크래시 복구용)
+    const pendingRenames = tempFiles.map((tmp) => ({
+      tmp,
+      final: tmp.replace(/\.tmp$/, ''),
+    }));
+    await FileSystem.writeAsStringAsync(
+      REENCRYPT_MANIFEST,
+      JSON.stringify({ pendingRenames })
+    );
+
     // Phase 2: Rename all temp files to final paths (fast, near-atomic)
-    for (const tempPath of tempFiles) {
-      const finalPath = tempPath.replace(/\.tmp$/, '');
-      await FileSystem.moveAsync({ from: tempPath, to: finalPath });
+    for (const { tmp, final } of pendingRenames) {
+      await FileSystem.moveAsync({ from: tmp, to: final });
     }
+
+    // Phase 2 완료 — 매니페스트 삭제
+    await FileSystem.deleteAsync(REENCRYPT_MANIFEST, { idempotent: true }).catch(() => {});
     onProgress?.(1);
   } catch (error) {
     // Cleanup temp files on failure
     for (const tempPath of tempFiles) {
       await FileSystem.deleteAsync(tempPath, { idempotent: true }).catch(() => {});
     }
+    await FileSystem.deleteAsync(REENCRYPT_MANIFEST, { idempotent: true }).catch(() => {});
     throw error;
   }
 }

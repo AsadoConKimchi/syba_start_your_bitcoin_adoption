@@ -14,6 +14,7 @@ import { loadSavedRegion } from '../src/regions';
 import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { useTheme } from '../src/hooks/useTheme';
 import { fetchRemoteInstallmentRates } from '../src/constants/cardCompanies';
+import { recoverReEncryptIfNeeded } from '../src/utils/storage';
 
 export default function RootLayout() {
   const { isLoading: authLoading, initialize: initAuth } = useAuthStore();
@@ -37,6 +38,7 @@ export default function RootLayout() {
       await loadSavedLanguage();
       await loadSavedRegion();
       await initAuth();
+      await recoverReEncryptIfNeeded();
       await loadSettings();
       await loadCachedPrices();
       fetchPrices().catch(() => {});
