@@ -7,6 +7,7 @@ import {
   deriveKey,
   deriveKeySHA1,
   hashPassword,
+  hashPasswordV2,
   hashPasswordLegacy,
   getSecure,
   saveSecure,
@@ -14,6 +15,7 @@ import {
   SECURE_KEYS,
   CRYPTO_V1,
   CRYPTO_V2,
+  CRYPTO_V3,
 } from '../utils/encryption';
 import { initializeStorage, reEncryptAllData } from '../utils/storage';
 import { CONFIG } from '../constants/config';
@@ -162,9 +164,9 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       saveSecure(SECURE_KEYS.ENCRYPTION_SALT, salt),
       saveSecure(SECURE_KEYS.PASSWORD_HASH, hash),
       saveSecure(SECURE_KEYS.ENCRYPTION_KEY, key),
-      saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V2),
+      saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V3),
     ]);
-    if (__DEV__) { console.log('[DEBUG] SecureStore 저장 완료 (v2 키 포함)'); }
+    if (__DEV__) { console.log('[DEBUG] SecureStore 저장 완료 (v3 키 포함)'); }
 
     _encryptionKey = key;
     set({
@@ -197,11 +199,20 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
 
     const isV1 = !cryptoVersion || cryptoVersion === CRYPTO_V1;
 
-    // 해시 검증: v2이면 PBKDF2 해시, v1이면 레거시 해시
-    const inputHash = isV1
+    // 해시 검증: v3이면 100k PBKDF2, v2이면 10k PBKDF2, v1이면 레거시 해시
+    let inputHash = isV1
       ? hashPasswordLegacy(password, salt)
-      : hashPassword(password, salt);
-    if (__DEV__) { console.log('[DEBUG] 비밀번호 해시 비교 중 (v' + (isV1 ? '1' : '2') + ')'); }
+      : cryptoVersion === CRYPTO_V3
+        ? hashPassword(password, salt)
+        : hashPasswordV2(password, salt);
+    if (__DEV__) { console.log('[DEBUG] 비밀번호 해시 비교 중 (v' + (cryptoVersion ?? '1') + ')'); }
+
+    // 해시 불일치 시 다른 버전으로 재시도 (부분 마이그레이션 크래시 복구)
+    if (inputHash !== storedHash && !isV1) {
+      inputHash = cryptoVersion === CRYPTO_V3
+        ? hashPasswordV2(password, salt)
+        : hashPassword(password, salt);
+    }
 
     if (inputHash === storedHash) {
       if (__DEV__) { console.log('[DEBUG] 비밀번호 일치'); }
@@ -235,18 +246,18 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
         }
         onProgress?.(0.8);
 
-        // 5. 재암호화 성공 후 해시 + v2 플래그 저장
+        // 5. 재암호화 성공 후 해시 + v3 플래그 저장
         const newHash = hashPassword(password, salt);
         await Promise.all([
           saveSecure(SECURE_KEYS.PASSWORD_HASH, newHash),
-          saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V2),
+          saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V3),
         ]);
         onProgress?.(1);
 
         if (__DEV__) { console.log('[DEBUG] v1→v2 마이그레이션 완료'); }
         _encryptionKey = newKey;
       } else {
-        // v2: 저장된 키 사용
+        // v2/v3: 저장된 키 사용
         let key = storedKey;
         if (!key) {
           if (__DEV__) { console.log('[DEBUG] 저장된 키 없음, 새로 생성'); }
@@ -256,6 +267,15 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
           if (__DEV__) { console.log('[DEBUG] 저장된 키 사용 (빠른 로그인)'); }
           onProgress?.(1);
         }
+
+        // v2→v3 마이그레이션: 해시만 재생성 (재암호화 불필요, 키는 동일)
+        if (cryptoVersion !== CRYPTO_V3) {
+          const newHash = hashPassword(password, salt);
+          await saveSecure(SECURE_KEYS.PASSWORD_HASH, newHash);
+          await saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V3);
+          if (__DEV__) { console.log('[DEBUG] v2→v3 해시 마이그레이션 완료 (10k→100k iterations)'); }
+        }
+
         _encryptionKey = key;
       }
 
@@ -296,11 +316,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return false;
     }
 
-    // 현재 비밀번호 검증 (v1/v2 호환)
+    // 현재 비밀번호 검증 (v1/v2/v3 호환)
     const isV1 = !cryptoVersion || cryptoVersion === CRYPTO_V1;
-    const inputHash = isV1
+    let inputHash = isV1
       ? hashPasswordLegacy(currentPassword, salt)
-      : hashPassword(currentPassword, salt);
+      : cryptoVersion === CRYPTO_V3
+        ? hashPassword(currentPassword, salt)
+        : hashPasswordV2(currentPassword, salt);
+
+    // 부분 마이그레이션 크래시 복구
+    if (inputHash !== storedHash && !isV1) {
+      inputHash = cryptoVersion === CRYPTO_V3
+        ? hashPasswordV2(currentPassword, salt)
+        : hashPassword(currentPassword, salt);
+    }
+
     if (inputHash !== storedHash) {
       return false;
     }
@@ -333,12 +363,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
       return false;
     }
 
-    // 새 인증 정보 저장 (항상 v2)
+    // 새 인증 정보 저장 (항상 v3)
     await Promise.all([
       saveSecure(SECURE_KEYS.ENCRYPTION_SALT, newSalt),
       saveSecure(SECURE_KEYS.PASSWORD_HASH, newHash),
       saveSecure(SECURE_KEYS.ENCRYPTION_KEY, newKey),
-      saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V2),
+      saveSecure(SECURE_KEYS.CRYPTO_VERSION, CRYPTO_V3),
     ]);
 
     _encryptionKey = newKey;

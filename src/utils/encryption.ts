@@ -10,12 +10,13 @@ export const SECURE_KEYS = {
   ENCRYPTION_KEY: 'encryption_key',
   BIOMETRIC_ENABLED: 'biometric_enabled',
   USER_ID: 'user_id',
-  CRYPTO_VERSION: 'crypto_version', // '1' = legacy SHA-1, '2' = SHA-256
+  CRYPTO_VERSION: 'crypto_version', // '1' = legacy SHA-1, '2' = SHA-256, '3' = SHA-256 100k hash
 } as const;
 
 // Crypto version constants
 export const CRYPTO_V1 = '1'; // Legacy: PBKDF2-SHA1 key + SHA256 simple hash
-export const CRYPTO_V2 = '2'; // Current: PBKDF2-SHA256 key + PBKDF2-SHA256 hash
+export const CRYPTO_V2 = '2'; // Transitional: PBKDF2-SHA256 key + PBKDF2-SHA256 hash (10k iterations)
+export const CRYPTO_V3 = '3'; // Current: PBKDF2-SHA256 key + PBKDF2-SHA256 hash (100k iterations)
 
 // 랜덤 솔트 생성
 export async function generateSalt(): Promise<string> {
@@ -117,8 +118,18 @@ export function deriveKeySync(password: string, salt: string): string {
   return key.toString();
 }
 
-// 비밀번호 해시 — v2: PBKDF2-SHA256 (10k iterations, 검증 전용)
+// 비밀번호 해시 — v3: PBKDF2-SHA256 (100k iterations)
 export function hashPassword(password: string, salt: string): string {
+  const key = CryptoJS.PBKDF2(password + '_verify', salt, {
+    keySize: 256 / 32,
+    iterations: CONFIG.PBKDF2_ITERATIONS,
+    hasher: CryptoJS.algo.SHA256,
+  });
+  return key.toString();
+}
+
+// 비밀번호 해시 — v2 레거시 (10k iterations, 마이그레이션 검증 전용)
+export function hashPasswordV2(password: string, salt: string): string {
   const key = CryptoJS.PBKDF2(password + '_verify', salt, {
     keySize: 256 / 32,
     iterations: 10000,

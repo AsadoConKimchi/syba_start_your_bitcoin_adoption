@@ -200,7 +200,7 @@ export default function EditRecurringTransferScreen() {
                   style={{ flex: 1, paddingVertical: 12, borderRadius: 8, alignItems: 'center', backgroundColor: transferType === tt.id ? theme.primary : theme.backgroundTertiary }}
                   onPress={() => { setTransferType(tt.id); setToAssetId(null); setToCardId(null); }}
                 >
-                  <Text style={{ fontSize: 14, color: transferType === tt.id ? '#FFFFFF' : theme.textSecondary }}>{tt.label}</Text>
+                  <Text style={{ fontSize: 14, color: transferType === tt.id ? theme.primaryText : theme.textSecondary }}>{tt.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -249,7 +249,7 @@ export default function EditRecurringTransferScreen() {
                   style={{ flex: 1, paddingVertical: 12, borderRadius: 8, alignItems: 'center', backgroundColor: frequency === f ? theme.primary : theme.backgroundTertiary }}
                   onPress={() => setFrequency(f)}
                 >
-                  <Text style={{ fontSize: 14, color: frequency === f ? '#FFFFFF' : theme.textSecondary }}>
+                  <Text style={{ fontSize: 14, color: frequency === f ? theme.primaryText : theme.textSecondary }}>
                     {t(`recurring.${f}`)}
                   </Text>
                 </TouchableOpacity>
@@ -326,7 +326,7 @@ export default function EditRecurringTransferScreen() {
               onPress={handleSave}
               disabled={isLoading}
             >
-              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+              <Text style={{ color: theme.primaryText, fontSize: 16, fontWeight: '600' }}>
                 {isLoading ? t('common.saving') : t('common.save')}
               </Text>
             </TouchableOpacity>
@@ -351,7 +351,7 @@ export default function EditRecurringTransferScreen() {
                   style={{ width: '14.28%', padding: 10, alignItems: 'center', backgroundColor: dayOfMonth === day ? theme.primary : 'transparent', borderRadius: 8 }}
                   onPress={() => { setDayOfMonth(day); setShowDayPicker(false); }}
                 >
-                  <Text style={{ fontSize: 16, color: dayOfMonth === day ? '#FFFFFF' : theme.text }}>{day}</Text>
+                  <Text style={{ fontSize: 16, color: dayOfMonth === day ? theme.primaryText : theme.text }}>{day}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -376,7 +376,7 @@ export default function EditRecurringTransferScreen() {
                   style={{ width: '23%', padding: 12, alignItems: 'center', backgroundColor: monthOfYear === m ? theme.primary : theme.backgroundTertiary, borderRadius: 8 }}
                   onPress={() => { setMonthOfYear(m); setShowMonthPicker(false); }}
                 >
-                  <Text style={{ fontSize: 16, color: monthOfYear === m ? '#FFFFFF' : theme.text }}>{m}{t('common.month')}</Text>
+                  <Text style={{ fontSize: 16, color: monthOfYear === m ? theme.primaryText : theme.text }}>{m}{t('common.month')}</Text>
                 </TouchableOpacity>
               ))}
             </View>

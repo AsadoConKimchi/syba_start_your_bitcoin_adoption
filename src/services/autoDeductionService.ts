@@ -271,10 +271,8 @@ export async function processLoanRepayments(): Promise<{
           const exists = currentRecords.some(
             (r) =>
               r.type === 'expense' &&
-              (((r as Expense).linkedLoanId === loan.id && r.date === payment.date) ||
-                (r.date === payment.date &&
-                  r.memo?.includes(loan.name) &&
-                  r.memo?.includes(`(${month}/${loan.termMonths}`)))
+              (r as Expense).linkedLoanId === loan.id &&
+              r.date === payment.date
           );
           if (exists) continue;
 
@@ -310,153 +308,168 @@ export async function processLoanRepayments(): Promise<{
       // ═══ Phase 2: 미래 미납 회차 처리 ═══
       // paidMonths 기반으로 밀린 회차를 순차 처리
       while (currentPaidMonths < loan.termMonths) {
-        // 다음 상환일 계산: startDate + (paidMonths + 1)개월의 repaymentDay일
-        const nextPaymentDate = getNextPaymentDate(loan.startDate, currentPaidMonths, repaymentDay);
+        let iterationFailed = false;
+        try {
+          // 다음 상환일 계산: startDate + (paidMonths + 1)개월의 repaymentDay일
+          const nextPaymentDate = getNextPaymentDate(loan.startDate, currentPaidMonths, repaymentDay);
 
-        // 아직 상환일이 안 왔으면 중단
-        if (today < nextPaymentDate) {
-          break;
-        }
-
-        // AsyncStorage 이중 실행 방지
-        const yearMonth = toYearMonth(nextPaymentDate);
-        if (lastDeduction[loan.id] === yearMonth) {
-          result.skipped++;
-          break;
-        }
-
-        // 기록 데이터 미리 생성 (중복 체크 + 실제 기록 생성에 사용)
-        const recordData = createLoanRepaymentRecordData({
-          ...loan,
-          paidMonths: currentPaidMonths,
-          remainingPrincipal: currentRemainingPrincipal,
-        });
-
-        // 기록 기반 중복 체크 (자산 차감 전에 수행 — sentinel 유실 시 안전장치)
-        let isDuplicate = false;
-        if (recordData) {
-          const currentRecords = useLedgerStore.getState().records;
-          isDuplicate = currentRecords.some(
-            (r) =>
-              r.type === 'expense' &&
-              (((r as Expense).linkedLoanId === loan.id && r.date === recordData.date) ||
-                (r.date === recordData.date && r.memo === recordData.memo))
-          );
-          if (isDuplicate) {
-            console.log(
-              `[AutoDeduction] 대출 ${loan.name}: 동일 기록 존재, 차감/기록 스킵 (${yearMonth})`
-            );
+          // 아직 상환일이 안 왔으면 중단
+          if (today < nextPaymentDate) {
+            break;
           }
-        }
 
-        // 잔여 원금 계산 (상환 방식에 따라 다름) — 상태 변경 전에 먼저 계산
-        const newPaidMonths = currentPaidMonths + 1;
-        const isCompleted = newPaidMonths >= loan.termMonths;
-        let newRemainingPrincipal = currentRemainingPrincipal;
-        if (isCompleted) {
-          // 마지막 회차: 잔여금 0으로 확정 (부동소수점 오차 누적 방지)
-          newRemainingPrincipal = 0;
-        } else if (loan.repaymentType === 'equalPrincipal') {
-          const monthlyPrincipal = loan.principal / loan.termMonths;
-          newRemainingPrincipal = Math.max(0, Math.round(currentRemainingPrincipal - monthlyPrincipal));
-        } else if (loan.repaymentType === 'equalPrincipalAndInterest') {
-          const monthlyInterest = (currentRemainingPrincipal * loan.interestRate) / 100 / 12;
-          const monthlyPrincipal = loan.monthlyPayment - monthlyInterest;
-          newRemainingPrincipal = Math.max(0, Math.round(currentRemainingPrincipal - monthlyPrincipal));
-        }
+          // AsyncStorage 이중 실행 방지
+          const yearMonth = toYearMonth(nextPaymentDate);
+          if (lastDeduction[loan.id] === yearMonth) {
+            result.skipped++;
+            break;
+          }
 
-        // 중복이 아닌 경우에만 자산 차감 + 기록 생성
-        if (!isDuplicate) {
-          // Step 1~3: 연결 계좌가 있는 경우에만 자산 차감 (pending TX 포함)
-          if (loan.linkedAssetId) {
-            // Step 1: pending transaction 저장 (차감 전 — 크래시 시 무시됨)
-            const pendingData = {
-              loanId: loan.id,
-              yearMonth,
-              step: 'pre_deduction',
-              newPaidMonths,
-              newRemainingPrincipal: Math.round(newRemainingPrincipal),
-              isCompleted,
-              monthlyPayment: loan.monthlyPayment,
-              loanName: loan.name,
-            };
-            await AsyncStorage.setItem(STORAGE_KEYS.PENDING_LOAN_TX, JSON.stringify(pendingData));
+          // 기록 데이터 미리 생성 (중복 체크 + 실제 기록 생성에 사용)
+          const recordData = createLoanRepaymentRecordData({
+            ...loan,
+            paidMonths: currentPaidMonths,
+            remainingPrincipal: currentRemainingPrincipal,
+          });
 
-            // Step 2: 자산에서 차감
-            const balanceResult = await adjustAssetBalance(
-              loan.linkedAssetId,
-              -loan.monthlyPayment,
-              encryptionKey
+          // 기록 기반 중복 체크 (자산 차감 전에 수행 — sentinel 유실 시 안전장치)
+          let isDuplicate = false;
+          if (recordData) {
+            const currentRecords = useLedgerStore.getState().records;
+            isDuplicate = currentRecords.some(
+              (r) =>
+                r.type === 'expense' &&
+                (r as Expense).linkedLoanId === loan.id &&
+                r.date === recordData.date
             );
-            if (balanceResult.clamped) {
-              result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
+            if (isDuplicate) {
+              console.log(
+                `[AutoDeduction] 대출 ${loan.name}: 동일 기록 존재, 차감/기록 스킵 (${yearMonth})`
+              );
+            }
+          }
+
+          // 잔여 원금 계산 (상환 방식에 따라 다름) — 상태 변경 전에 먼저 계산
+          const newPaidMonths = currentPaidMonths + 1;
+          const isCompleted = newPaidMonths >= loan.termMonths;
+          let newRemainingPrincipal = currentRemainingPrincipal;
+          if (isCompleted) {
+            // 마지막 회차: 잔여금 0으로 확정 (부동소수점 오차 누적 방지)
+            newRemainingPrincipal = 0;
+          } else if (loan.repaymentType === 'equalPrincipal') {
+            const monthlyPrincipal = loan.principal / loan.termMonths;
+            newRemainingPrincipal = Math.max(0, Math.round(currentRemainingPrincipal - monthlyPrincipal));
+          } else if (loan.repaymentType === 'equalPrincipalAndInterest') {
+            const monthlyInterest = (currentRemainingPrincipal * loan.interestRate) / 100 / 12;
+            const monthlyPrincipal = loan.monthlyPayment - monthlyInterest;
+            newRemainingPrincipal = Math.max(0, Math.round(currentRemainingPrincipal - monthlyPrincipal));
+          }
+
+          // 중복이 아닌 경우에만 자산 차감 + 기록 생성
+          if (!isDuplicate) {
+            // Step 1~3: 연결 계좌가 있는 경우에만 자산 차감 (pending TX 포함)
+            if (loan.linkedAssetId) {
+              // Step 1: pending transaction 저장 (차감 전 — 크래시 시 무시됨)
+              const pendingData = {
+                loanId: loan.id,
+                yearMonth,
+                step: 'pre_deduction',
+                newPaidMonths,
+                newRemainingPrincipal: Math.round(newRemainingPrincipal),
+                isCompleted,
+                monthlyPayment: loan.monthlyPayment,
+                loanName: loan.name,
+              };
+              await AsyncStorage.setItem(STORAGE_KEYS.PENDING_LOAN_TX, JSON.stringify(pendingData));
+
+              // Step 2: 자산에서 차감
+              const balanceResult = await adjustAssetBalance(
+                loan.linkedAssetId,
+                -loan.monthlyPayment,
+                encryptionKey
+              );
+              if (balanceResult.clamped) {
+                result.warnings.push({ assetName: balanceResult.assetName, requested: balanceResult.requested, actual: balanceResult.actual });
+              }
+
+              // Step 3: pending을 'asset_deducted'로 업데이트 (차감 완료 확인)
+              pendingData.step = 'asset_deducted';
+              await AsyncStorage.setItem(STORAGE_KEYS.PENDING_LOAN_TX, JSON.stringify(pendingData));
             }
 
-            // Step 3: pending을 'asset_deducted'로 업데이트 (차감 완료 확인)
-            pendingData.step = 'asset_deducted';
-            await AsyncStorage.setItem(STORAGE_KEYS.PENDING_LOAN_TX, JSON.stringify(pendingData));
+            // Step 4: 기록탭에 지출 자동 기록
+            if (recordData) {
+              const { addExpense } = useLedgerStore.getState();
+              await addExpense({
+                date: recordData.date,
+                amount: recordData.amount,
+                currency: 'KRW',
+                category: recordData.category,
+                paymentMethod: recordData.paymentMethod,
+                cardId: null,
+                installmentMonths: null,
+                isInterestFree: null,
+                installmentId: null,
+                memo: recordData.memo,
+                linkedAssetId: null, // 자산 차감은 위에서 별도 처리
+                linkedLoanId: recordData.linkedLoanId,
+                isAutoGenerated: recordData.isAutoGenerated,
+              });
+              console.log(`[AutoDeduction] 대출 ${loan.name}: 기록탭에 지출 기록 추가됨`);
+            }
           }
 
-          // Step 4: 기록탭에 지출 자동 기록
-          if (recordData) {
-            const { addExpense } = useLedgerStore.getState();
-            await addExpense({
-              date: recordData.date,
-              amount: recordData.amount,
-              currency: 'KRW',
-              category: recordData.category,
-              paymentMethod: recordData.paymentMethod,
-              cardId: null,
-              installmentMonths: null,
-              isInterestFree: null,
-              installmentId: null,
-              memo: recordData.memo,
-              linkedAssetId: null, // 자산 차감은 위에서 별도 처리
-              linkedLoanId: recordData.linkedLoanId,
-              isAutoGenerated: recordData.isAutoGenerated,
-            });
-            console.log(`[AutoDeduction] 대출 ${loan.name}: 기록탭에 지출 기록 추가됨`);
+          // Step 5: 대출 상환 상태 업데이트 (항상 실행 — 중복이든 아니든 paidMonths 갱신)
+          await updateLoan(
+            loan.id,
+            {
+              paidMonths: newPaidMonths,
+              remainingPrincipal: Math.round(newRemainingPrincipal),
+              status: isCompleted ? 'completed' : 'active',
+            },
+            encryptionKey
+          );
+
+          // Step 5-1: 상환 기록 납부 완료 마킹 (항상 실행, fallback으로 안정성 보장)
+          const { getRecordsForLoan, markRecordAsPaid } = useDebtStore.getState();
+          const record = getRecordsForLoan(loan.id).find((r) => r.month === newPaidMonths);
+          await markRecordAsPaid(
+            record?.id ?? '',
+            encryptionKey,
+            { loanId: loan.id, month: newPaidMonths }
+          );
+
+          // Step 6: pending 제거 (연결 계좌가 있는 경우에만)
+          if (!isDuplicate && loan.linkedAssetId) {
+            await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_LOAN_TX);
           }
+
+          // 로컬 추적 변수 갱신
+          currentPaidMonths = newPaidMonths;
+          currentRemainingPrincipal = Math.round(newRemainingPrincipal);
+
+          // AsyncStorage 보조 기록 저장
+          lastDeduction[loan.id] = yearMonth;
+          await AsyncStorage.setItem(
+            STORAGE_KEYS.LAST_LOAN_DEDUCTION,
+            JSON.stringify(lastDeduction)
+          );
+          result.processed++;
+
+          console.log(
+            `[AutoDeduction] 대출 ${loan.name}: ${isDuplicate ? '(중복 스킵) ' : ''}${loan.monthlyPayment.toLocaleString()}원 처리 완료 (${newPaidMonths}/${loan.termMonths}회차, ${yearMonth})`
+          );
+        } catch (iterError) {
+          console.error(
+            `[AutoDeduction] 대출 ${loan.name}: ${currentPaidMonths + 1}회차 처리 중 오류, 루프 중단:`,
+            iterError
+          );
+          result.errors.push(
+            `대출 ${loan.name} ${currentPaidMonths + 1}회차 실패: ${iterError}`
+          );
+          iterationFailed = true;
         }
-
-        // Step 5: 대출 상환 상태 업데이트 (항상 실행 — 중복이든 아니든 paidMonths 갱신)
-        await updateLoan(
-          loan.id,
-          {
-            paidMonths: newPaidMonths,
-            remainingPrincipal: Math.round(newRemainingPrincipal),
-            status: isCompleted ? 'completed' : 'active',
-          },
-          encryptionKey
-        );
-
-        // Step 5-1: 상환 기록 납부 완료 마킹 (항상 실행)
-        const { getRecordsForLoan, markRecordAsPaid } = useDebtStore.getState();
-        const record = getRecordsForLoan(loan.id).find((r) => r.month === newPaidMonths);
-        if (record) {
-          await markRecordAsPaid(record.id, encryptionKey);
-        }
-
-        // Step 6: pending 제거 (연결 계좌가 있는 경우에만)
-        if (!isDuplicate && loan.linkedAssetId) {
-          await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_LOAN_TX);
-        }
-
-        // 로컬 추적 변수 갱신
-        currentPaidMonths = newPaidMonths;
-        currentRemainingPrincipal = Math.round(newRemainingPrincipal);
-
-        // AsyncStorage 보조 기록 저장
-        lastDeduction[loan.id] = yearMonth;
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.LAST_LOAN_DEDUCTION,
-          JSON.stringify(lastDeduction)
-        );
-        result.processed++;
-
-        console.log(
-          `[AutoDeduction] 대출 ${loan.name}: ${isDuplicate ? '(중복 스킵) ' : ''}${loan.monthlyPayment.toLocaleString()}원 처리 완료 (${newPaidMonths}/${loan.termMonths}회차, ${yearMonth})`
-        );
+        if (iterationFailed) break;
       }
     } catch (error) {
       const errorMsg = `대출 ${loan.name} 차감 실패: ${error}`;
@@ -663,11 +676,13 @@ async function recoverPendingLoanTransaction(
       encryptionKey
     );
 
-    // 상환 기록 납부 완료 마킹
+    // 상환 기록 납부 완료 마킹 (fallback으로 안정성 보장)
     const record = getRecordsForLoan(pending.loanId).find((r) => r.month === pending.newPaidMonths);
-    if (record) {
-      await markRecordAsPaid(record.id, encryptionKey);
-    }
+    await markRecordAsPaid(
+      record?.id ?? '',
+      encryptionKey,
+      { loanId: pending.loanId, month: pending.newPaidMonths }
+    );
 
     // 차감 기록 + pending 제거
     lastDeduction[pending.loanId] = pending.yearMonth;
