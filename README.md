@@ -1,6 +1,6 @@
 # SYBA - Start Your Bitcoin Adoption
 
-> v1.2.0 | 비트코인 기반 개인 재무 관리 앱
+> v1.2.1 | 비트코인 기반 개인 재무 관리 앱
 
 <!-- 향후 Play Store 출시 시 배지 추가
 [![Google Play](https://img.shields.io/badge/Google_Play-다운로드-green?logo=google-play)](https://play.google.com/store/apps/details?id=com.syba.finance)
@@ -124,8 +124,10 @@ SYBA가 외부와 통신하는 모든 경우를 투명하게 공개합니다:
 | 환율 API | USD/KRW 환율 조회 | 없음 (GET 요청만) |
 | Supabase | 구독 관리 | 익명 linking_key만 (이메일, 이름, 전화번호 없음) |
 | Blink 프록시 서버 | Lightning 결제 (구독 결제 시) | 결제 금액, 인보이스 (금융 데이터 아님) |
+| Sentry | 크래시/에러 자동 보고 | 에러 스택트레이스, 기기 정보 (금융 데이터 미포함) |
+| Supabase (분석) | 앱 사용 분석 (5개 이벤트만) | 익명 이벤트 카운트 (PII 미포함) |
 
-- **분석/추적 SDK**: 없음
+- **분석/추적**: 최소 분석만 수집 (5개 익명 이벤트). 설정에서 비활성화 가능
 - **광고 SDK**: 없음
 - **Lightning API 키**: 앱에 포함되지 않음 (서버에만 보관)
 
