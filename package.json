@@ -17,7 +17,8 @@
     "moduleNameMapper": {
       "^expo-localization$": "<rootDir>/src/__mocks__/expo-localization.js",
       "^expo-crypto$": "<rootDir>/src/__mocks__/expo-crypto.js",
-      "^expo-secure-store$": "<rootDir>/src/__mocks__/expo-secure-store.js"
+      "^expo-secure-store$": "<rootDir>/src/__mocks__/expo-secure-store.js",
+      "^@react-native-async-storage/async-storage$": "<rootDir>/src/__mocks__/@react-native-async-storage/async-storage.js"
     }
   },
   "dependencies": {

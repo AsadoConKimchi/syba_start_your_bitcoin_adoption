@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../src/hooks/useTheme';
 import { useAuthStore } from '../../src/stores/authStore';
-import { useLedgerStore } from '../../src/stores/ledgerStore';
+import { useLedgerStore, recoverPendingTransfer } from '../../src/stores/ledgerStore';
 import { useCardStore } from '../../src/stores/cardStore';
 import { useDebtStore } from '../../src/stores/debtStore';
 import { useAssetStore } from '../../src/stores/assetStore';
@@ -103,6 +103,13 @@ export default function TabsLayout() {
 
         if (!autoDeductionDone && !autoDeductionLock) {
           autoDeductionLock = true;
+
+          // 미완료 이체 트랜잭션 복구
+          try {
+            await recoverPendingTransfer(encryptionKey);
+          } catch (error) {
+            console.error('[TabsLayout] Transfer recovery error:', error);
+          }
 
           try {
             const result = await processAllAutoDeductions();

@@ -9,6 +9,19 @@ import { useCardStore } from './cardStore';
 import { fetchHistoricalBtcPrice } from '../services/api/upbit';
 import { krwToSats, satsToKrw } from '../utils/calculations';
 import { getTodayString } from '../utils/formatters';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const PENDING_TRANSFER_TX_KEY = 'pendingTransferTransaction';
+
+interface PendingTransferTx {
+  transferId: string;
+  fromAssetId: string;
+  toAssetId?: string;
+  toCardId?: string;
+  amount: number;
+  step: 'pre_debit' | 'source_debited';
+  createdAt: string;
+}
 
 /**
  * 대출 원리금 자동 기록의 중복 제거 (순수 함수)
@@ -388,6 +401,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
   },
 
   // 이체 추가 (계좌→계좌 또는 계좌→선불카드)
+  // pending TX 패턴으로 크래시 시 복구 가능
   addTransfer: async (transferData) => {
     const encryptionKey = useAuthStore.getState().getEncryptionKey();
     if (!encryptionKey) throw new Error('No encryption key');
@@ -408,8 +422,20 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     set(state => ({ records: [...state.records, newRecord] }));
     await get().saveRecords();
 
+    // 2. pending TX 저장 (출금 전)
+    const pendingTx: PendingTransferTx = {
+      transferId: id,
+      fromAssetId: transferData.fromAssetId,
+      toAssetId: transferData.toAssetId,
+      toCardId: transferData.toCardId,
+      amount: transferData.amount,
+      step: 'pre_debit',
+      createdAt: now,
+    };
+    await AsyncStorage.setItem(PENDING_TRANSFER_TX_KEY, JSON.stringify(pendingTx));
+
     try {
-      // 2. 출금 자산 잔액 차감
+      // 3. 출금 자산 잔액 차감
       await useAssetStore.getState().adjustAssetBalance(
         transferData.fromAssetId,
         -transferData.amount,
@@ -417,8 +443,12 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
       );
       if (__DEV__) { console.log('[DEBUG] addTransfer - 출금 완료'); }
 
+      // 4. pending TX 업데이트 (출금 완료)
+      pendingTx.step = 'source_debited';
+      await AsyncStorage.setItem(PENDING_TRANSFER_TX_KEY, JSON.stringify(pendingTx));
+
       try {
-        // 3a. 계좌→계좌
+        // 5a. 계좌→계좌
         if (transferData.toAssetId) {
           await useAssetStore.getState().adjustAssetBalance(
             transferData.toAssetId,
@@ -427,7 +457,7 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           );
           if (__DEV__) { console.log('[DEBUG] addTransfer - 입금(계좌) 완료'); }
         }
-        // 3b. 계좌→선불카드
+        // 5b. 계좌→선불카드
         else if (transferData.toCardId) {
           await useCardStore.getState().updateCardBalance(
             transferData.toCardId,
@@ -435,25 +465,30 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
           );
           if (__DEV__) { console.log('[DEBUG] addTransfer - 충전(카드) 완료'); }
         }
+
+        // 6. pending TX 삭제 (이체 완료)
+        await AsyncStorage.removeItem(PENDING_TRANSFER_TX_KEY);
       } catch (error) {
-        // 3 실패 시 2번 롤백 (출금 복원)
+        // 5 실패 시 출금 롤백
         if (__DEV__) { console.log('[DEBUG] addTransfer - 입금 실패, 출금 롤백:', error); }
         await useAssetStore.getState().adjustAssetBalance(
           transferData.fromAssetId,
           transferData.amount,
           encryptionKey
         );
-        // 기록도 삭제
+        // 기록 삭제 + pending 삭제
         set(state => ({ records: state.records.filter(r => r.id !== id) }));
         await get().saveRecords();
+        await AsyncStorage.removeItem(PENDING_TRANSFER_TX_KEY);
         throw error;
       }
     } catch (error) {
-      // 2 실패 시 기록 삭제
+      // 3 실패 시 기록 삭제
       if (get().records.find(r => r.id === id)) {
         set(state => ({ records: state.records.filter(r => r.id !== id) }));
         await get().saveRecords();
       }
+      await AsyncStorage.removeItem(PENDING_TRANSFER_TX_KEY);
       throw error;
     }
   },
@@ -808,3 +843,78 @@ export const useLedgerStore = create<LedgerState & LedgerActions>((set, get) => 
     return result;
   },
 }));
+
+/**
+ * 앱 시작 시 미완료 이체 트랜잭션 복구
+ * - pre_debit: 출금 안 됨 → 기록만 삭제 (보수적 처리)
+ * - source_debited: 출금됨, 입금 안 됨 → 입금 재시도 → 실패 시 출금 복원 + 기록 삭제
+ */
+export async function recoverPendingTransfer(encryptionKey: string): Promise<void> {
+  try {
+    const pendingStr = await AsyncStorage.getItem(PENDING_TRANSFER_TX_KEY);
+    if (!pendingStr) return;
+
+    const pending: PendingTransferTx = JSON.parse(pendingStr);
+    console.warn(`[Transfer Recovery] pending TX 발견: ${pending.transferId} (step: ${pending.step})`);
+
+    const { records } = useLedgerStore.getState();
+    const record = records.find(r => r.id === pending.transferId);
+
+    if (pending.step === 'pre_debit') {
+      // 출금 전 크래시 → 기록만 삭제
+      if (record) {
+        useLedgerStore.setState(state => ({
+          records: state.records.filter(r => r.id !== pending.transferId),
+        }));
+        await useLedgerStore.getState().saveRecords();
+      }
+      await AsyncStorage.removeItem(PENDING_TRANSFER_TX_KEY);
+      console.warn('[Transfer Recovery] pre_debit — 기록 삭제 완료');
+      return;
+    }
+
+    if (pending.step === 'source_debited') {
+      // 출금 완료, 입금 미완료 → 입금 재시도
+      try {
+        if (pending.toAssetId) {
+          await useAssetStore.getState().adjustAssetBalance(
+            pending.toAssetId,
+            pending.amount,
+            encryptionKey
+          );
+        } else if (pending.toCardId) {
+          await useCardStore.getState().updateCardBalance(
+            pending.toCardId,
+            pending.amount
+          );
+        }
+        await AsyncStorage.removeItem(PENDING_TRANSFER_TX_KEY);
+        console.warn('[Transfer Recovery] source_debited — 입금 완료');
+      } catch (error) {
+        // 입금 재시도 실패 → 출금 복원 + 기록 삭제
+        console.error('[Transfer Recovery] 입금 재시도 실패, 출금 복원:', error);
+        try {
+          await useAssetStore.getState().adjustAssetBalance(
+            pending.fromAssetId,
+            pending.amount,
+            encryptionKey
+          );
+        } catch (rollbackError) {
+          console.error('[Transfer Recovery] 출금 복원도 실패:', rollbackError);
+        }
+        if (record) {
+          useLedgerStore.setState(state => ({
+            records: state.records.filter(r => r.id !== pending.transferId),
+          }));
+          await useLedgerStore.getState().saveRecords();
+        }
+        await AsyncStorage.removeItem(PENDING_TRANSFER_TX_KEY);
+        console.warn('[Transfer Recovery] 출금 복원 + 기록 삭제 완료');
+      }
+    }
+  } catch (error) {
+    console.error('[Transfer Recovery] 복구 실패:', error);
+    // 복구 자체가 실패해도 앱은 정상 시작되어야 함
+    await AsyncStorage.removeItem(PENDING_TRANSFER_TX_KEY).catch(() => {});
+  }
+}
