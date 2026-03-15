@@ -129,7 +129,7 @@ export default function EditRecordScreen() {
 
   if (!record || isTransfer(record)) {
     return (
-      <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ color: theme.text }}>{t('editRecord.notFound')}</Text>
       </SafeAreaView>
     );
@@ -261,7 +261,7 @@ export default function EditRecordScreen() {
   };
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+    <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         {/* 헤더 */}
         <View

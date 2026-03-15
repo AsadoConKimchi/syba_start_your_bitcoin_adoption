@@ -298,23 +298,25 @@ export default function LoginScreen() {
 
         <TouchableOpacity
           style={{ marginTop: 24, alignItems: 'center' }}
-          onPress={() => Alert.alert(t('auth.forgotPasswordTitle'), t('auth.forgotPasswordMessage'))}
+          onPress={() =>
+            Alert.alert(
+              t('auth.forgotPasswordTitle'),
+              t('auth.forgotPasswordMessage'),
+              [
+                { text: t('common.cancel'), style: 'cancel' },
+                {
+                  text: t('auth.resetData'),
+                  style: 'destructive',
+                  onPress: handleReset,
+                },
+              ]
+            )
+          }
         >
           <Text style={{ color: theme.textSecondary, fontSize: 14 }}>
             {t('auth.forgotPassword')}
           </Text>
         </TouchableOpacity>
-
-        {__DEV__ && (
-          <TouchableOpacity
-            style={{ marginTop: 32, alignItems: 'center' }}
-            onPress={handleReset}
-          >
-            <Text style={{ color: theme.error, fontSize: 12 }}>
-              {t('auth.resetData')}
-            </Text>
-          </TouchableOpacity>
-        )}
       </View>
     </KeyboardAvoidingView>
   );

@@ -148,7 +148,7 @@ export default function SupportScreen() {
       ) : (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
           {/* 이메일 문의 안내 */}
-          <View style={{ backgroundColor: theme.cardBackground, borderRadius: 8, padding: 12, marginBottom: 16 }}>
+          <View style={{ backgroundColor: theme.backgroundSecondary, borderRadius: 8, padding: 12, marginBottom: 16 }}>
             <Text style={{ fontSize: 13, color: theme.textMuted }}>
               {t('support.contactEmail')}: {SUPPORT_EMAIL}
             </Text>
@@ -170,7 +170,7 @@ export default function SupportScreen() {
                 key={ticket.id}
                 onPress={() => router.push({ pathname: '/(modals)/ticket-detail', params: { ticketId: ticket.id } })}
                 style={{
-                  backgroundColor: theme.cardBackground,
+                  backgroundColor: theme.backgroundSecondary,
                   borderRadius: 8,
                   padding: 14,
                   marginBottom: 8,
@@ -234,7 +234,7 @@ export default function SupportScreen() {
                     paddingHorizontal: 12,
                     paddingVertical: 6,
                     borderRadius: 16,
-                    backgroundColor: category === cat ? theme.primary : theme.cardBackground,
+                    backgroundColor: category === cat ? theme.primary : theme.backgroundSecondary,
                   }}
                 >
                   <Text style={{
@@ -255,10 +255,13 @@ export default function SupportScreen() {
             <TextInput
               value={subject}
               onChangeText={setSubject}
+              placeholder={t('support.subject')}
               style={{
-                backgroundColor: theme.cardBackground,
+                backgroundColor: theme.backgroundSecondary,
                 color: theme.text,
                 borderRadius: 8,
+                borderWidth: 1,
+                borderColor: theme.inputBorder,
                 padding: 12,
                 fontSize: 15,
                 marginBottom: 20,
@@ -274,12 +277,15 @@ export default function SupportScreen() {
             <TextInput
               value={message}
               onChangeText={setMessage}
+              placeholder={t('support.message')}
               multiline
               numberOfLines={6}
               style={{
-                backgroundColor: theme.cardBackground,
+                backgroundColor: theme.backgroundSecondary,
                 color: theme.text,
                 borderRadius: 8,
+                borderWidth: 1,
+                borderColor: theme.inputBorder,
                 padding: 12,
                 fontSize: 15,
                 minHeight: 120,
@@ -295,7 +301,7 @@ export default function SupportScreen() {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
-              backgroundColor: theme.cardBackground,
+              backgroundColor: theme.backgroundSecondary,
               borderRadius: 8,
               padding: 12,
               marginBottom: 12,

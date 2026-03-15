@@ -144,7 +144,7 @@ export default function CategoryManagementScreen() {
   // ── Group List View ──
   if (!selectedGroupId) {
     return (
-      <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+      <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
         {/* Header */}
         <View style={{
           flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -287,7 +287,7 @@ export default function CategoryManagementScreen() {
 
   // ── Group Detail View ──
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+    <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
       {/* Header */}
       <View style={{
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',

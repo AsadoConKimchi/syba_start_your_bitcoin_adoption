@@ -59,7 +59,7 @@ export default function AssetDetailScreen() {
 
   if (!asset) {
     return (
-      <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ color: theme.textMuted }}>{t('common.notFound')}</Text>
         <TouchableOpacity
           style={{ marginTop: 16, padding: 12, backgroundColor: theme.success, borderRadius: 8 }}
@@ -167,7 +167,7 @@ export default function AssetDetailScreen() {
   // 보기 모드
   if (!isEditing) {
     return (
-      <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+      <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
         {/* 헤더 */}
         <View
           style={{
@@ -365,7 +365,7 @@ export default function AssetDetailScreen() {
 
   // 수정 모드
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+    <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}

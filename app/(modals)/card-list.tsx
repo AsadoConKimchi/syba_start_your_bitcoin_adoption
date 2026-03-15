@@ -57,7 +57,7 @@ export default function CardListScreen() {
   };
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+    <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
       {/* 헤더 */}
       <View
         style={{

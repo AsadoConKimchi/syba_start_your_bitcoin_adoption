@@ -64,6 +64,7 @@ export default function EditCardScreen() {
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [showDebitAccountPicker, setShowDebitAccountPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [balance, setBalance] = useState('');
 
   const fiatAssets = assets.filter(isFiatAsset);
 
@@ -79,6 +80,7 @@ export default function EditCardScreen() {
       setBillingEndDay(card.billingEndDay ?? null);
       setLinkedAssetId(card.linkedAssetId ?? null);
       setLinkedAccountId(card.linkedAccountId ?? null);
+      setBalance(card.balance != null ? String(card.balance) : '');
     }
   }, [card?.id]);
 
@@ -137,6 +139,7 @@ export default function EditCardScreen() {
           : cardType === 'credit' ? { paymentDay: undefined, billingStartDay: undefined, billingEndDay: undefined } : {}),
         ...(cardType === 'credit' ? { linkedAssetId: linkedAssetId || undefined } : { linkedAssetId: undefined }),
         ...(cardType === 'debit' ? { linkedAccountId: linkedAccountId || undefined } : { linkedAccountId: undefined }),
+        ...(cardType === 'prepaid' ? { balance: balance ? parseInt(balance, 10) : 0 } : {}),
       });
       Alert.alert('', t('card.editDone'), [
         { text: t('common.confirm'), onPress: () => router.back() },
@@ -150,14 +153,14 @@ export default function EditCardScreen() {
 
   if (!card) {
     return (
-      <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }}>
         <Text style={{ color: theme.textSecondary }}>{t('common.notFound')}</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView edges={['bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
+    <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.background }}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         {/* Header */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: theme.border }}>
@@ -307,6 +310,22 @@ export default function EditCardScreen() {
                 <Ionicons name="chevron-forward" size={20} color={theme.textMuted} />
               </TouchableOpacity>
               <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>{t('card.debitAccountHint')}</Text>
+            </View>
+          )}
+
+          {/* Prepaid card balance */}
+          {cardType === 'prepaid' && (
+            <View style={{ marginBottom: 24 }}>
+              <Text style={{ fontSize: 14, color: theme.textSecondary, marginBottom: 8 }}>{t('card.balance')}</Text>
+              <TextInput
+                style={{ borderWidth: 1, borderColor: theme.inputBorder, borderRadius: 8, padding: 12, fontSize: 16, color: theme.inputText }}
+                placeholder="0"
+                placeholderTextColor={theme.placeholder}
+                value={balance}
+                onChangeText={setBalance}
+                keyboardType="number-pad"
+              />
+              <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 8 }}>{t('card.initialBalanceHint')}</Text>
             </View>
           )}
 
